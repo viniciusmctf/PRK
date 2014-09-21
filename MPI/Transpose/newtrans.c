@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 #ifdef _OPENMP
@@ -27,12 +28,12 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &wsize);
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
 
-    {
-        if (wsize != (int)pow(floor(sqrt(wsize)),2)) {
-            printf("nproc must be a square for now\n");
-            MPI_Abort(MPI_COMM_WORLD, wsize);
-        }
+    if (wsize != (int)pow(floor(sqrt(wsize)),2)) {
+        printf("nproc must be a square for now\n");
+        MPI_Abort(MPI_COMM_WORLD, wsize);
     }
+
+    /* cartesian communicator setup */
 
     MPI_Comm comm2d;
     {
@@ -59,6 +60,8 @@ int main(int argc, char* argv[])
         cranky = coords[1];
     }
 
+    /* input parsing */
+
     int matdim = (argc>1) ? atoi(argv[1]) : 2520; /* 9x8x7x5 is divisible by lots of things */
     int tilex  = matdim/csizex;
     int tiley  = matdim/csizey;
@@ -69,19 +72,24 @@ int main(int argc, char* argv[])
                 tilex, tiley, csizex, csizey);
     }
 
+    int      tilecount = tilex * tiley;
+    MPI_Aint tilebytes = tilecount * sizeof(double);
+
+    /* allocation */
+
     MPI_Win matwin1;
     MPI_Win matwin2;
     double * matptr1 = NULL;
     double * matptr2 = NULL;
     {
-        MPI_Aint bytes = tilex * tiley * sizeof(double);
         MPI_Info info = MPI_INFO_NULL; /* FIXME */
-        MPI_Win_allocate(bytes, sizeof(double), info, comm2d, &matptr1, &matwin1);
-        MPI_Win_allocate(bytes, sizeof(double), info, comm2d, &matptr2, &matwin2);
+        MPI_Win_allocate(tilebytes, sizeof(double), info, comm2d, &matptr1, &matwin1);
+        MPI_Win_allocate(tilebytes, sizeof(double), info, comm2d, &matptr2, &matwin2);
         MPI_Win_lock_all(0,matwin1);
         MPI_Win_lock_all(0,matwin2);
     }
-    MPI_Barrier(comm2d); /* this barrier is necessary */
+
+    /* initialization */
 
     for (int iy=0; iy<tiley; iy++) {
         for (int ix=0; ix<tilex; ix++) {
@@ -95,8 +103,58 @@ int main(int argc, char* argv[])
             }
         }
     }
-    MPI_Win_sync(matwin1);
+    MPI_Win_sync(matwin1); /* ensure RMA visibility of local writes above (this is a memory barrier) */
+    memset(matptr2, 255, tilex * tiley * sizeof(double));
+    MPI_Win_sync(matwin2);
     MPI_Barrier(comm2d);
+
+    if (matdim<100) {
+        fflush(stdout);
+        MPI_Barrier(comm2d);
+        fflush(stdout);
+        MPI_Barrier(comm2d);
+        if (wrank==0) {
+            printf("====================================\n");
+            fflush(stdout);
+        }
+        fflush(stdout);
+        MPI_Barrier(comm2d);
+        fflush(stdout);
+        MPI_Barrier(comm2d);
+    }
+
+    /* transpose */
+
+    /* local transpose */
+    double * temp = NULL;
+    MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
+    for (int ix=0; ix<tilex; ix++) {
+        for (int iy=0; iy<tiley; iy++) {
+            temp[ix*tilex+iy] = matptr1[iy*tiley+ix];
+        }
+    }
+    /* network transpose */
+    int transrank = csizey * cranky + crankx;
+    printf("crank = %d transrank = %d\n", crank, transrank);
+    MPI_Put(temp, tilecount, MPI_DOUBLE, transrank, 0 /* disp */, tilecount, MPI_DOUBLE, matwin2);
+    MPI_Win_flush(transrank, matwin2);
+    MPI_Barrier(comm2d);
+    MPI_Free_mem(temp);
+
+    MPI_Win_sync(matwin2); /* ensure win and local views are in sync */
+    for (int iy=0; iy<tiley; iy++) {
+        for (int ix=0; ix<tilex; ix++) {
+            int tx = crankx * tilex + ix;
+            int ty = cranky * tiley + iy;
+            int t2 = ty * matdim + tx;
+            if (matdim<100) {
+                printf("%d: cry=%d crx=%d iy=%d ix=%d ty=%d tx=%d t2=%d mat=%lf\n",
+                        crank, cranky, crankx, iy, ix, ty, tx, t2, matptr2[iy*tiley+ix]);
+            }
+        }
+    }
+
+    /* deallocation */
 
     MPI_Win_unlock_all(matwin2);
     MPI_Win_unlock_all(matwin1);
