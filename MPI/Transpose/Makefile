@@ -13,7 +13,8 @@ OPTFLAGS    = $(DEFAULT_OPT_FLAGS)
 #DEBUGFLAG    = -DVERBOSE
 #description: default diagnostic style is silent
 
-USERFLAGS     = -strict-ansi -vec-report3
+#USERFLAGS     = -strict-ansi -vec-report3
+USERFLAGS     = -ansi -std=c99 -Wall
 #description: parameter to specify optional flags
 
 #set the following variables for custom libraries and/or other objects
@@ -25,7 +26,10 @@ INCLUDEPATHS =
 ### End User configurable options ###
 
 TUNEFLAGS   = $(BLOCKFLAG) $(DEBUGFLAG) $(USERFLAGS) 
-PROGRAM     = transpose
+#PROGRAM     = transpose
+PROGRAM     = newtrans
 OBJS        = $(PROGRAM).o $(COMOBJS)
 
+all: newtrans
 include ../../common/make.common
+
