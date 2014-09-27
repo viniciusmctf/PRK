@@ -87,4 +87,4 @@ static void transpose(
     }	
   }
 }
-#endif LOCAL_TRANSPOSE_H
+#endif // LOCAL_TRANSPOSE_H
