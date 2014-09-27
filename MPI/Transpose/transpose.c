@@ -61,11 +61,14 @@ FUNCTIONS CALLED:
 HISTORY: Written by Tim Mattson, April 1999.  
          Updated by Rob Van der Wijngaart, December 2005.
          Updated by Rob Van der Wijngaart, October 2006.
+         Updated by Jeff Hammond, September 2014.
   
 *******************************************************************/
 
 #include <par-res-kern_general.h>
 #include <par-res-kern_mpi.h>
+
+#include "localtrans.h"
 
 /* Constant to shift column index */
 #define  COL_SHIFT  1000.00
@@ -370,45 +373,4 @@ void trans_comm(double *buff,  double *trans, int Block_order,
 
 
    }
-}
-
-/*******************************************************************
-** Copy the transpose of an array slice inside matrix A into 
-** the an array slice inside matrix B.
-**
-**  Parameters:
-**
-**       A, B                base address of the slices
-**       sub_rows, sub_cols  Numb of rows/cols in the slice.
-** 
-*******************************************************************/
-
-void transpose(
-  double *A, double *B,         /* input and output matrix        */
-  int tile_size,                /* local tile size                */
-  int sub_rows, int sub_cols)   /* size of slice to  transpose    */
-{
-  int    i, j, it, jt;
-
-  /*  Transpose the  matrix.  */
-
-  /* tile only if the tile size is smaller than the matrix block  */
-  if (tile_size < sub_cols) {
-    for (i=0; i<sub_cols; i+=tile_size) { 
-      for (j=0; j<sub_rows; j+=tile_size) { 
-        for (it=i; it<MIN(sub_cols,i+tile_size); it++){ 
-          for (jt=j; jt<MIN(sub_rows,j+tile_size);jt++){ 
-            B[it+sub_cols*jt] = A[jt+sub_rows*it]; 
-          } 
-        } 
-      } 
-    } 
-  }
-  else {
-    for (i=0;i<sub_cols; i++) {
-      for (j=0;j<sub_rows;j++) {
-        B[i+sub_cols*j] = A[j+i*sub_rows];
-      }
-    }	
-  }
 }
