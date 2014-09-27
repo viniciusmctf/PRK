@@ -9,6 +9,14 @@
 
 #include <mpi.h>
 
+typedef enum {
+    RMA_LOCAL_PUT_FLUSH_BARRIER = 1,
+    RMA_GET_FLUSH_LOCAL         = 2,
+    P2P_SENDRECV_LOCAL          = 3,
+    P2P_ISEND_IRECV_LOCAL       = 4,
+    P2P_SEND_RECV_2PHASE  = 5
+} transpose_method_e;
+
 int main(int argc, char* argv[])
 {
 #ifdef _OPENMP
@@ -77,7 +85,8 @@ int main(int argc, char* argv[])
     /* Input parsing:
      * We round down to avoid having to manage edge-case bookkeeping. */
 
-    int matdim = (argc>1) ? atoi(argv[1]) : 2520; /* 9x8x7x5 is divisible by lots of things */
+    transpose_method_e method = (argc>1) ? atoi(argv[1]) : RMA_LOCAL_PUT_FLUSH_BARRIER;
+    int matdim = (argc>2) ? atoi(argv[2]) : 2520; /* 9x8x7x5 is divisible by lots of things */
     int tilex  = matdim/csizex;
     int tiley  = matdim/csizey;
     matdim = tilex * csizex; /* round down to something evenly divisible */
@@ -85,6 +94,28 @@ int main(int argc, char* argv[])
     if (wrank==0) {
         printf("matrix tiles of %d by %d on a process grid of %d by %d \n",
                 tilex, tiley, csizex, csizey);
+        char * methodname;
+        switch (method) {
+            case RMA_LOCAL_PUT_FLUSH_BARRIER:
+              methodname = "RMA_LOCAL_PUT_FLUSH_BARRIER";
+              break;
+            case RMA_GET_FLUSH_LOCAL:
+              methodname = "RMA_GET_FLUSH_LOCAL";
+              break;
+            case P2P_SENDRECV_LOCAL:
+              methodname = "P2P_SENDRECV_LOCAL";
+              break;
+            case P2P_ISEND_IRECV_LOCAL:
+              methodname = "P2P_ISEND_IRECV_LOCAL";
+              break;
+            case P2P_SEND_RECV_2PHASE:
+              methodname = "P2P_SEND_RECV_2PHASE";
+              break;
+            default:
+              methodname = "UNDEFINED";
+              break;
+        }
+        printf("method = %s\n", methodname);
     }
 
     /* Caching these to avoid computing integer multiplies on the stack is debatable. */
@@ -124,6 +155,7 @@ int main(int argc, char* argv[])
                     (*imm)==MPI_WIN_UNIFIED ? "UNIFIED" : "SEPARATE" );
             fflush(stderr);
         }
+        MPI_Barrier(MPI_COMM_WORLD); /* solely to observe ordered printf */
     }
 
     /* initialization */
@@ -170,33 +202,120 @@ int main(int argc, char* argv[])
         MPI_Barrier(comm2d);
     }
 
-    /* Perform the transpose:
-     *************************************************
-     * Method 1 - local transpose followed by RMA put.
-     * Method 2 - RMA get followed by local transpose.
-     * Method 3 - Send-Recv.
-     *************************************************/
+    /*************************************************/
 
-    /* M1: Local transpose - should be replaced with Tim's code. */
-    double * temp = NULL;
-    MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
-    for (int ix=0; ix<tilex; ix++) {
-        for (int iy=0; iy<tiley; iy++) {
-            temp[ix*tilex+iy] = matptr1[iy*tiley+ix];
+    if (method==RMA_LOCAL_PUT_FLUSH_BARRIER) {
+
+        /* Local transpose - should be replaced with Tim's code. */
+        double * temp = NULL;
+        MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
+        for (int ix=0; ix<tilex; ix++) {
+            for (int iy=0; iy<tiley; iy++) {
+                temp[ix*tilex+iy] = matptr1[iy*tiley+ix];
+            }
         }
+
+        /* Network transpose */
+        int transrank = csizey * cranky + crankx;
+        MPI_Put(temp, tilecount, MPI_DOUBLE, transrank, 0 /* disp */, tilecount, MPI_DOUBLE, matwin2);
+        MPI_Win_flush(transrank, matwin2); /* ensure remote completion but lacks notification */
+        MPI_Free_mem(temp);
+
+        /* heavy hammer for remote notification */
+        MPI_Barrier(comm2d);
+
+        /* ensure win and local views are in sync */
+        MPI_Win_sync(matwin2);
+    }
+    else if (method==RMA_GET_FLUSH_LOCAL) {
+
+        double * temp = NULL;
+        MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
+
+        /* Network transpose */
+        int transrank = csizey * cranky + crankx;
+        MPI_Get(temp, tilecount, MPI_DOUBLE, transrank, 0 /* disp */, tilecount, MPI_DOUBLE, matwin1);
+        /* ensure data has arrived */
+        MPI_Win_flush_local(transrank, matwin1);
+
+        /* Local transpose - should be replaced with Tim's code. */
+        for (int ix=0; ix<tilex; ix++) {
+            for (int iy=0; iy<tiley; iy++) {
+                matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
+            }
+        }
+        MPI_Free_mem(temp);
+
+        /* ensure win and local views are in sync */
+        MPI_Win_sync(matwin2);
+    }
+    else if (method==P2P_SENDRECV_LOCAL) {
+
+        double * temp = NULL;
+        MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
+
+        /* Network transpose */
+        int transrank = csizey * cranky + crankx;
+        MPI_Sendrecv(matptr1, tilecount, MPI_DOUBLE, transrank, 0,
+                     temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
+
+        /* Local transpose - should be replaced with Tim's code. */
+        for (int ix=0; ix<tilex; ix++) {
+            for (int iy=0; iy<tiley; iy++) {
+                matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
+            }
+        }
+        MPI_Free_mem(temp);
+    }
+    else if (method==P2P_ISEND_IRECV_LOCAL) {
+
+        double * temp = NULL;
+        MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
+
+        /* Network transpose */
+        int transrank = csizey * cranky + crankx;
+        MPI_Request reqs[2];
+        MPI_Isend(matptr1, tilecount, MPI_DOUBLE, transrank, 0, comm2d, &(reqs[0]));
+        MPI_Irecv(temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, &(reqs[1]));
+        MPI_Waitall(2, reqs, MPI_STATUSES_IGNORE);
+
+        /* Local transpose - should be replaced with Tim's code. */
+        for (int ix=0; ix<tilex; ix++) {
+            for (int iy=0; iy<tiley; iy++) {
+                matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
+            }
+        }
+        MPI_Free_mem(temp);
+    }
+    else if (method==P2P_SEND_RECV_2PHASE) {
+
+        double * temp = NULL;
+        MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
+
+        /* Network transpose */
+        int transrank = csizey * cranky + crankx;
+        if (cranky<crankx) {
+            MPI_Send(matptr1, tilecount, MPI_DOUBLE, transrank, 0, comm2d);
+            MPI_Recv(temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
+        } else if (cranky>crankx) {
+            MPI_Recv(temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
+            MPI_Send(matptr1, tilecount, MPI_DOUBLE, transrank, 0, comm2d);
+        } else /* cranky==crankx */ {
+            MPI_Sendrecv(matptr1, tilecount, MPI_DOUBLE, transrank, 0,
+                         temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
+        }
+
+        /* Local transpose - should be replaced with Tim's code. */
+        for (int ix=0; ix<tilex; ix++) {
+            for (int iy=0; iy<tiley; iy++) {
+                matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
+            }
+        }
+        MPI_Free_mem(temp);
     }
 
-    /* M1: Network transpose */
-    int transrank = csizey * cranky + crankx;
-    MPI_Put(temp, tilecount, MPI_DOUBLE, transrank, 0 /* disp */, tilecount, MPI_DOUBLE, matwin2);
-    MPI_Win_flush(transrank, matwin2); /* ensure remote completion but lacks notification */
+    /*************************************************/
 
-    /* heavy hammer for remote notification */
-    MPI_Barrier(comm2d);
-
-    MPI_Free_mem(temp);
-    /* notify-wait would go here... */
-    MPI_Win_sync(matwin2); /* ensure win and local views are in sync */
     for (int iy=0; iy<tiley; iy++) {
         for (int ix=0; ix<tilex; ix++) {
             int tx = crankx * tilex + ix;
