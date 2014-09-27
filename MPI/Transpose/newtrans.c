@@ -17,6 +17,17 @@ typedef enum {
     P2P_SEND_RECV_2PHASE  = 5
 } transpose_method_e;
 
+static void local_transpose(const double * restrict in,
+                            double * restrict out,
+                            int tilex, int tiley)
+{
+    for (int ix=0; ix<tilex; ix++) {
+        for (int iy=0; iy<tiley; iy++) {
+            out[ix*tilex+iy] = in[iy*tiley+ix];
+        }
+    }
+}
+
 int main(int argc, char* argv[])
 {
 #ifdef _OPENMP
@@ -206,14 +217,17 @@ int main(int argc, char* argv[])
 
     if (method==RMA_LOCAL_PUT_FLUSH_BARRIER) {
 
-        /* Local transpose - should be replaced with Tim's code. */
         double * temp = NULL;
         MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
+#if 0
         for (int ix=0; ix<tilex; ix++) {
             for (int iy=0; iy<tiley; iy++) {
                 temp[ix*tilex+iy] = matptr1[iy*tiley+ix];
             }
         }
+#else
+        local_transpose(matptr1, temp, tilex, tiley);
+#endif
 
         /* Network transpose */
         int transrank = csizey * cranky + crankx;
@@ -238,12 +252,15 @@ int main(int argc, char* argv[])
         /* ensure data has arrived */
         MPI_Win_flush_local(transrank, matwin1);
 
-        /* Local transpose - should be replaced with Tim's code. */
+#if 0
         for (int ix=0; ix<tilex; ix++) {
             for (int iy=0; iy<tiley; iy++) {
                 matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
             }
         }
+#else
+        local_transpose(temp, matptr2, tilex, tiley);
+#endif
         MPI_Free_mem(temp);
 
         /* ensure win and local views are in sync */
@@ -259,12 +276,15 @@ int main(int argc, char* argv[])
         MPI_Sendrecv(matptr1, tilecount, MPI_DOUBLE, transrank, 0,
                      temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
 
-        /* Local transpose - should be replaced with Tim's code. */
+#if 0
         for (int ix=0; ix<tilex; ix++) {
             for (int iy=0; iy<tiley; iy++) {
                 matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
             }
         }
+#else
+        local_transpose(matptr1, temp, tilex, tiley);
+#endif
         MPI_Free_mem(temp);
     }
     else if (method==P2P_ISEND_IRECV_LOCAL) {
@@ -279,12 +299,15 @@ int main(int argc, char* argv[])
         MPI_Irecv(temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, &(reqs[1]));
         MPI_Waitall(2, reqs, MPI_STATUSES_IGNORE);
 
-        /* Local transpose - should be replaced with Tim's code. */
+#if 0
         for (int ix=0; ix<tilex; ix++) {
             for (int iy=0; iy<tiley; iy++) {
                 matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
             }
         }
+#else
+        local_transpose(matptr1, temp, tilex, tiley);
+#endif
         MPI_Free_mem(temp);
     }
     else if (method==P2P_SEND_RECV_2PHASE) {
@@ -292,9 +315,32 @@ int main(int argc, char* argv[])
         double * temp = NULL;
         MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
 
-        /* Network transpose */
+        /* phase 0 crankx==cranky is the diagonal and is self-comm:
+         *    --> transpose directly out of source buffer into target
+         * phase 1 upper-triangle rank is even:
+         *    --> transpose into a temporary then send it into target
+         * phase 2 upper-triangle rank is odd
+         *    --> receive into temporary and then transpose it into target
+         */
+
         int transrank = csizey * cranky + crankx;
         if (crankx==cranky /* self-comm */) {
+            /* Local transpose - should be replaced with Tim's code. */
+            for (int ix=0; ix<tilex; ix++) {
+                for (int iy=0; iy<tiley; iy++) {
+                    matptr2[ix*tilex+iy] = matptr1[iy*tiley+ix];
+                }
+            }
+        } else if (((crankx>cranky) && (crank%2==0)) || ((crankx<cranky) && (transrank%2==0))) {
+            /* Local transpose - should be replaced with Tim's code. */
+            for (int ix=0; ix<tilex; ix++) {
+                for (int iy=0; iy<tiley; iy++) {
+                    temp[ix*tilex+iy] = matptr1[iy*tiley+ix];
+                }
+            }
+            MPI_Sendrecv(temp, tilecount, MPI_DOUBLE, transrank, 0,
+                         matptr2, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
+        } else if (((crankx>cranky) && (crank%2==1)) || ((crankx<cranky) && (transrank%2==1))) {
             MPI_Sendrecv(matptr1, tilecount, MPI_DOUBLE, transrank, 0,
                          temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
             /* Local transpose - should be replaced with Tim's code. */
@@ -303,26 +349,8 @@ int main(int argc, char* argv[])
                     matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
                 }
             }
-        } else if (crankx<cranky) {
-            MPI_Send(matptr1, tilecount, MPI_DOUBLE, transrank, 0, comm2d);
-            MPI_Recv(temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
-            /* Local transpose - should be replaced with Tim's code. */
-            for (int ix=0; ix<tilex; ix++) {
-                for (int iy=0; iy<tiley; iy++) {
-                    matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
-                }
-            }
-        } else if (crankx>cranky) {
-            MPI_Recv(temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
-            MPI_Send(matptr1, tilecount, MPI_DOUBLE, transrank, 0, comm2d);
-            /* Local transpose - should be replaced with Tim's code. */
-            for (int ix=0; ix<tilex; ix++) {
-                for (int iy=0; iy<tiley; iy++) {
-                    matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
-                }
-            }
         } else {
-            printf("WTF\n");
+            printf("Something is wrong\n");
             MPI_Abort(comm2d,1);
         }
 
