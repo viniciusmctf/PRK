@@ -14,7 +14,7 @@ typedef enum {
     RMA_GET_FLUSH_LOCAL         = 2,
     P2P_SENDRECV_LOCAL          = 3,
     P2P_ISEND_IRECV_LOCAL       = 4,
-    P2P_SEND_RECV_2PHASE  = 5
+    P2P_SEND_RECV_2PHASE        = 5
 } transpose_method_e;
 
 static void local_transpose(double * restrict out,
