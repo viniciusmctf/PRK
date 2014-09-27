@@ -68,6 +68,8 @@ HISTORY: Written by Tim Mattson, April 1999.
 #include <par-res-kern_general.h>
 #include <par-res-kern_mpi.h>
 
+/* This must be included last so it sees the definition
+ * of RESTRICT from par-res-kern_general.h */
 #include "localtrans.h"
 
 /* Constant to shift column index */

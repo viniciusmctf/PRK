@@ -50,9 +50,16 @@ HISTORY: Written by Tim Mattson, April 1999.
 ** 
 *******************************************************************/
 
+#ifndef LOCAL_TRANSPOSE_H
+#define LOCAL_TRANSPOSE_H
+
+/* This header is included prior to this file in the parent.
+ * #include <par-res-kern_general.h>
+ */
+
 static void transpose(
-  const double * restrict A,    /* input matrix                   */
-  double * restrict B,          /* output matrix                  */
+  const double * RESTRICT A,    /* input matrix                   */
+  double * RESTRICT B,          /* output matrix                  */
   int tile_size,                /* local tile size                */
   int sub_rows, int sub_cols)   /* size of slice to  transpose    */
 {
@@ -80,3 +87,4 @@ static void transpose(
     }	
   }
 }
+#endif LOCAL_TRANSPOSE_H
