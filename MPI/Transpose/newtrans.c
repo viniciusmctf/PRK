@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
             matptr1[iy*tiley+ix] = (double)t2;
             if (matdim<100) {
                 /* debug printing for tiny tiles... */
-                printf("%d: cry=%d crx=%d iy=%d ix=%d ty=%d tx=%d t2=%d mat=%lf\n",
+                printf("%d: cry=%d crx=%d iy=%d ix=%d ty=%d tx=%d t2=%d mat1=%lf\n",
                         crank, cranky, crankx, iy, ix, ty, tx, t2, matptr1[iy*tiley+ix]);
             }
         }
@@ -294,23 +294,38 @@ int main(int argc, char* argv[])
 
         /* Network transpose */
         int transrank = csizey * cranky + crankx;
-        if (cranky<crankx) {
-            MPI_Send(matptr1, tilecount, MPI_DOUBLE, transrank, 0, comm2d);
-            MPI_Recv(temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
-        } else if (cranky>crankx) {
-            MPI_Recv(temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
-            MPI_Send(matptr1, tilecount, MPI_DOUBLE, transrank, 0, comm2d);
-        } else /* cranky==crankx */ {
+        if (crankx==cranky /* self-comm */) {
             MPI_Sendrecv(matptr1, tilecount, MPI_DOUBLE, transrank, 0,
                          temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
+            /* Local transpose - should be replaced with Tim's code. */
+            for (int ix=0; ix<tilex; ix++) {
+                for (int iy=0; iy<tiley; iy++) {
+                    matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
+                }
+            }
+        } else if (crankx<cranky) {
+            MPI_Send(matptr1, tilecount, MPI_DOUBLE, transrank, 0, comm2d);
+            MPI_Recv(temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
+            /* Local transpose - should be replaced with Tim's code. */
+            for (int ix=0; ix<tilex; ix++) {
+                for (int iy=0; iy<tiley; iy++) {
+                    matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
+                }
+            }
+        } else if (crankx>cranky) {
+            MPI_Recv(temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
+            MPI_Send(matptr1, tilecount, MPI_DOUBLE, transrank, 0, comm2d);
+            /* Local transpose - should be replaced with Tim's code. */
+            for (int ix=0; ix<tilex; ix++) {
+                for (int iy=0; iy<tiley; iy++) {
+                    matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
+                }
+            }
+        } else {
+            printf("WTF\n");
+            MPI_Abort(comm2d,1);
         }
 
-        /* Local transpose - should be replaced with Tim's code. */
-        for (int ix=0; ix<tilex; ix++) {
-            for (int iy=0; iy<tiley; iy++) {
-                matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
-            }
-        }
         MPI_Free_mem(temp);
     }
 
@@ -322,7 +337,7 @@ int main(int argc, char* argv[])
             int ty = cranky * tiley + iy;
             int t2 = ty * matdim + tx;
             if (matdim<100) {
-                printf("%d: cry=%d crx=%d iy=%d ix=%d ty=%d tx=%d t2=%d mat=%lf\n",
+                printf("%d: cry=%d crx=%d iy=%d ix=%d ty=%d tx=%d t2=%d mat2=%lf\n",
                         crank, cranky, crankx, iy, ix, ty, tx, t2, matptr2[iy*tiley+ix]);
             }
         }
