@@ -225,15 +225,7 @@ int main(int argc, char* argv[])
 
         double * temp = NULL;
         MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
-#if 0
-        for (int ix=0; ix<tilex; ix++) {
-            for (int iy=0; iy<tiley; iy++) {
-                temp[ix*tilex+iy] = matptr1[iy*tiley+ix];
-            }
-        }
-#else
         local_transpose(temp, matptr1, tilex, tiley);
-#endif
 
         /* Network transpose */
         int transrank = csizey * cranky + crankx;
@@ -258,15 +250,7 @@ int main(int argc, char* argv[])
         /* ensure data has arrived */
         MPI_Win_flush_local(transrank, matwin1);
 
-#if 0
-        for (int ix=0; ix<tilex; ix++) {
-            for (int iy=0; iy<tiley; iy++) {
-                matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
-            }
-        }
-#else
         local_transpose(matptr2, temp, tilex, tiley);
-#endif
         MPI_Free_mem(temp);
     }
     else if (method==P2P_SENDRECV_LOCAL) {
@@ -279,15 +263,7 @@ int main(int argc, char* argv[])
         MPI_Sendrecv(matptr1, tilecount, MPI_DOUBLE, transrank, 0,
                      temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
 
-#if 0
-        for (int ix=0; ix<tilex; ix++) {
-            for (int iy=0; iy<tiley; iy++) {
-                matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
-            }
-        }
-#else
         local_transpose(matptr2, temp, tilex, tiley);
-#endif
         MPI_Free_mem(temp);
     }
     else if (method==P2P_ISEND_IRECV_LOCAL) {
@@ -302,15 +278,7 @@ int main(int argc, char* argv[])
         MPI_Irecv(temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, &(reqs[1]));
         MPI_Waitall(2, reqs, MPI_STATUSES_IGNORE);
 
-#if 0
-        for (int ix=0; ix<tilex; ix++) {
-            for (int iy=0; iy<tiley; iy++) {
-                matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
-            }
-        }
-#else
         local_transpose(matptr2, temp, tilex, tiley);
-#endif
         MPI_Free_mem(temp);
     }
     else if (method==P2P_SEND_RECV_2PHASE) {
@@ -330,39 +298,15 @@ int main(int argc, char* argv[])
 
         int transrank = csizey * cranky + crankx;
         if (crankx==cranky /* self-comm */) {
-#if 0
-            for (int ix=0; ix<tilex; ix++) {
-                for (int iy=0; iy<tiley; iy++) {
-                    matptr2[ix*tilex+iy] = matptr1[iy*tiley+ix];
-                }
-            }
-#else
             local_transpose(matptr2, matptr1, tilex, tiley);
-#endif
         } else if (((crankx>cranky) && (crank%2==0)) || ((crankx<cranky) && (transrank%2==0))) {
-#if 0
-            for (int ix=0; ix<tilex; ix++) {
-                for (int iy=0; iy<tiley; iy++) {
-                    temp[ix*tilex+iy] = matptr1[iy*tiley+ix];
-                }
-            }
-#else
             local_transpose(temp, matptr1, tilex, tiley);
-#endif
             MPI_Sendrecv(temp, tilecount, MPI_DOUBLE, transrank, 0,
                          matptr2, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
         } else if (((crankx>cranky) && (crank%2==1)) || ((crankx<cranky) && (transrank%2==1))) {
             MPI_Sendrecv(matptr1, tilecount, MPI_DOUBLE, transrank, 0,
                          temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
-#if 0
-            for (int ix=0; ix<tilex; ix++) {
-                for (int iy=0; iy<tiley; iy++) {
-                    matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
-                }
-            }
-#else
             local_transpose(matptr2, temp, tilex, tiley);
-#endif
         } else {
             printf("Something is wrong\n");
             MPI_Abort(comm2d,1);
@@ -389,39 +333,15 @@ int main(int argc, char* argv[])
 
         int transrank = csizey * cranky + crankx;
         if (crankx==cranky /* self-comm */) {
-#if 0
-            for (int ix=0; ix<tilex; ix++) {
-                for (int iy=0; iy<tiley; iy++) {
-                    matptr2[ix*tilex+iy] = matptr1[iy*tiley+ix];
-                }
-            }
-#else
             local_transpose(matptr2, matptr1, tilex, tiley);
-#endif
         } else if (((crankx>cranky) && (crank%2==0)) || ((crankx<cranky) && (transrank%2==0))) {
-#if 0
-            for (int ix=0; ix<tilex; ix++) {
-                for (int iy=0; iy<tiley; iy++) {
-                    temp[ix*tilex+iy] = matptr1[iy*tiley+ix];
-                }
-            }
-#else
             local_transpose(temp, matptr1, tilex, tiley);
-#endif
             MPI_Sendrecv(temp, tilecount, MPI_DOUBLE, transrank, 0,
                          matptr2, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
         } else if (((crankx>cranky) && (crank%2==1)) || ((crankx<cranky) && (transrank%2==1))) {
             MPI_Sendrecv(matptr1, tilecount, MPI_DOUBLE, transrank, 0,
                          temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
-#if 0
-            for (int ix=0; ix<tilex; ix++) {
-                for (int iy=0; iy<tiley; iy++) {
-                    matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
-                }
-            }
-#else
             local_transpose(matptr2, temp, tilex, tiley);
-#endif
         } else {
             printf("Something is wrong\n");
             MPI_Abort(comm2d,1);
