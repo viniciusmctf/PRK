@@ -10,11 +10,13 @@
 #include <mpi.h>
 
 typedef enum {
+    METHOD_UNDEFINED            = 0,
     RMA_LOCAL_PUT_FLUSH_BARRIER = 1,
     RMA_GET_FLUSH_LOCAL         = 2,
     P2P_SENDRECV_LOCAL          = 3,
     P2P_ISEND_IRECV_LOCAL       = 4,
-    P2P_SEND_RECV_2PHASE        = 5
+    P2P_SEND_RECV_2PHASE        = 5,
+    P2P_PUT_GET_2PHASE          = 6
 } transpose_method_e;
 
 static void local_transpose(double * restrict out,
@@ -96,7 +98,7 @@ int main(int argc, char* argv[])
     /* Input parsing:
      * We round down to avoid having to manage edge-case bookkeeping. */
 
-    transpose_method_e method = (argc>1) ? atoi(argv[1]) : RMA_LOCAL_PUT_FLUSH_BARRIER;
+    transpose_method_e method = (argc>1) ? atoi(argv[1]) : METHOD_UNDEFINED;
     int matdim = (argc>2) ? atoi(argv[2]) : 2520; /* 9x8x7x5 is divisible by lots of things */
     int tilex  = matdim/csizex;
     int tiley  = matdim/csizey;
@@ -122,8 +124,12 @@ int main(int argc, char* argv[])
             case P2P_SEND_RECV_2PHASE:
               methodname = "P2P_SEND_RECV_2PHASE";
               break;
+            case P2P_PUT_GET_2PHASE:
+              methodname = "P2P_PUT_GET_2PHASE";
+              break;
             default:
-              methodname = "UNDEFINED";
+              printf("Invalid method selected!\n");
+              MPI_Abort(MPI_COMM_WORLD,1);
               break;
         }
         printf("method = %s\n", methodname);
@@ -310,7 +316,9 @@ int main(int argc, char* argv[])
     else if (method==P2P_SEND_RECV_2PHASE) {
 
         double * temp = NULL;
-        MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
+        if (crankx!=cranky) {
+            MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
+        }   
 
         /* phase 0 crankx==cranky is the diagonal and is self-comm:
          *    --> transpose directly out of source buffer into target
@@ -360,7 +368,68 @@ int main(int argc, char* argv[])
             MPI_Abort(comm2d,1);
         }
 
-        MPI_Free_mem(temp);
+        if (crankx!=cranky) {
+            MPI_Free_mem(temp);
+        }
+    }
+    else if (method==P2P_PUT_GET_2PHASE) {
+
+        double * temp = NULL;
+        if (crankx!=cranky) {
+            MPI_Alloc_mem(tilebytes, MPI_INFO_NULL, &temp);
+        }
+
+        /* phase 0 crankx==cranky is the diagonal and is self-comm:
+         *    --> transpose directly out of source buffer into target
+         * phase 1 upper-triangle rank is even:
+         *    --> transpose into a temporary then send it into target
+         * phase 2 upper-triangle rank is odd
+         *    --> receive into temporary and then transpose it into target
+         */
+
+        int transrank = csizey * cranky + crankx;
+        if (crankx==cranky /* self-comm */) {
+#if 0
+            for (int ix=0; ix<tilex; ix++) {
+                for (int iy=0; iy<tiley; iy++) {
+                    matptr2[ix*tilex+iy] = matptr1[iy*tiley+ix];
+                }
+            }
+#else
+            local_transpose(matptr2, matptr1, tilex, tiley);
+#endif
+        } else if (((crankx>cranky) && (crank%2==0)) || ((crankx<cranky) && (transrank%2==0))) {
+#if 0
+            for (int ix=0; ix<tilex; ix++) {
+                for (int iy=0; iy<tiley; iy++) {
+                    temp[ix*tilex+iy] = matptr1[iy*tiley+ix];
+                }
+            }
+#else
+            local_transpose(temp, matptr1, tilex, tiley);
+#endif
+            MPI_Sendrecv(temp, tilecount, MPI_DOUBLE, transrank, 0,
+                         matptr2, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
+        } else if (((crankx>cranky) && (crank%2==1)) || ((crankx<cranky) && (transrank%2==1))) {
+            MPI_Sendrecv(matptr1, tilecount, MPI_DOUBLE, transrank, 0,
+                         temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
+#if 0
+            for (int ix=0; ix<tilex; ix++) {
+                for (int iy=0; iy<tiley; iy++) {
+                    matptr2[ix*tilex+iy] = temp[iy*tiley+ix];
+                }
+            }
+#else
+            local_transpose(matptr2, temp, tilex, tiley);
+#endif
+        } else {
+            printf("Something is wrong\n");
+            MPI_Abort(comm2d,1);
+        }
+
+        if (crankx!=cranky) {
+            MPI_Free_mem(temp);
+        }
     }
 
     /*************************************************/
