@@ -300,10 +300,12 @@ int main(int argc, char* argv[])
         if (crankx==cranky /* self-comm */) {
             local_transpose(matptr2, matptr1, tilex, tiley);
         } else if (((crankx>cranky) && (crank%2==0)) || ((crankx<cranky) && (transrank%2==0))) {
+            printf("%d=(%d,%d): local->Sendrecv(%d)\n", crank, crankx, cranky, transrank);
             local_transpose(temp, matptr1, tilex, tiley);
             MPI_Sendrecv(temp, tilecount, MPI_DOUBLE, transrank, 0,
                          matptr2, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
         } else if (((crankx>cranky) && (crank%2==1)) || ((crankx<cranky) && (transrank%2==1))) {
+            printf("%d=(%d,%d): Sendrecv(%d)->local\n", crank, crankx, cranky, transrank);
             MPI_Sendrecv(matptr1, tilecount, MPI_DOUBLE, transrank, 0,
                          temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
             local_transpose(matptr2, temp, tilex, tiley);
@@ -335,12 +337,14 @@ int main(int argc, char* argv[])
         if (crankx==cranky /* self-comm */) {
             local_transpose(matptr2, matptr1, tilex, tiley);
         } else if (((crankx>cranky) && (crank%2==0)) || ((crankx<cranky) && (transrank%2==0))) {
+            printf("%d=(%d,%d): Put(%d)\n", crank, crankx, cranky, transrank);
             local_transpose(temp, matptr1, tilex, tiley);
-            MPI_Sendrecv(temp, tilecount, MPI_DOUBLE, transrank, 0,
-                         matptr2, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
+            MPI_Put(temp, tilecount, MPI_DOUBLE, transrank, 0 /* disp */, tilecount, MPI_DOUBLE, matwin2);
+            MPI_Win_flush(transrank, matwin2); /* ensure remote completion but lacks notification */
         } else if (((crankx>cranky) && (crank%2==1)) || ((crankx<cranky) && (transrank%2==1))) {
-            MPI_Sendrecv(matptr1, tilecount, MPI_DOUBLE, transrank, 0,
-                         temp, tilecount, MPI_DOUBLE, transrank, 0, comm2d, MPI_STATUS_IGNORE);
+            printf("%d=(%d,%d): Get(%d)\n", crank, crankx, cranky, transrank);
+            MPI_Get(temp, tilecount, MPI_DOUBLE, transrank, 0 /* disp */, tilecount, MPI_DOUBLE, matwin1);
+            MPI_Win_flush_local(transrank, matwin1); /* ensure data has arrived */
             local_transpose(matptr2, temp, tilex, tiley);
         } else {
             printf("Something is wrong\n");
