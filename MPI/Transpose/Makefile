@@ -26,10 +26,10 @@ INCLUDEPATHS =
 ### End User configurable options ###
 
 TUNEFLAGS   = $(BLOCKFLAG) $(DEBUGFLAG) $(USERFLAGS) 
-#PROGRAM     = transpose
-PROGRAM     = newtrans
+PROGRAM     = transpose
+#PROGRAM     = newtrans
 OBJS        = $(PROGRAM).o $(COMOBJS)
 
-all: newtrans
+all: $(PROGRAM)
 include ../../common/make.common
 
