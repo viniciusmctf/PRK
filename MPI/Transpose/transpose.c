@@ -78,7 +78,8 @@ HISTORY: Written by Tim Mattson, April 1999.
 #define  ROW_SHIFT  0.001  
 
 void trans_comm(double *buff,  double *trans, int Block_order,
-                int tile_size, double *work,  int my_ID, int Num_procs);
+                int tile_size, double *work,  int my_ID, int Num_procs,
+                MPI_Win allwin);
 void transpose(double *A, double *B, int tile_size, int sub_rows, int sub_cols);
 
 
@@ -210,7 +211,13 @@ int main(int argc, char ** argv)
 ** Create the column block of the test matrix, the row block of the 
 ** transposed matrix, and workspace (workspace only if #procs>1)
 *********************************************************************/
+#if 0
   buff   = (double *)malloc(2*Col_block_size*sizeof(double));
+#else
+  MPI_Win allwin; /* TODO */
+  MPI_Win_allocate(2*Col_block_size*sizeof(double), 1, MPI_INFO_NULL, 
+                   MPI_COMM_WORLD, &buff, &allwin);
+#endif
   if (buff == NULL){
     printf(" Error allocating space for buff on node %d\n",my_ID);
     error = 1;
@@ -244,7 +251,8 @@ int main(int argc, char ** argv)
     trans_time = wtime();
 
     trans_comm(buff, trans, Block_order, tile_size,
-               work, my_ID, Num_procs);
+               work, my_ID, Num_procs, 
+               allwin);
 
     trans_time = wtime() - trans_time;
 
@@ -288,6 +296,8 @@ int main(int argc, char ** argv)
     }
   }
 
+  MPI_Win_free(&allwin);
+
   bail_out(error);
 
   MPI_Finalize();
@@ -311,7 +321,8 @@ PURPOSE: This function uses MPI SND's and RCV's to transpose
 #define FROM(ID, PHASE, NPROC)  ((ID + NPROC - PHASE) % NPROC)
 
 void trans_comm(double *buff,  double *trans, int Block_order,
-                int tile_size, double *work,  int my_ID, int Num_procs)
+                int tile_size, double *work,  int my_ID, int Num_procs,
+                MPI_Win allwin);
 {
   int iphase;
   int block_size;
