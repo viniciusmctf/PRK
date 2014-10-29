@@ -77,16 +77,12 @@ HISTORY: Written by Tim Mattson, April 1999.
 /* Constant to shift row index */
 #define  ROW_SHIFT  0.001  
 
-#ifdef NORMA
-/* will not be used */
-#define MPI_Win int
-#endif
-
 void trans_comm(double *buff,  double *trans, int Block_order,
                 int tile_size, double *work,  int my_ID, int Num_procs,
                 MPI_Win allwin);
-void transpose(double *A, double *B, int tile_size, int sub_rows, int sub_cols);
+//void transpose(double *A, double *B, int tile_size, int sub_rows, int sub_cols);
 
+#define USE_RMA
 
 int main(int argc, char ** argv)
 {
@@ -216,13 +212,10 @@ int main(int argc, char ** argv)
 ** Create the column block of the test matrix, the row block of the 
 ** transposed matrix, and workspace (workspace only if #procs>1)
 *********************************************************************/
-#ifndef NORMA
-  MPI_Win allwin; /* TODO */
+  MPI_Win allwin;
   MPI_Win_allocate(2*Col_block_size*sizeof(double), 1, MPI_INFO_NULL, 
                    MPI_COMM_WORLD, &buff, &allwin);
-#else
-  buff   = (double *)malloc(2*Col_block_size*sizeof(double));
-#endif
+  //buff   = (double *)malloc(2*Col_block_size*sizeof(double));
   if (buff == NULL){
     printf(" Error allocating space for buff on node %d\n",my_ID);
     error = 1;
@@ -256,8 +249,7 @@ int main(int argc, char ** argv)
     trans_time = wtime();
 
     trans_comm(buff, trans, Block_order, tile_size,
-               work, my_ID, Num_procs, 
-               allwin);
+               work, my_ID, Num_procs, allwin);
 
     trans_time = wtime() - trans_time;
 
@@ -301,9 +293,7 @@ int main(int argc, char ** argv)
     }
   }
 
-#ifndef NORMA
   MPI_Win_free(&allwin);
-#endif
 
   bail_out(error);
 
@@ -321,7 +311,7 @@ PURPOSE: This function uses MPI SND's and RCV's to transpose
          of a column-bock distributed matrix in either synchronous
          or asynchronous mode
   
-/*******************************************************************
+*******************************************************************
 ** Define macros to compute processor source and destinations
 *******************************************************************/
 #define TO(ID,   PHASE, NPROC)  ((ID + PHASE        ) % NPROC)
@@ -329,7 +319,7 @@ PURPOSE: This function uses MPI SND's and RCV's to transpose
 
 void trans_comm(double *buff,  double *trans, int Block_order,
                 int tile_size, double *work,  int my_ID, int Num_procs,
-                MPI_Win allwin);
+                MPI_Win allwin)
 {
   int iphase;
   int block_size;
@@ -337,7 +327,7 @@ void trans_comm(double *buff,  double *trans, int Block_order,
   double *bblock;    /* pointer to current location in buff */
   double *tblock;    /* pointer to current location in trans */
   MPI_Status status;
-#ifndef SYNCHRONOUS
+#if !defined(SYNCHRONOUS) && !defined(USE_RMA)
   MPI_Request send_req, recv_req;
 #endif
  
@@ -363,9 +353,12 @@ void trans_comm(double *buff,  double *trans, int Block_order,
     send_to = TO(my_ID, iphase, Num_procs);
     bblock  = buff + send_to * block_size;
 
-#ifndef SYNCHRONOUS
+#ifndef USE_RMA
+# ifndef SYNCHRONOUS
+#warning IRECV
     MPI_Irecv (tblock, block_size, MPI_DOUBLE, recv_from,
               iphase, MPI_COMM_WORLD, &recv_req);  
+# endif
 #endif
 
     transpose(bblock, work, tile_size, Block_order, Block_order);
@@ -375,15 +368,29 @@ void trans_comm(double *buff,  double *trans, int Block_order,
                iphase,my_ID);
 #endif
 
-#ifndef SYNCHRONOUS  
+#ifdef USE_RMA
+    /* TODO */
+    MPI_Win_lock(MPI_LOCK_EXCLUSIVE, send_to, 0, allwin);
+    MPI_Put(work, block_size, MPI_DOUBLE, send_to, 
+            (intptr_t)tblock-(intptr_t)buff, block_size, MPI_DOUBLE, allwin);
+    MPI_Win_unlock(send_to, allwin);
+    /* Synchronize processes to ensure data has arrived */
+    MPI_Sendrecv(NULL, 0, MPI_BYTE, send_to, iphase,
+                 NULL, 0, MPI_BYTE, recv_from, iphase, 
+                 MPI_COMM_WORLD, &status);
+#else
+# ifndef SYNCHRONOUS  
+#warning ISEND
     MPI_Isend(work, block_size, MPI_DOUBLE, send_to,
               iphase, MPI_COMM_WORLD, &send_req);
     MPI_Wait(&recv_req,  &status);
     MPI_Wait(&send_req, &status);
-#else
+# else
+#warning SENDRECV
     MPI_Sendrecv(work,   block_size, MPI_DOUBLE, send_to,   iphase,
 		 tblock, block_size, MPI_DOUBLE, recv_from, iphase, 
 		 MPI_COMM_WORLD, &status);
+# endif
 #endif
 
 #ifdef VERBOSE
