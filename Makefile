@@ -39,7 +39,7 @@ ifndef matrix_rank
 endif
 
 ifndef default_opt_flags
-  default_opt_flags=-O3
+  default_opt_flags=-O3 -std=c99
 endif
 
 default:

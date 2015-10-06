@@ -68,7 +68,12 @@ HISTORY: - Written by Rob Van der Wijngaart, March 2006.
 #include <par-res-kern_mpiomp.h>
  
 /* THIS IS BROKEN */
-// #define PRK_SERIALIZE_MPI
+#define PRK_SERIALIZE_MPI
+#if defined(PRK_SERIALIZE_MPI) && (( __STDC_VERSION__ >= 199901L ) || (__cplusplus >= 201103L ))
+#define OMP_CRITICAL _Pragma("omp critical")
+#else
+#define OMP_CRITICAL
+#endif
 
 /* define shorthand for flag with cache line padding                             */ 
 #define LINEWORDS  16 
@@ -316,9 +321,7 @@ int main(int argc, char ** argv)
          send data                                                                */
       if (TID==0){
         if (my_ID > 0) {
-#ifdef PRK_SERIALIZE_MPI
-#pragma omp critical
-#endif
+          OMP_CRITICAL
           {
             MPI_Recv(&(ARRAY(start-1,j)), 1, MPI_DOUBLE, my_ID-1, j, 
                      MPI_COMM_WORLD, &status);
@@ -351,9 +354,7 @@ int main(int argc, char ** argv)
       }
       else { /* if not on the right boundary, send data to my right neighbor      */  
         if (my_ID < Num_procs-1) {
-#ifdef PRK_SERIALIZE_MPI
-#pragma omp critical
-#endif
+          OMP_CRITICAL
           {
             MPI_Send(&(ARRAY(end,j)), 1, MPI_DOUBLE, my_ID+1, j, MPI_COMM_WORLD);
           }
@@ -365,17 +366,13 @@ int main(int argc, char ** argv)
     if (Num_procs>1) {
       if (TID==nthread-1 && my_ID==root) {
         corner_val = -ARRAY(end,n-1);
-#ifdef PRK_SERIALIZE_MPI
-#pragma omp critical
-#endif
+        OMP_CRITICAL
         {
           MPI_Send(&corner_val,1,MPI_DOUBLE,0,888,MPI_COMM_WORLD);
         }
       }
       if (TID==0  && my_ID==0) {
-#ifdef PRK_SERIALIZE_MPI
-#pragma omp critical
-#endif
+        OMP_CRITICAL
         {
           MPI_Recv(&(ARRAY(0,0)),1,MPI_DOUBLE,root,888,MPI_COMM_WORLD,&status);
         }
