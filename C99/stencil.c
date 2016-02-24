@@ -59,8 +59,7 @@ HISTORY: - Written by Rob Van der Wijngaart, February 2009.
   
 **********************************************************************************/
 
-#include <prk_util.h>
-#include <prk_openmp.h>
+#include "prk_util.h"
 
 #include <tgmath.h>
 

@@ -61,8 +61,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MAX(x,y) ((x)>(y)?(x):(y))
 #endif
 
-#ifdef _OPENMP
-#include <prk_openmp.h>
-#endif
-#include <prk_wtime.h>
-#include <prk_malloc.h>
+#include "prk_openmp.h"
+#include "prk_wtime.h"
+#include "prk_malloc.h"

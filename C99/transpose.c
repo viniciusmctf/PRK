@@ -60,9 +60,16 @@ HISTORY: Written by  Rob Van der Wijngaart, February 2009.
          Modernized by Jeff Hammond, February 2016.
 *******************************************************************/
 
-#include <prk_util.h>
+#include "prk_util.h"
+#include "prk_openmp.h"
 
 #include <math.h>
+
+#ifdef PRK_LOOP_INDEX_TYPE
+typedef PRK_LOOP_INDEX_TYPE prk_index_t;
+#else
+typedef int prk_index_t;
+#endif
 
 int main(int argc, char * argv[])
 {
@@ -71,7 +78,11 @@ int main(int argc, char * argv[])
   *********************************************************************/
 
   printf("Parallel Research Kernels version %s\n", PRKVERSION);
+#ifdef _OPENMP
+  printf("OpenMP Matrix transpose: B = A^T\n");
+#else
   printf("Serial Matrix transpose: B = A^T\n");
+#endif
 
   if (argc != 4 && argc != 3) {
     printf("Usage: %s <# iterations> <matrix order> [tile size]\n", argv[0]);
@@ -84,13 +95,13 @@ int main(int argc, char * argv[])
     exit(EXIT_FAILURE);
   }
 
-  int order = atoi(argv[2]); /* order of a the matrix */
+  prk_index_t order = atoi(argv[2]); /* order of a the matrix */
   if (order <= 0) {
-    printf("ERROR: Matrix Order must be greater than 0 : %d \n", order);
+    printf("ERROR: Matrix Order must be greater than 0 : %llu \n", (long long unsigned)order);
     exit(EXIT_FAILURE);
   }
 
-  int tile_size = 32; /* default tile size for tiling of local transpose */
+  prk_index_t tile_size = 32; /* default tile size for tiling of local transpose */
   if (argc == 4) {
       tile_size = atoi(argv[3]);
   }
@@ -105,65 +116,79 @@ int main(int argc, char * argv[])
 
   size_t bytes = (size_t)order * (size_t)order * sizeof(double);
 
-  double * const restrict A = (double *)prk_malloc(bytes);
-  if (A == NULL){
+  double (* const restrict A)[order] = (double (*)[order]) prk_malloc(bytes);
+  if (A == NULL) {
     printf(" Error allocating space for transposed matrix\n");
     exit(EXIT_FAILURE);
   }
-  double * const restrict B = (double *)prk_malloc(bytes);
-  if (B == NULL){
+  double (* const restrict B)[order] = (double (*)[order]) prk_malloc(bytes);
+  if (B == NULL) {
     printf(" Error allocating space for input matrix\n");
     exit(EXIT_FAILURE);
   }
 
-  printf("Matrix order          = %d\n", order);
+#ifdef _OPENMP
+  printf("Number of threads     = %d\n", omp_get_max_threads());
+#endif
+  printf("Matrix order          = %llu\n", (long long unsigned)order);
   if (tile_size < order) {
-      printf("Tile size             = %d\n", tile_size);
+      printf("Tile size             = %llu\n", (long long unsigned)tile_size);
   } else {
       printf("Untiled\n");
   }
   printf("Number of iterations  = %d\n", iterations);
 
-  for (int j=0; j<order; j++) {
-    for (int i=0; i<order; i++) {
-      const size_t offset_ji = (size_t)j*(size_t)order+(size_t)i;
-      A[offset_ji] = (double)offset_ji;
-      B[offset_ji] = 0.0;
-    }
-  }
-
   double trans_time = 0.0;
 
-  for (int iter = 0; iter<=iterations; iter++) {
-    /* start timer after a warmup iteration */
-    if (iter==1) trans_time = wtime();
+  OMP_PARALLEL()
+  {
+      OMP_FOR()
+      for (prk_index_t j=0; j<order; j++) {
+        OMP_SIMD()
+        for (prk_index_t i=0; i<order; i++) {
+          const double val = (double) ((size_t)order*(size_t)j+(size_t)i);
+          A[j][i] = val;
+          B[j][i] = 0.0;
+        }
+      }
 
-    /* transpose the  matrix */
-    if (tile_size < order) {
-      for (int it=0; it<order; it+=tile_size) {
-        for (int jt=0; jt<order; jt+=tile_size) {
-          for (int i=it; i<MIN(order,it+tile_size); i++) {
-            for (int j=jt; j<MIN(order,jt+tile_size); j++) {
-              const size_t offset_ij = (size_t)i*(size_t)order+(size_t)j;
-              const size_t offset_ji = (size_t)j*(size_t)order+(size_t)i;
-              B[offset_ij] += A[offset_ji];
-              A[offset_ji] += 1.0;
+      for (int iter = 0; iter<=iterations; iter++) {
+        /* start timer after a warmup iteration */
+        if (iter==1) {
+          OMP_BARRIER
+          OMP_MASTER
+          { trans_time = wtime(); }
+        }
+        /* transpose the  matrix */
+        if (tile_size < order) {
+          OMP_FOR()
+          for (prk_index_t it=0; it<order; it+=tile_size) {
+            for (prk_index_t jt=0; jt<order; jt+=tile_size) {
+              for (prk_index_t i=it; i<MIN(order,it+tile_size); i++) {
+                OMP_SIMD()
+                for (prk_index_t j=jt; j<MIN(order,jt+tile_size); j++) {
+                  B[i][j] += A[j][i];
+                  A[j][i] += 1.0;
+                }
+              }
+            }
+          }
+        } else {
+          OMP_FOR()
+          for (prk_index_t i=0;i<order; i++) {
+            OMP_SIMD()
+            for (prk_index_t j=0;j<order;j++) {
+              B[i][j] += A[j][i];
+              A[j][i] += 1.0;
             }
           }
         }
       }
-    } else {
-      for (int i=0;i<order; i++) {
-        for (int j=0;j<order;j++) {
-          const size_t offset_ij = (size_t)i*(size_t)order+(size_t)j;
-          const size_t offset_ji = (size_t)j*(size_t)order+(size_t)i;
-          B[offset_ij] += A[offset_ji];
-          A[offset_ji] += 1.0;
-        }
-      }
-    }
-  }
-  trans_time = wtime() - trans_time;
+      OMP_BARRIER
+      OMP_MASTER
+      { trans_time = wtime() - trans_time; }
+
+  } /* end OMP_PARALLEL */
 
   /*********************************************************************
   ** Analyze and output results.
@@ -171,13 +196,16 @@ int main(int argc, char * argv[])
 
   double abserr = 0.0;
   const double addit = ((double)(iterations+1) * (double) (iterations))/2.0;
-  for (int j=0;j<order;j++) {
-    for (int i=0;i<order; i++) {
-      const size_t offset_ij = (size_t)i*(size_t)order+(size_t)j;
-      const size_t offset_ji = (size_t)j*(size_t)order+(size_t)i;
-      abserr += fabs(B[offset_ji] - ((double)offset_ij*(iterations+1.)+addit));
-    }
-  }
+  OMP_PARALLEL(shared(abserr))
+  {
+      OMP_FOR(reduction(+:abserr))
+      for (prk_index_t j=0;j<order;j++) {
+        for (prk_index_t i=0;i<order; i++) {
+          const size_t offset_ij = (size_t)i*(size_t)order+(size_t)j;
+          abserr += fabs(B[j][i] - ((double)offset_ij*(iterations+1.)+addit));
+        }
+      }
+  } /* end OMP_PARALLEL */
 
   prk_free(B);
   prk_free(A);
