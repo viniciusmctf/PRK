@@ -143,7 +143,6 @@ clean:
 	make -C C89 clean
 	make -C C99 clean
 	make -C FORTRAN clean
-	make -C C99 clean
 	cd CHARM++/Stencil;         $(MAKE) clean
 	cd CHARM++/Synch_p2p;       $(MAKE) clean
 	cd CHARM++/Transpose;       $(MAKE) clean
@@ -156,4 +155,4 @@ veryclean: clean
 	make -C C89 veryclean
 	cd scripts/small;           $(MAKE) -f  Makefile_FG_MPI veryclean
 	cd scripts/wide;            $(MAKE) -f  Makefile_FG_MPI veryclean
-	rm -f common/make.defs
+	#rm -f common/make.defs
