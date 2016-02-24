@@ -57,7 +57,7 @@ FUNCTIONS CALLED:
 HISTORY: - Written by Rob Van der Wijngaart, February 2009.
 *******************************************************************/
 
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 
 /* define shorthand for indexing a multi-dimensional array                       */
 #define ARRAY(i,j) vector[i+(j)*(m)]
@@ -142,7 +142,7 @@ int main(int argc, char ** argv) {
 
   /* verify correctness, using top right value;                                  */
   corner_val = (double)((iterations+1)*(n+m-2));
-  if (ABS(ARRAY(m-1,n-1)-corner_val)/corner_val > epsilon) {
+  if (fabs(ARRAY(m-1,n-1)-corner_val)/corner_val > epsilon) {
     printf("ERROR: checksum %lf does not match verification value %lf\n",
            ARRAY(m-1,n-1), corner_val);
     exit(EXIT_FAILURE);

@@ -58,7 +58,7 @@ HISTORY: Written by Rob Van der Wijngaart, February 2009.
   
 ***********************************************************************************/
 
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 
 #ifdef MKL
   #include <mkl_cblas.h>
@@ -239,7 +239,7 @@ int main(int argc, char **argv)
   ref_checksum = (0.25*forder*forder*forder*(forder-1.0)*(forder-1.0));
   ref_checksum *= iterations;
 
-  if (ABS((checksum - ref_checksum)/ref_checksum) > epsilon) {
+  if (fabs((checksum - ref_checksum)/ref_checksum) > epsilon) {
     printf("ERROR: Checksum = %lf, Reference checksum = %lf\n",
            checksum, ref_checksum);
     exit(EXIT_FAILURE);

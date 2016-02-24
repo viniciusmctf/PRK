@@ -59,7 +59,7 @@ HISTORY: - Written by Rob Van der Wijngaart, February 2009.
   
 **********************************************************************************/
 
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 
 #ifdef DOUBLE
   #define DTYPE   double
@@ -280,7 +280,7 @@ int main(int argc, char ** argv) {
 
   /* compute L1 norm in parallel                                                */
   for (j=RADIUS; j<n-RADIUS; j++) for (i=RADIUS; i<n-RADIUS; i++) {
-    norm += (DTYPE)ABS(OUT(i,j));
+    norm += (DTYPE)fabs(OUT(i,j));
   }
 
   norm /= f_active_points;
@@ -291,7 +291,7 @@ int main(int argc, char ** argv) {
 
 /* verify correctness                                                            */
   reference_norm = (DTYPE) (iterations+1) * (COEFX + COEFY);
-  if (ABS(norm-reference_norm) > EPSILON) {
+  if (fabs(norm-reference_norm) > EPSILON) {
     printf("ERROR: L1 norm = "FSTR", Reference L1 norm = "FSTR"\n",
            norm, reference_norm);
     exit(EXIT_FAILURE);

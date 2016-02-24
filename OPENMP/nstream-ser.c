@@ -112,7 +112,7 @@ HISTORY:   This code is loosely based on the Stream benchmark by John
            external publications
 **********************************************************************/
  
-#include <par-res-kern_general.h>
+#include "prk_util.h"
  
 #define DEFAULTMAXLENGTH 2000000
 #ifdef MAXLENGTH
@@ -275,7 +275,7 @@ int checkTRIADresults (int iterations, long int length) {
   printf ("        Observed checksum: %f\n",asum);
 #endif
  
-  if (ABS(aj-asum)/asum > epsilon) {
+  if (fabs(aj-asum)/asum > epsilon) {
     printf ("Failed Validation on output array\n");
 #ifndef VERBOSE
     printf ("        Expected checksum: %f \n",aj);

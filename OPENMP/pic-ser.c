@@ -60,7 +60,7 @@ HISTORY: - Written by Evangelos Georganas, August 2015.
   
 **********************************************************************************/
 
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 #include <random_draw.h>
 
 #include <math.h>

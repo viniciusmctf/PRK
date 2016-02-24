@@ -59,7 +59,7 @@ FUNCTIONS CALLED:
 HISTORY: Written by  Rob Van der Wijngaart, February 2009.
 *******************************************************************/
 
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 
 #define A(i,j)        A_p[(i)+order*(j)]
 #define B(i,j)        B_p[(i)+order*(j)]
@@ -77,6 +77,7 @@ int main(int argc, char ** argv) {
   double * RESTRICT A_p;/* buffer to hold original matrix                  */
   double * RESTRICT B_p;/* buffer to hold transposed matrix                */
   double abserr;        /* squared error                                   */
+  double addit;
   double epsilon=1.e-8; /* error tolerance                                 */
   double trans_time,    /* timing parameters                               */
          avgtime; 
@@ -179,9 +180,9 @@ int main(int argc, char ** argv) {
   trans_time = wtime() - trans_time;
 
   abserr = 0.0;
-  double addit = ((double)(iterations+1) * (double) (iterations))/2.0;
+  addit = ((double)(iterations+1) * (double) (iterations))/2.0;
   for (j=0;j<order;j++) for (i=0;i<order; i++) {
-      abserr += ABS(B(i,j) - ((double)(order*i + j)*(iterations+1)+addit));
+      abserr += fabs(B(i,j) - ((double)(order*i + j)*(iterations+1)+addit));
   }
 
 #ifdef VERBOSE

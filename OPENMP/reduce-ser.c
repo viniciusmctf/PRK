@@ -56,7 +56,7 @@ HISTORY: Written by Rob Van der Wijngaart, February 2009.
   
 *******************************************************************/
 
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 
 int main(int argc, char ** argv)
 {
@@ -134,7 +134,7 @@ int main(int argc, char ** argv)
   element_value = (double)(iterations + 2.0);
 
   for (i=0; i<vector_length; i++) {
-    if (ABS(vector[i] - element_value) >= epsilon) {
+    if (fabs(vector[i] - element_value) >= epsilon) {
        printf("First error at i=%d; value: %lf; reference value: %lf\n",
               i, vector[i], element_value);
        exit(EXIT_FAILURE);
