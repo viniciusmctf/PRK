@@ -1,6 +1,6 @@
 PROGRAM=transpose
 
-include ../../common/Cxx11.defs
+include ../../common/make.defs
 include ../../common/PRKVERSION
 
 CXXFLAGS  = $(DEFAULT_OPT_FLAGS)
