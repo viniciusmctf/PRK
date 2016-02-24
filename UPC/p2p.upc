@@ -50,8 +50,8 @@ USAGE:   The program takes as input the dimensions of the grid, and the
 HISTORY: Written by Abdullah Kayi, September 2015
 
 *******************************************************************/
-#include <par-res-kern_general.h>
-#include <par-res-kern_upc.h>
+#include "prk_util.h"
+#include "prk_upc_util.h"
 
 shared double times[THREADS];
 

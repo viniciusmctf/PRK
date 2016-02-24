@@ -53,8 +53,8 @@ USAGE:   The program takes as input the linear dimension of the grid,
 HISTORY: Written by Abdullah Kayi, June 2015
 
 *******************************************************************/
-#include <par-res-kern_general.h>
-#include <par-res-kern_upc.h>
+#include "prk_util.h"
+#include "prk_upc_util.h"
 
 #include <math.h>
 
@@ -463,7 +463,7 @@ int main(int argc, char ** argv) {
   /* compute L1 norm in parallel */
   for (int y=starty; y<endy; y++) {
     for (int x=startx; x<endx; x++) {
-      norm += (double)ABS(out_array[y][x]);
+      norm += (double)fabs(out_array[y][x]);
     }
   }
 
@@ -483,7 +483,7 @@ int main(int argc, char ** argv) {
     /* verify correctness */
     reference_norm = (double) (iterations+1) * (COEFX + COEFY);
 
-    if (ABS(norm - reference_norm) > EPSILON)
+    if (fabs(norm - reference_norm) > EPSILON)
       bail_out("L1 norm = "FSTR", Reference L1 norm = "FSTR"\n", norm, reference_norm);
     else {
       printf("Solution validates\n");

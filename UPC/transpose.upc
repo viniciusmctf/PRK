@@ -53,8 +53,10 @@ HISTORY: Written by Abdullah Kayi, June 2015
 
 *******************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_upc.h>
+#include "prk_util.h"
+#include "prk_upc_util.h"
+
+#include <math.h>
 
 int is_debugging = 0;
 void debug(char *fmt, ...){
@@ -310,7 +312,7 @@ int main(int argc, char ** argv) {
   double addit = ((double)(iterations+1) * (double) (iterations))/2.0;
   for(long y=myoffsety; y<myoffsety + sizey; y++){
     for(long x=myoffsetx; x<myoffsetx + sizex; x++){
-      abserr += ABS(out_array_private[y][x] - (double)((y + N*x)*(iterations+1)+addit));
+      abserr += fabs(out_array_private[y][x] - (double)((y + N*x)*(iterations+1)+addit));
     }
   }
 
