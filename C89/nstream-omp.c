@@ -86,7 +86,7 @@ FUNCTIONS CALLED:
            external functions are used in this program:
  
            wtime()
-           bail_out()
+           omp_bail_out()
            checkTRIADresults()
  
 NOTES:     Bandwidth is determined as the number of words read, plus the 
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
     printf("Number of iterations = %d\n", iterations);
   }
   }
-  bail_out(num_error); 
+  omp_bail_out(num_error); 
 
   /* FIXME Use OpenMP 4 via _Pragma */
   #pragma omp for

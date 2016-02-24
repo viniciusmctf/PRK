@@ -53,7 +53,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         mpi_bail_out()
          reverse()
          qsort()
          compare
@@ -220,7 +220,7 @@ int main(int argc, char **argv){
 
     ENDOFTESTS:;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   /* Broadcast benchmark data to all ranks */
   MPI_Bcast(&lsize,      1, MPI_INT,           root, MPI_COMM_WORLD);
@@ -244,7 +244,7 @@ int main(int argc, char **argv){
            my_ID, matrix_space);
     error = 1;
   } 
-  bail_out(error);
+  mpi_bail_out(error);
 
   matrix = (double *) prk_malloc(matrix_space);
   if (!matrix) {
@@ -252,7 +252,7 @@ int main(int argc, char **argv){
            my_ID, matrix_space);
     error = 1;
   } 
-  bail_out(error);
+  mpi_bail_out(error);
 
   vector_space = (size2 + nrows)*sizeof(double);
   if (vector_space/sizeof(double) != (size2+nrows)) {
@@ -260,7 +260,7 @@ int main(int argc, char **argv){
            my_ID, vector_space);
     error = 1; 
   } 
-  bail_out(error);
+  mpi_bail_out(error);
 
   vector = (double *) prk_malloc(vector_space);
   if (!vector) {
@@ -268,7 +268,7 @@ int main(int argc, char **argv){
            my_ID, (int)(2*nrows));
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
   result = vector + size2;
 
   index_space = nent*sizeof(s64Int);
@@ -277,7 +277,7 @@ int main(int argc, char **argv){
            my_ID, index_space);
     error = 1;
   } 
-  bail_out(error);
+  mpi_bail_out(error);
 
   colIndex = (s64Int *) prk_malloc(index_space);
   if (!colIndex) {
@@ -285,7 +285,7 @@ int main(int argc, char **argv){
            my_ID, nent*sizeof(s64Int));
     error = 1;
   } 
-  bail_out(error);
+  mpi_bail_out(error);
 
   /* fill matrix with nonzeroes corresponding to difference stencil. We use the 
      scrambling for reordering the points in the grid.                            */
@@ -408,7 +408,7 @@ int main(int argc, char **argv){
            1.0E-06 * (2.0*nent*Num_procs)/avgtime, avgtime);
   }
 
-  bail_out(error);
+  mpi_bail_out(error);
 
   MPI_Finalize();
   exit(EXIT_SUCCESS);

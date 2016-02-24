@@ -30,6 +30,9 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef PRK_OPENMP_STUBS_H
+#define PRK_OPENMP_STUBS_H
+
 #ifdef _OPENMP
 #include <omp.h>
 #else
@@ -73,3 +76,4 @@ int omp_test_lock(omp_lock_t * l)
 }
 #endif
 
+#endif /* PRK_OPENMP_STUBS_H */

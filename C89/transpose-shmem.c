@@ -55,7 +55,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
           wtime()           Portable wall-timer interface.
-          bail_out()        Determine global error and exit if nonzero.
+          shmem_bail_out()        Determine global error and exit if nonzero.
 
 HISTORY: Written by Tom St. John, July 2015.  
          Rob vdW: Fixed race condition on synchronization flags, August 2015
@@ -222,7 +222,7 @@ int main(int argc, char ** argv)
 
     ENDOFTESTS:;
   }
-  bail_out(error);
+  shmem_bail_out(error);
 
   if (my_ID == root) {
     printf("Number of ranks      = %d\n", Num_procs);
@@ -269,14 +269,14 @@ int main(int argc, char ** argv)
     printf(" Error allocating space for original matrix on node %d\n",my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
 
   B_p = (double *)prk_malloc(Colblock_size*sizeof(double));
   if (B_p == NULL){
     printf(" Error allocating space for transpose matrix on node %d\n",my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
 
   if (Num_procs>1) {
     Work_in_p   = (double**)prk_malloc((Num_procs-1)*sizeof(double));
@@ -287,14 +287,14 @@ int main(int argc, char ** argv)
       printf(" Error allocating space for work or flags on node %d\n",my_ID);
       error = 1;
     }
-    bail_out(error);
+    shmem_bail_out(error);
     for(i=0;i<(Num_procs-1);i++) {
       Work_in_p[i]=(double *) prk_shmem_align(prk_get_alignment(),Block_size*sizeof(double));
       if (Work_in_p[i] == NULL) {
         printf(" Error allocating space for work on node %d\n",my_ID);
         error = 1;
       }
-      bail_out(error);
+      shmem_bail_out(error);
     }
 
     for(i=0;i<Num_procs-1;i++)
@@ -404,7 +404,7 @@ int main(int argc, char ** argv)
     }
   }
 
-  bail_out(error);
+  shmem_bail_out(error);
 
   if (Num_procs>1) 
     {

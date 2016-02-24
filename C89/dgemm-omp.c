@@ -53,7 +53,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         omp_bail_out()
 
 HISTORY: Written by Rob Van der Wijngaart, September 2006.
          Made array dimensioning dynamic, October 2007
@@ -177,7 +177,7 @@ int main(int argc, char **argv){
       printf("Could not allocate space for matrix tiles on thread %d\n", 
              omp_get_thread_num());
     }
-    bail_out(num_error);
+    omp_bail_out(num_error);
     BB = AA + block*(block+BOFFSET);
     CC = BB + block*(block+BOFFSET);
   } 
@@ -204,7 +204,7 @@ int main(int argc, char **argv){
       printf("Only doing initialization\n"); 
   }
   }
-  bail_out(num_error); 
+  omp_bail_out(num_error); 
 
   if (shortcut) exit(EXIT_SUCCESS);
 

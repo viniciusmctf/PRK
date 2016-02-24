@@ -53,7 +53,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         mpi_bail_out()
 
 NOTES:   Derived frmo SUMMA implementation provided by Robert Van de Geijn,
          U. Texas at Austion.
@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
     
     ENDOFTESTS:;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   MPI_Bcast(&order,            1, MPI_INT,  root, MPI_COMM_WORLD);
   MPI_Bcast(&iterations,       1, MPI_INT,  root, MPI_COMM_WORLD);
@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
            my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
   mm = ranks + Num_procs;
   nn = mm + Num_procs;
 
@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
     error = 1;
     printf("ERROR: Proc %d could not allocate a, b, and/or c\n",my_ID);
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   /* get space for two work arrays for dgemm                       */
   work1 = (double *) prk_malloc( nb*lda*sizeof(double) );
@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
     printf("ERROR: Proc %d could not allocate work buffers\n", my_ID);
     error = 1;
   }  
-  bail_out(error);
+  mpi_bail_out(error);
 
   /* collect array that holds mynrows from all nodes in my row
      of the rank grid (array of all m_i)                           */
@@ -341,7 +341,7 @@ int main(int argc, char *argv[])
 #endif
     }
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   /* report elapsed time                                           */
   nflops = 2.0*forder*forder*forder;

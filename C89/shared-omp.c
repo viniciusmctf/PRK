@@ -52,7 +52,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
  
          wtime()
-         bail_out()
+         omp_bail_out()
          getpagesize()
          private_stream()
  
@@ -221,7 +221,7 @@ int main(int argc, char ** argv)
 #endif
   }
   }
-  bail_out(num_error);
+  omp_bail_out(num_error);
  
   /* do one warmup iteration outside main loop to avoid overhead      */
 #ifdef DEPENDENT
@@ -299,7 +299,7 @@ int main(int argc, char ** argv)
     printf("ERROR: Thread %d encountered errors in private work\n",
            omp_get_thread_num());           
   }
-  bail_out(num_error);
+  omp_bail_out(num_error);
 
   } /* end of OpenMP parallel region */
  

@@ -53,7 +53,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         mpi_bail_out()
 
 HISTORY: - Written by Rob Van der Wijngaart, March 2006.
          - modified by Rob Van der Wijngaart, August 2006:
@@ -148,7 +148,7 @@ int main(int argc, char ** argv)
 
     ENDOFTESTS:;
   }
-  bail_out(error); 
+  mpi_bail_out(error); 
 
   if (my_ID == root) {
     printf("Number of ranks                = %d\n",Num_procs);
@@ -188,7 +188,7 @@ int main(int argc, char ** argv)
     printf(" on rank %d\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
   
   /* reserve space for in and out buffers                                        */
   inbuf = (double *) prk_malloc(2*sizeof(double)*(grp));
@@ -198,7 +198,7 @@ int main(int argc, char ** argv)
     printf(" on rank %d\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
   outbuf = inbuf + grp;
    
   /* clear the array                                                             */
@@ -298,7 +298,7 @@ int main(int argc, char ** argv)
       error = 1;
     }
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   if (my_ID == final) {
     avgtime = pipeline_time/iterations;

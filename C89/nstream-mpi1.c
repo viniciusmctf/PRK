@@ -90,7 +90,7 @@ FUNCTIONS CALLED:
            external functions are used in this program:
  
            wtime()
-           bail_out()
+           mpi_bail_out()
            checkTRIADresults()
  
 NOTES:     Bandwidth is determined as the number of words read, plus the 
@@ -186,7 +186,7 @@ int main(int argc, char **argv)
 
     ENDOFTESTS:;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   /* broadcast initialization data */
   MPI_Bcast(&length,1, MPI_LONG, root, MPI_COMM_WORLD);
@@ -199,7 +199,7 @@ int main(int argc, char **argv)
     printf("ERROR: Could not allocate %ld bytes for vectors\n", (long int)space);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   b = a + length + offset;
   c = b + length + offset;
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
     }
     else error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
   MPI_Finalize();
 }
  

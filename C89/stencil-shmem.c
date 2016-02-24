@@ -52,7 +52,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
  
          wtime()
-         bail_out()
+         shmem_bail_out()
  
 HISTORY: - Written by Tom St. John, July 2015.
          - Adapted by Rob Van der Wijngaart to introduce double buffering, December 2015
@@ -153,7 +153,7 @@ int main(int argc, char ** argv) {
     printf("Could not allocate scalar variables on rank %d\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
 
   for(i=0;i<PRK_SHMEM_BCAST_SYNC_SIZE;i++)
     pSync_bcast[i]=PRK_SHMEM_SYNC_VALUE;
@@ -214,7 +214,7 @@ int main(int argc, char ** argv) {
  
     ENDOFTESTS:;  
   }
-  bail_out(error);
+  shmem_bail_out(error);
  
   /* determine best way to create a 2D grid of ranks (closest to square, for 
      best surface/volume ratio); we do this brute force for now
@@ -294,7 +294,7 @@ int main(int argc, char ** argv) {
     printf("ERROR: rank %d has no work to do\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
  
   height = n/Num_procsy;
   leftover = n%Num_procsy;
@@ -312,14 +312,14 @@ int main(int argc, char ** argv) {
     printf("ERROR: rank %d has no work to do\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
  
   if (width < RADIUS || height < RADIUS) {
     printf("ERROR: rank %d has work tile smaller then stencil radius\n",
            my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
  
   total_length_in = (width+2*RADIUS);
   total_length_in *= (height+2*RADIUS);
@@ -336,7 +336,7 @@ int main(int argc, char ** argv) {
             my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
  
   /* fill the stencil weights to reflect a discrete divergence operator         */
   for (jj=-RADIUS; jj<=RADIUS; jj++) for (ii=-RADIUS; ii<=RADIUS; ii++)
@@ -363,7 +363,7 @@ int main(int argc, char ** argv) {
     printf("ERROR: Rank %d could not allocate output comm buffers for y-direction\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
   bottom_buf_out = top_buf_out+RADIUS*width;
 
   top_buf_in[0]=(DTYPE*)prk_shmem_align(prk_get_alignment(),4*sizeof(DTYPE)*RADIUS*width);
@@ -372,7 +372,7 @@ int main(int argc, char ** argv) {
     printf("ERROR: Rank %d could not allocate input comm buffers for y-direction\n", my_ID);
     error=1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
   top_buf_in[1]    = top_buf_in[0]    + RADIUS*width;
   bottom_buf_in[0] = top_buf_in[1]    + RADIUS*width;
   bottom_buf_in[1] = bottom_buf_in[0] + RADIUS*width;
@@ -382,7 +382,7 @@ int main(int argc, char ** argv) {
     printf("ERROR: Rank %d could not allocate output comm buffers for x-direction\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
   left_buf_out=right_buf_out+RADIUS*height;
 
   right_buf_in[0]=(DTYPE*)prk_shmem_align(prk_get_alignment(),4*sizeof(DTYPE)*RADIUS*height);
@@ -391,7 +391,7 @@ int main(int argc, char ** argv) {
     printf("ERROR: Rank %d could not allocate input comm buffers for x-dimension\n", my_ID);
     error=1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
   right_buf_in[1] = right_buf_in[0] + RADIUS*height;
   left_buf_in[0]  = right_buf_in[1] + RADIUS*height;
   left_buf_in[1]  = left_buf_in[0]  + RADIUS*height;
@@ -553,7 +553,7 @@ int main(int argc, char ** argv) {
 #endif
     }
   }
-  bail_out(error);
+  shmem_bail_out(error);
  
   if (my_ID == root) {
     /* flops/stencil: 2 flops (fma) for each point in the stencil, 

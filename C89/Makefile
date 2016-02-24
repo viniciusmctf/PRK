@@ -31,29 +31,45 @@ CFLAGS += -DRESTRICT=$(RESTRICTFLAG)
 SERIAL_PROGRAMS = branch-ser dgemm-ser nstream-ser p2p-ser \
                   random-ser reduce-ser sparse-ser \
                   stencil-ser transpose-ser pic-ser
-
 OPENMP_PROGRAMS = branch-omp dgemm-omp nstream-omp p2p-omp \
                   random-omp reduce-omp sparse-omp \
                   stencil-omp transpose-omp \
                   global-omp private-omp shared-omp
-
+SHMEM_PROGRAMS = p2p-shmem stencil-shmem transpose-shmem
 MPI1_PROGRAMS = branch-mpi1 dgemm-mpi1 nstream-mpi1 p2p-mpi1 \
                 random-mpi1 reduce-mpi1 sparse-mpi1 \
                 stencil-mpi1 transpose-mpi1
+AMPI_PROGRAMS = branch-ampi dgemm-ampi nstream-ampi p2p-ampi \
+                random-ampi reduce-ampi sparse-ampi \
+                stencil-ampi transpose-ampi
+FGMPI_PROGRAMS = branch-fgmpi dgemm-fgmpi nstream-fgmpi p2p-fgmpi \
+                 random-fgmpi reduce-fgmpi sparse-fgmpi \
+                 stencil-fgmpi transpose-fgmpi
+MPIRMA_PROGRAMS = p2p-mpirma stencil-mpirma transpose-mpirma
+MPISHM_PROGRAMS = p2p-mpishm stencil-mpishm transpose-mpishm
+MPIOMP_PROGRAMS = p2p-mpiomp stencil-mpiomp transpose-mpiomp
 
-SHMEM_PROGRAMS = p2p-shmem stencil-shmem transpose-shmem
+.PHONY: all clean allser allomp allshmem allmpi allmpi1 allmpirma allmpishm allmpiomp allampi allfgmpi
 
-.PHONY: all clean allser allomp allmpi1 allshmem
+all: allser allomp allshmem allmpi allmpi1 allmpirma allmpishm allmpiomp allampi allfgmpi
 
-all: allser allomp allmpi allshmem
-
-allmpi: allmpi1
+allmpi: allmpi1 allmpirma allmpiomp allmpishm allampi allfgmpi
 
 allser: $(SERIAL_PROGRAMS)
 
 allomp: $(OPENMP_PROGRAMS)
 
+allmpiomp: $(MPIOMP_PROGRAMS)
+
+allmpirma: $(MPIRMA_PROGRAMS)
+
+allmpishm: $(MPISHM_PROGRAMS)
+
 allmpi1: $(MPI1_PROGRAMS)
+
+allampi: $(AMPI_PROGRAMS)
+
+allfgmpi: $(FGMPI_PROGRAMS)
 
 allshmem: $(SHMEM_PROGRAMS)
 
@@ -84,6 +100,12 @@ stencil-omp: stencil-omp.c loop_body_star.incl loop_body_compact.incl
 stencil-mpi1: stencil-mpi1.c loop_body_star.incl loop_body_compact.incl
 	$(MPICC) $(CFLAGS) $< -o $@
 
+stencil-ampi: stencil-ampi.c loop_body_star.incl loop_body_compact.incl
+	$(AMPICC) $(CFLAGS) $< -o $@
+
+stencil-fgmpi: stencil-fgmpi.c loop_body_star.incl loop_body_compact.incl
+	$(FGMPICC) $(CFLAGS) $< -o $@
+
 stencil-shmem: stencil-shmem.c loop_body_star.incl loop_body_compact.incl
 	$(OSHCC) $(CFLAGS) $< -o $@
 
@@ -95,6 +117,21 @@ stencil-shmem: stencil-shmem.c loop_body_star.incl loop_body_compact.incl
 
 %-mpi1: %-mpi1.c
 	$(MPICC) $(CFLAGS) $< -o $@
+
+%-mpirma: %-mpirma.c
+	$(MPICC) $(CFLAGS) $< -o $@
+
+%-mpishm: %-mpishm.c
+	$(MPICC) $(CFLAGS) $< -o $@
+
+%-mpiomp: %-mpiomp.c
+	$(MPICC) $(CFLAGS) $(OPENMPFLAG) $< -o $@
+
+%-ampi: %-ampi.c
+	$(AMPICC) $(CFLAGS) $< -o $@
+
+%-fgmpi: %-fgmpi.c
+	$(FGMPICC) $(CFLAGS) $< -o $@
 
 %-shmem: %-shmem.c
 	$(OSHCC) $(CFLAGS) $< -o $@
@@ -125,9 +162,15 @@ clean:
 	-rm -f $(SERIAL_PROGRAMS)
 	-rm -f $(OPENMP_PROGRAMS)
 	-rm -f $(MPI1_PROGRAMS)
+	-rm -f $(MPISHM_PROGRAMS)
+	-rm -f $(MPIRMA_PROGRAMS)
+	-rm -f $(MPIOMP_PROGRAMS)
+	-rm -f $(AMPI_PROGRAMS)
+	-rm -f $(FGMPI_PROGRAMS)
 	-rm -f $(SHMEM_PROGRAMS)
 
 veryclean: clean
 	-rm -f func.c
 	-rm -f loop_body_star.incl loop_body_compact.incl
+	-rm -f ___*.c
 

@@ -59,7 +59,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         omp_bail_out()
          chartoi()
 
 HISTORY: Written by Rob Van der Wijngaart, December 2005.
@@ -167,7 +167,7 @@ int main(int argc, char ** argv)
            my_ID);
     num_error = 1;
   }
-  bail_out(num_error);
+  omp_bail_out(num_error);
 
   strcpy(iterstring, basestring);
 
@@ -186,7 +186,7 @@ int main(int argc, char ** argv)
     printf("Number of iterations           = %d\n", iterations);
   }
   }
-  bail_out(num_error);
+  omp_bail_out(num_error);
 
   #pragma omp master 
   {

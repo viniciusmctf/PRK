@@ -109,7 +109,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         omp_bail_out()
          fill_vec()
          func*()
 
@@ -216,7 +216,7 @@ int main(int argc, char ** argv)
     printf("Branching type             = %s\n", branch_type);
   }
   }
-  bail_out(num_error);
+  omp_bail_out(num_error);
 
   my_ID = omp_get_thread_num();
 
@@ -226,7 +226,7 @@ int main(int argc, char ** argv)
     num_error = 1;
   }
 
-  bail_out(num_error);
+  omp_bail_out(num_error);
 
   /* grab the second half of vector to store index array                         */
   index   = vector + vector_length;

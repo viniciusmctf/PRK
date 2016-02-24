@@ -30,6 +30,9 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef PRK_UTIL_H
+#define PRK_UTIL_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -67,3 +70,4 @@ POSSIBILITY OF SUCH DAMAGE.
   #define FSTR64U            "%16llu"
 #endif
 
+#endif /* PRK_UTIL_H */

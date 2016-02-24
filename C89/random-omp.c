@@ -98,7 +98,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         omp_bail_out()
          PRK_starts()
          poweroftwo()
 
@@ -349,7 +349,7 @@ int main(int argc, char **argv) {
 #endif
   }
   }
-  bail_out(num_error);
+  omp_bail_out(num_error);
 
 #ifdef CHUNKED
   /* compute upper and lower table bounds for this thread                     */
@@ -366,7 +366,7 @@ int main(int argc, char **argv) {
            my_ID, my_starts*(int)sizeof(u64Int));
     num_error = 1;
   }
-  bail_out(num_error);
+  omp_bail_out(num_error);
 
   /* initialize the table */
   #pragma omp for 

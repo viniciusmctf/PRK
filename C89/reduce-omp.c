@@ -59,7 +59,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         omp_bail_out()
 
 NOTES:   The long-optimal algorithm is based on a distributed memory
          algorithm decribed in:
@@ -199,7 +199,7 @@ int main(int argc, char ** argv)
     printf("Number of iterations           = %d\n", iterations);
   }
   }
-  bail_out(num_error);
+  omp_bail_out(num_error);
 
   for (iter=0; iter<=iterations; iter++) {
 

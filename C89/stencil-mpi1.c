@@ -52,7 +52,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
  
          wtime()
-         bail_out()
+         mpi_bail_out()
  
 HISTORY: - Written by Rob Van der Wijngaart, November 2006.
          - RvdW, August 2013: Removed unrolling pragmas for clarity;
@@ -195,7 +195,7 @@ int main(int argc, char ** argv) {
  
     ENDOFTESTS:;  
   }
-  bail_out(error);
+  mpi_bail_out(error);
  
   /* determine best way to create a 2D grid of ranks (closest to square, for 
      best surface/volume ratio); we do this brute force for now
@@ -254,7 +254,7 @@ int main(int argc, char ** argv) {
     printf("ERROR: rank %d has no work to do\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   height = n/Num_procsy;
   leftover = n%Num_procsy;
@@ -272,14 +272,14 @@ int main(int argc, char ** argv) {
     printf("ERROR: rank %d has no work to do\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   if (width < RADIUS || height < RADIUS) {
     printf("ERROR: rank %d has work tile smaller then stencil radius\n",
            my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
  
   total_length_in  = (long) (width+2*RADIUS)*(long) (height+2*RADIUS)*sizeof(DTYPE);
   total_length_out = (long) width* (long) height*sizeof(DTYPE);
@@ -291,7 +291,7 @@ int main(int argc, char ** argv) {
             my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
  
   /* fill the stencil weights to reflect a discrete divergence operator         */
   for (jj=-RADIUS; jj<=RADIUS; jj++) for (ii=-RADIUS; ii<=RADIUS; ii++)
@@ -318,7 +318,7 @@ int main(int argc, char ** argv) {
       printf("ERROR: Rank %d could not allocated comm buffers for y-direction\n", my_ID);
       error = 1;
     }
-    bail_out(error);
+    mpi_bail_out(error);
     top_buf_in     = top_buf_out +   RADIUS*width;
     bottom_buf_out = top_buf_out + 2*RADIUS*width;
     bottom_buf_in  = top_buf_out + 3*RADIUS*width;
@@ -328,7 +328,7 @@ int main(int argc, char ** argv) {
       printf("ERROR: Rank %d could not allocated comm buffers for x-direction\n", my_ID);
       error = 1;
     }
-    bail_out(error);
+    mpi_bail_out(error);
     right_buf_in   = right_buf_out +   RADIUS*height;
     left_buf_out   = right_buf_out + 2*RADIUS*height;
     left_buf_in    = right_buf_out + 3*RADIUS*height;
@@ -468,7 +468,7 @@ int main(int argc, char ** argv) {
 #endif
     }
   }
-  bail_out(error);
+  mpi_bail_out(error);
  
   if (my_ID == root) {
     /* flops/stencil: 2 flops (fma) for each point in the stencil, 

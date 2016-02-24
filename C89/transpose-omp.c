@@ -57,7 +57,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()          portable wall-timer interface.
-         bail_out()
+         omp_bail_out()
          test_results()   Verify that the transpose worked
 
 HISTORY: Written by Tim Mattson, April 1999.  
@@ -175,7 +175,7 @@ int main(int argc, char ** argv) {
       printf("Untiled\n");
   }
   }
-  bail_out(num_error);
+  omp_bail_out(num_error);
 
   /*  Fill the original matrix, set transpose to known garbage value. */
 

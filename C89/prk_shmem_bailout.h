@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /*******************************************************************
 
-NAME:      bail_out
+NAME:      shmem_bail_out
 
 PURPOSE:   Exit gracefully when an SHMEM process has encountered an error
   
@@ -49,7 +49,7 @@ HISTORY: - Written by Gabriele Jost, March 2015.
 #ifndef PRK_SHMEM_BAILOUT_H
 #define PRK_SHMEM_BAILOUT_H
 
-static void bail_out (int error)
+static void shmem_bail_out (int error)
 {
    long *global_error;
    long *local_error;

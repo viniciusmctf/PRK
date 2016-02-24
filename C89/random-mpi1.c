@@ -86,7 +86,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime
-         bail_out()
+         mpi_bail_out()
          PRK_starts
          poweroftwo
 
@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
 
     ENDOFTESTS:;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   /* broadcast initialization data                                                 */
   MPI_Bcast(&log2nproc,        1, MPI_INT,           root, MPI_COMM_WORLD);
@@ -332,7 +332,7 @@ int main(int argc, char **argv) {
            my_ID, nstarts*sizeof(u64Int));
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
   
   Table = (u64Int *) prk_malloc(tablespace);
   if (!Table) {
@@ -340,7 +340,7 @@ int main(int argc, char **argv) {
            my_ID, (u64Int) tablespace);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   /* allocate send and receive buckets                                             */
   ranSendBucket = (u64Int **) prk_malloc((Num_procs+1)*sizeof(u64Int *));
@@ -348,7 +348,7 @@ int main(int argc, char **argv) {
     printf("ERROR: rank %d Could not allocate bucket pointers\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
   ranRecvBucket = ranSendBucket + Num_procs;
 
   ranSendBucket[0] = (u64Int *) prk_malloc(2*Num_procs*nstarts*sizeof(u64Int));
@@ -356,7 +356,7 @@ int main(int argc, char **argv) {
     printf("ERROR: rank %d Could not allocate bucket space\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   for (proc=1; proc<Num_procs; proc++) 
     ranSendBucket[proc] = ranSendBucket[0] + proc*nstarts;
@@ -369,7 +369,7 @@ int main(int argc, char **argv) {
     printf("ERROR: rank %d Could not allocate bucket sizes\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   sizeRecvBucket = sizeSendBucket + Num_procs;
   senddispls     = sizeRecvBucket + Num_procs;

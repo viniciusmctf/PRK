@@ -108,7 +108,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         mpi_bail_out()
          fill_vec()
          func*()
 
@@ -201,7 +201,7 @@ int main(int argc, char ** argv)
     }
     ENDOFTESTS:;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   if (my_ID == root) {
     printf("Number of ranks            = %d\n", Num_procs);
@@ -220,7 +220,7 @@ int main(int argc, char ** argv)
     printf("ERROR: rank %d failed to allocate space for vector\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   index   = vector + vector_length;
 

@@ -53,7 +53,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         omp_bail_out()
 
 HISTORY: - Written by Rob Van der Wijngaart, March 2006.
          - modified by Rob Van der Wijngaart, August 2006:
@@ -197,7 +197,7 @@ int main(int argc, char ** argv) {
 #endif
   }
   }
-  bail_out(num_error);
+  omp_bail_out(num_error);
 
   TID = omp_get_thread_num();
 

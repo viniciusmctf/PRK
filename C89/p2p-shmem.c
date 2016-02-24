@@ -53,7 +53,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         shmem_bail_out()
 
 HISTORY: - Written by Rob Van der Wijngaart, March 2006.
          - modified by Rob Van der Wijngaart, August 2006:
@@ -159,7 +159,7 @@ int main(int argc, char ** argv)
     error = 1;
   }
   ENDOFTESTS:;
-  bail_out (error);
+  shmem_bail_out (error);
   shmem_barrier_all ();
 
   if (my_ID == root) {
@@ -188,7 +188,7 @@ int main(int argc, char ** argv)
            my_ID);
     error = 1;
   }
-  bail_out(error); 
+  shmem_bail_out(error); 
 
   start = (int *) prk_shmem_align(prk_get_alignment(),2*Num_procs*sizeof(int));
   if (!start) {
@@ -196,7 +196,7 @@ int main(int argc, char ** argv)
            my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
   end = start + Num_procs;
   start[0] = 0;
   for (ID=0; ID<Num_procs; ID++) {
@@ -218,7 +218,7 @@ int main(int argc, char ** argv)
     printf(" on rank %d\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
 
   /* clear the array                                                             */
   for (j=0; j<n; j++) for (i=start[my_ID]-1; i<=end[my_ID]; i++) {
@@ -333,7 +333,7 @@ int main(int argc, char ** argv)
       error = 1;
     }
   }
-  bail_out(error);
+  shmem_bail_out(error);
 
   if (my_ID == root) {
     avgtime = pipeline_time [0]/iterations;

@@ -55,7 +55,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
           wtime()           Portable wall-timer interface.
-          bail_out()        Determine global error and exit if nonzero.
+          mpi_bail_out()        Determine global error and exit if nonzero.
 
 HISTORY: Written by Tim Mattson, April 1999.  
          Updated by Rob Van der Wijngaart, December 2005.
@@ -204,7 +204,7 @@ int main(int argc, char ** argv)
 
     ENDOFTESTS:;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   if (my_ID == root) {
     printf("Number of ranks      = %d\n", Num_procs);
@@ -248,14 +248,14 @@ int main(int argc, char ** argv)
     printf(" Error allocating space for original matrix on node %d\n",my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   B_p = (double *)prk_malloc(Colblock_size*sizeof(double));
   if (B_p == NULL){
     printf(" Error allocating space for transpose matrix on node %d\n",my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   if (Num_procs>1) {
     Work_in_p   = (double *)prk_malloc(2*Block_size*sizeof(double));
@@ -263,7 +263,7 @@ int main(int argc, char ** argv)
       printf(" Error allocating space for work on node %d\n",my_ID);
       error = 1;
     }
-    bail_out(error);
+    mpi_bail_out(error);
     Work_out_p = Work_in_p + Block_size;
   }
 
@@ -377,7 +377,7 @@ int main(int argc, char ** argv)
     }
   }
 
-  bail_out(error);
+  mpi_bail_out(error);
 
   MPI_Finalize();
   exit(EXIT_SUCCESS);

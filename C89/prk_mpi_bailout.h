@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /**********************************************************************
 
-Name:      bail_out
+Name:      mpi_bail_out
 
 Purpose:   Exit gracefully when an MPI process has encountered an error
 
@@ -47,11 +47,17 @@ History:   Written by Rob Van der Wijngaart, January 2006
 
 **********************************************************************/
 
+#ifndef PRK_MPI_BAILOUT_H
+#define PRK_MPI_BAILOUT_H
+
 #include "prk_util.h"
 #include <mpi.h>
 
-static void bail_out(int error)
+static void mpi_bail_out(int error)
 {
+#if defined(_OPENMP)
+  #pragma omp barrier
+#endif
   int error_tot;
   MPI_Allreduce(&error, &error_tot, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   if (error_tot != 0) {
@@ -59,3 +65,5 @@ static void bail_out(int error)
     exit(EXIT_FAILURE);
   }
 }
+
+#endif /* PRK_MPI_BAILOUT_H */

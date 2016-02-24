@@ -54,7 +54,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime();
-         bail_out();
+         mpi_bail_out();
 
 HISTORY: Written by Rob Van der Wijngaart, March 2006.
          Modified by Rob Van der Wijngaart, November 2014
@@ -121,7 +121,7 @@ int main(int argc, char ** argv)
 
     ENDOFTESTS:;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
 
   if (my_ID == root) {
@@ -139,7 +139,7 @@ int main(int argc, char ** argv)
            2*vector_length*sizeof(double),my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
   ones = vector + vector_length;
 
   /* initialize the arrays                                                    */
@@ -194,7 +194,7 @@ int main(int argc, char ** argv)
       }
     }
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   if (my_ID == root) {
     printf("Solution validates\n");

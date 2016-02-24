@@ -52,7 +52,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         omp_bail_out()
 
 HISTORY: Written by Rob Van der Wijngaart, January 2006.
   
@@ -211,7 +211,7 @@ int main(int argc, char ** argv)
     printf("Using (uncontended) locks\n");
   }
   }
-  bail_out(num_error);
+  omp_bail_out(num_error);
 
   #pragma omp master
   {

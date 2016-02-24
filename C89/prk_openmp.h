@@ -1,3 +1,35 @@
+/*
+Copyright (c) 2013, Intel Corporation
+
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions 
+are met:
+
+* Redistributions of source code must retain the above copyright 
+      notice, this list of conditions and the following disclaimer.
+      * Redistributions in binary form must reproduce the above 
+      copyright notice, this list of conditions and the following 
+      disclaimer in the documentation and/or other materials provided 
+      with the distribution.
+      * Neither the name of Intel Corporation nor the names of its 
+      contributors may be used to endorse or promote products 
+      derived from this software without specific prior written 
+      permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #ifndef PRK_OPENMP_H
 #define PRK_OPENMP_H
 
@@ -7,31 +39,8 @@
 #define MAX_THREADS MAXTHREADS
 #endif
 
-/* TODO Need to check for OpenMP 4 to use "omp simd",
- *      and fallback to compiler-specific alternatives if not available. */
-
-#if defined(_OPENMP) && (( __STDC_VERSION__ >= 199901L ) || (__cplusplus >= 201103L ))
-
-#define PRAGMA(x) _Pragma(#x)
-
-#define OMP_PARALLEL(a) PRAGMA(omp parallel a)
-#define OMP_FOR(a) PRAGMA(omp for schedule(static) a)
-#define OMP_SIMD(a) PRAGMA(omp simd a)
-#define OMP_BARRIER PRAGMA(omp barrier)
-#define OMP_MASTER PRAGMA(omp master)
-
-#else
-
-#define OMP_PARALLEL(a)
-#define OMP_FOR(a)
-#define OMP_SIMD(a)
-#define OMP_BARRIER
-#define OMP_MASTER
-
-#endif
-
 #if defined(_OPENMP)
-static void bail_out(int error)
+static void omp_bail_out(int error)
 {
   #pragma omp barrier
   if (error != 0) exit(EXIT_FAILURE);

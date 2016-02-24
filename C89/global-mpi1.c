@@ -54,7 +54,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         mpi_bail_out()
          chartoi()
 
 HISTORY: Written by Rob Van der Wijngaart, December 2005.
@@ -131,7 +131,7 @@ int main(int argc, char ** argv)
 
      ENDOFTESTS:;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   if (my_ID == root) {
     printf("Number of ranks        = %d\n", Num_procs);
@@ -149,7 +149,7 @@ int main(int argc, char ** argv)
     printf("ERROR: Could not allocate space for scramble string\n");
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   /* fill the base string with copies (truncated) of scrable string         */
   for (i=0; i<proc_length; i++) basestring[i]=scramble[i%32];
@@ -161,7 +161,7 @@ int main(int argc, char ** argv)
            length+1);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   /* initialize concatenation string with nonsense                          */
   for (i=0; i<length; i++) catstring[i]='9';
@@ -172,7 +172,7 @@ int main(int argc, char ** argv)
     printf("ERROR: Could not allocate space for strings in rank %d\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  mpi_bail_out(error);
 
   strcpy(iterstring, basestring);
 
@@ -182,7 +182,7 @@ int main(int argc, char ** argv)
     error = 1;
   }
 
-  bail_out(error);
+  mpi_bail_out(error);
 
   for (i=0; i<length; i++) catstring[i]='9';
   catstring[length]=EOS;

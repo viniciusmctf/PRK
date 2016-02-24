@@ -53,7 +53,7 @@ FUNCTIONS CALLED:
          functions are used in this program:
 
          wtime()
-         bail_out()
+         omp_bail_out()
          reverse()
 
 NOTES:   
@@ -235,7 +235,7 @@ int main(int argc, char **argv){
 #endif
   }
   }
-  bail_out(num_error);
+  omp_bail_out(num_error);
 
   /* initialize the input and result vectors                                      */
   #pragma omp for
