@@ -30,9 +30,10 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <shmem.h>
+#ifndef PRK_SHMEM_UTIL_H
+#define PRK_SHMEM_UTIL_H
 
-extern void bail_out(int);
+#include <shmem.h>
 
 #if defined(SHMEM_MAJOR_VERSION) && defined(SHMEM_MINOR_VERSION)
 #if ((SHMEM_MAJOR_VERSION>1) || ((SHMEM_MAJOR_VERSION == 1) && (SHMEM_MINOR_VERSION >= 2)))
@@ -128,3 +129,7 @@ static void prk_shmem_free(void * ptr) {
 #  define PRK_SHMEM_SYNC_VALUE _SHMEM_SYNC_VALUE
 #  define PRK_SHMEM_REDUCE_MIN_WRKDATA_SIZE _SHMEM_REDUCE_MIN_WRKDATA_SIZE
 #endif
+
+#include "prk_shmem_bailout.h"
+
+#endif /* PRK_SHMEM_UTIL_H */

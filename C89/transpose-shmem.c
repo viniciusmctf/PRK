@@ -108,8 +108,8 @@ o The original and transposed matrices are called A and B
 |           |           |           |                             |
  -----------------------------------------------------------------*/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_shmem.h>
+#include "prk_util.h"
+#include "prk_shmem_util.h"
 
 #define A(i,j)        A_p[(i+istart)+order*(j)]
 #define B(i,j)        B_p[(i+istart)+order*(j)]
@@ -164,7 +164,7 @@ int main(int argc, char ** argv)
     printf("SHMEM matrix transpose: B = A^T\n");
   }
 
-// initialize sync variables for error checks
+  /* initialize sync variables for error checks */
   pSync_bcast      = (long *)   prk_shmem_align(prk_get_alignment(),PRK_SHMEM_BCAST_SYNC_SIZE*sizeof(long));
   pSync_reduce     = (long *)   prk_shmem_align(prk_get_alignment(),PRK_SHMEM_REDUCE_SYNC_SIZE*sizeof(long));
   pWrk             = (double *) prk_shmem_align(prk_get_alignment(),sizeof(double) * PRK_SHMEM_REDUCE_MIN_WRKDATA_SIZE);
@@ -383,7 +383,7 @@ int main(int argc, char ** argv)
   istart = 0;
   double addit = ((double)(iterations+1) * (double) (iterations))/2.0;
   for (j=0;j<Block_order;j++) for (i=0;i<order; i++) {
-      abserr[0] += ABS(B(i,j) - (double)((order*i + j+colstart)*(iterations+1)+addit));
+      abserr[0] += fabs(B(i,j) - (double)((order*i + j+colstart)*(iterations+1)+addit));
   }
 
   shmem_barrier_all();

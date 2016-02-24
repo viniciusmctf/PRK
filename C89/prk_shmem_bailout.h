@@ -46,10 +46,11 @@ HISTORY: - Written by Gabriele Jost, March 2015.
   
 **********************************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_shmem.h>
+#ifndef PRK_SHMEM_BAILOUT_H
+#define PRK_SHMEM_BAILOUT_H
 
-void bail_out (int error) {
+static void bail_out (int error)
+{
    long *global_error;
    long *local_error;
    long *pWrk;
@@ -73,3 +74,4 @@ void bail_out (int error) {
   return;
 }
 
+#endif /* PRK_SHMEM_BAILOUT_H */

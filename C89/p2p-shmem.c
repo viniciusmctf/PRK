@@ -66,8 +66,8 @@ HISTORY: - Written by Rob Van der Wijngaart, March 2006.
   
 **********************************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_shmem.h>
+#include "prk_util.h"
+#include "prk_shmem_util.h"
 
 #define ARRAY(i,j) vector[i+1+(j)*(segment_size+1)]
 
@@ -141,7 +141,7 @@ int main(int argc, char ** argv)
     goto ENDOFTESTS;
   }
 
-// initialize sync variables for error checks
+  /* initialize sync variables for error checks */
   pSync = (long *)   prk_shmem_align(prk_get_alignment(), sizeof(long) * PRK_SHMEM_REDUCE_SYNC_SIZE );
   pWrk  = (double *) prk_shmem_align(prk_get_alignment(), sizeof(double) * PRK_SHMEM_REDUCE_MIN_WRKDATA_SIZE );
   if (!pSync || !pWrk) {

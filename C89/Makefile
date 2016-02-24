@@ -1,5 +1,5 @@
-include ../common/OPENMP.defs
-include ../common/MPI.defs
+include ../common/make.defs
+
 include ../common/PRKVERSION
 
 ifndef NUMBER_OF_FUNCTIONS
@@ -41,17 +41,21 @@ MPI1_PROGRAMS = branch-mpi1 dgemm-mpi1 nstream-mpi1 p2p-mpi1 \
                 random-mpi1 reduce-mpi1 sparse-mpi1 \
                 stencil-mpi1 transpose-mpi1
 
-.PHONY: all clean allser allomp allmpi1
+SHMEM_PROGRAMS = p2p-shmem stencil-shmem transpose-shmem
 
-all: allser allomp allmpi
+.PHONY: all clean allser allomp allmpi1 allshmem
+
+all: allser allomp allmpi allshmem
+
+allmpi: allmpi1
 
 allser: $(SERIAL_PROGRAMS)
 
 allomp: $(OPENMP_PROGRAMS)
 
-allmpi: allmpi1
-
 allmpi1: $(MPI1_PROGRAMS)
+
+allshmem: $(SHMEM_PROGRAMS)
 
 func.o: func.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -80,6 +84,9 @@ stencil-omp: stencil-omp.c loop_body_star.incl loop_body_compact.incl
 stencil-mpi1: stencil-mpi1.c loop_body_star.incl loop_body_compact.incl
 	$(MPICC) $(CFLAGS) $< -o $@
 
+stencil-shmem: stencil-shmem.c loop_body_star.incl loop_body_compact.incl
+	$(OSHCC) $(CFLAGS) $< -o $@
+
 %-ser: %-ser.c
 	$(CC) $(CFLAGS) $< -o $@
 
@@ -88,6 +95,9 @@ stencil-mpi1: stencil-mpi1.c loop_body_star.incl loop_body_compact.incl
 
 %-mpi1: %-mpi1.c
 	$(MPICC) $(CFLAGS) $< -o $@
+
+%-shmem: %-shmem.c
+	$(OSHCC) $(CFLAGS) $< -o $@
 
 func.c:
 	@echo "############################################################"
@@ -115,6 +125,7 @@ clean:
 	-rm -f $(SERIAL_PROGRAMS)
 	-rm -f $(OPENMP_PROGRAMS)
 	-rm -f $(MPI1_PROGRAMS)
+	-rm -f $(SHMEM_PROGRAMS)
 
 veryclean: clean
 	-rm -f func.c

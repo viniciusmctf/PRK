@@ -59,10 +59,8 @@ HISTORY: - Written by Tom St. John, July 2015.
   
 *********************************************************************************/
  
-#include <par-res-kern_general.h>
-#include <par-res-kern_shmem.h>
-
-#include <math.h>
+#include "prk_util.h"
+#include "prk_shmem_util.h"
 
 #ifdef DOUBLE
   #define DTYPE     double
@@ -517,7 +515,7 @@ int main(int argc, char ** argv) {
   local_norm[0] = (DTYPE) 0.0;
   for (j=MAX(jstart,RADIUS); j<MIN(n-RADIUS,jend); j++) {
     for (i=MAX(istart,RADIUS); i<MIN(n-RADIUS,iend); i++) {
-      local_norm[0] += (DTYPE)ABS(OUT(i,j));
+      local_norm[0] += (DTYPE)fabs(OUT(i,j));
     }
   }
 
@@ -542,7 +540,7 @@ int main(int argc, char ** argv) {
     else {
       reference_norm = (DTYPE) 0.0;
     }
-    if (ABS(norm[0]-reference_norm) > EPSILON) {
+    if (fabs(norm[0]-reference_norm) > EPSILON) {
       printf("ERROR: L1 norm = "FSTR", Reference L1 norm = "FSTR"\n",
              norm[0], reference_norm);
       error = 1;
