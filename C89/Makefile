@@ -176,6 +176,7 @@ clean:
 	-rm -f $(SHMEM_PROGRAMS)
 
 veryclean: clean
+	-rf -f charmrun
 	-rm -f func.c
 	-rm -f loop_body_star.incl loop_body_compact.incl
 	-rm -f ___*.c
