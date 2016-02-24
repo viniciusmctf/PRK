@@ -147,8 +147,7 @@ HISTORY: Written by Rob Van der Wijngaart, June 2006.
   
 ************************************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_omp.h>
+#include "prk_util.h"
 
 /* Define constants                                                                */
 /* PERIOD = (2^63-1)/7 = 7*73*127*337*92737*649657                                 */

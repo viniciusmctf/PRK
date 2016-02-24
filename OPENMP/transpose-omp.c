@@ -65,8 +65,7 @@ HISTORY: Written by Tim Mattson, April 1999.
   
 *******************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_omp.h>
+#include "prk_util.h"
 
 #define A(i,j)    A[i+order*(j)]
 #define B(i,j)    B[i+order*(j)]
@@ -89,6 +88,7 @@ int main(int argc, char ** argv) {
          nthread;
   int    num_error=0;     /* flag that signals that requested and 
                              obtained numbers of threads are the same      */
+  int i,j,it,jt,iter; /* loop indices */
 
   /*********************************************************************
   ** read and test input parameters
@@ -149,7 +149,7 @@ int main(int argc, char ** argv) {
 
   bytes = 2.0 * sizeof(double) * order * order;
 
-  #pragma omp parallel
+  #pragma omp parallel private(i,j,it,jt)
   {  
 
   #pragma omp master
@@ -185,24 +185,24 @@ int main(int argc, char ** argv) {
 #else
     #pragma omp for
 #endif
-    for (size_t j=0; j<order; j+=Tile_order) 
-      for (size_t i=0; i<order; i+=Tile_order) 
-        for (size_t jt=j; jt<MIN(order,j+Tile_order);jt++)
-          for (size_t it=i; it<MIN(order,i+Tile_order); it++){
+    for (j=0; j<order; j+=Tile_order) 
+      for (i=0; i<order; i+=Tile_order) 
+        for (jt=j; jt<MIN(order,j+Tile_order);jt++)
+          for (it=i; it<MIN(order,i+Tile_order); it++){
             A(it,jt) = (double) (order*jt + it);
             B(it,jt) = 0.0;
           }
   }
   else {
     #pragma omp for
-    for (size_t j=0;j<order;j++) 
-      for (size_t i=0;i<order; i++) {
+    for (j=0;j<order;j++) 
+      for (i=0;i<order; i++) {
         A(i,j) = (double) (order*j + i);
         B(i,j) = 0.0;
       }
   }
 
-  for (int iter = 0; iter<=iterations; iter++){
+  for (iter = 0; iter<=iterations; iter++){
 
     /* start timer after a warmup iteration                                        */
     if (iter == 1) { 
@@ -216,8 +216,8 @@ int main(int argc, char ** argv) {
     /* Transpose the  matrix                                                       */
     if (!tiling) {
       #pragma omp for
-      for (size_t i=0;i<order; i++) 
-        for (size_t j=0;j<order;j++) { 
+      for (i=0;i<order; i++) 
+        for (j=0;j<order;j++) { 
           B(j,i) += A(i,j);
           A(i,j) += 1.0;
         }
@@ -228,10 +228,10 @@ int main(int argc, char ** argv) {
 #else
       #pragma omp for
 #endif
-      for (size_t i=0; i<order; i+=Tile_order) 
-        for (size_t j=0; j<order; j+=Tile_order) 
-          for (size_t it=i; it<MIN(order,i+Tile_order); it++) 
-            for (size_t jt=j; jt<MIN(order,j+Tile_order);jt++) {
+      for (i=0; i<order; i+=Tile_order) 
+        for (j=0; j<order; j+=Tile_order) 
+          for (it=i; it<MIN(order,i+Tile_order); it++) 
+            for (jt=j; jt<MIN(order,j+Tile_order);jt++) {
               B(jt,it) += A(it,jt);
               A(it,jt) += 1.0;
             } 
@@ -278,15 +278,15 @@ int main(int argc, char ** argv) {
 
 /* function that computes the error committed during the transposition */
 
-double test_results (size_t order, double *B, int iterations) {
-
+double test_results (size_t order, double *B, int iterations)
+{
+  int i,j;
   double abserr=0.0;
-
   double addit = ((double)(iterations+1) * (double) (iterations))/2.0;
-  #pragma omp parallel for reduction(+:abserr)
-  for (size_t j=0;j<order;j++) {
-    for (size_t i=0;i<order; i++) {
-      abserr += ABS(B(i,j) - ((i*order + j)*(iterations+1L)+addit));
+  #pragma omp parallel for reduction(+:abserr) private(i,j)
+  for (j=0;j<order;j++) {
+    for (i=0;i<order; i++) {
+      abserr += fabs(B(i,j) - ((i*order + j)*(iterations+1L)+addit));
     }
   }
 

@@ -66,8 +66,7 @@ HISTORY: Written by Rob Van der Wijngaart, August 2006.
   
 ***********************************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_omp.h>
+#include "prk_util.h"
 
 /* linearize the grid index                                                       */
 #define LIN(i,j) (i+((j)<<lsize))
@@ -304,7 +303,7 @@ int main(int argc, char **argv){
 
   vector_sum = 0.0;
   for (row=0; row<size2; row++) vector_sum += result[row];
-  if (ABS(vector_sum-reference_sum) > epsilon) {
+  if (fabs(vector_sum-reference_sum) > epsilon) {
     printf("ERROR: Vector sum = %lf, Reference vector sum = %lf\n",
            vector_sum, reference_sum);
     exit(EXIT_FAILURE);

@@ -107,8 +107,7 @@ REVISION:  Modified by Rob Van der Wijngaart, May 2006, to introduce
            necessary to avoid dead code elimination
 **********************************************************************/
  
-#include <par-res-kern_general.h>
-#include <par-res-kern_omp.h>
+#include "prk_util.h"
  
 #define DEFAULTMAXLENGTH 2000000
 #ifdef MAXLENGTH
@@ -315,7 +314,7 @@ int checkTRIADresults (int iterations, long int length) {
   printf ("        Observed checksum: %f\n",asum);
 #endif
  
-  if (ABS(aj-asum)/asum > epsilon) {
+  if (fabs(aj-asum)/asum > epsilon) {
     printf ("Failed Validation on output array\n");
 #ifndef VERBOSE
     printf ("        Expected checksum: %f \n",aj);

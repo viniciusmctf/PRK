@@ -77,8 +77,7 @@ HISTORY: Written by Rob Van der Wijngaart, March 2006.
   
 *******************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_omp.h>
+#include "prk_util.h"
 
 #define LINEAR            11
 #define BINARY_BARRIER    12
@@ -365,7 +364,7 @@ int main(int argc, char ** argv)
   element_value = (double)nthread*(2.0*(double)nthread+1.0);
 
   for (i=0; i<vector_length; i++) {
-    if (ABS(VEC0(0,i) - element_value) >= epsilon) {
+    if (fabs(VEC0(0,i) - element_value) >= epsilon) {
        printf("First error at i=%d; value: %lf; reference value: %lf\n",
               i, VEC0(0,i), element_value);
        exit(EXIT_FAILURE);

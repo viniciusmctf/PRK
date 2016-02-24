@@ -64,8 +64,7 @@ HISTORY: Written by Rob Van der Wijngaart, September 2006.
   
 ***********************************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_omp.h>
+#include "prk_util.h"
 
 #ifdef MKL
   #include <mkl_cblas.h>
@@ -105,6 +104,7 @@ int main(int argc, char **argv){
   long    order;                /* number of rows and columns of matrices         */
   int     block;                /* tile size of matrices                          */
   int     shortcut;             /* true if only doing initialization              */
+  double  nflops;
 
   printf("Parallel Research Kernels version %s\n", PRKVERSION);
   printf("OpenMP Dense matrix-matrix multiplication\n");
@@ -294,7 +294,7 @@ int main(int argc, char **argv){
   /* verification test                                                            */
   ref_checksum *= (iterations+1);
 
-  if (ABS((checksum - ref_checksum)/ref_checksum) > epsilon) {
+  if (fabs((checksum - ref_checksum)/ref_checksum) > epsilon) {
     printf("ERROR: Checksum = %lf, Reference checksum = %lf\n",
            checksum, ref_checksum);
     exit(EXIT_FAILURE);
@@ -307,7 +307,7 @@ int main(int argc, char **argv){
 #endif
   }
 
-  double nflops = 2.0*forder*forder*forder;
+  nflops = 2.0*forder*forder*forder;
   avgtime = dgemm_time/iterations;
   printf("Rate (MFlops/s): %lf  Avg time (s): %lf\n",
          1.0E-06 *nflops/avgtime, avgtime);

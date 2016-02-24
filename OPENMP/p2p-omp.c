@@ -64,8 +64,7 @@ HISTORY: - Written by Rob Van der Wijngaart, March 2006.
   
 *******************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_omp.h>
+#include "prk_util.h"
 
 /* define shorthand for indexing a multi-dimensional array                       */
 #define ARRAY(i,j) vector[i+(j)*(m)]
@@ -90,7 +89,7 @@ int main(int argc, char ** argv) {
          nthread; 
   int    grp;             /* grid line aggregation factor                        */
   int    jjsize;          /* actual line group size                              */
-  double RESTRICT *vector;/* array holding grid values                           */
+  double * RESTRICT vector;         /* array holding grid values                           */
   long   total_length;    /* total required length to store grid values          */
   int    num_error=0;     /* flag that signals that requested and obtained
                              numbers of threads are the same                     */

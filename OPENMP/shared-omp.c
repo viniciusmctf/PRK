@@ -62,8 +62,7 @@ HISTORY: Written by Rob Van der Wijngaart, January 2006.
   
 *******************************************************************/
  
-#include <par-res-kern_general.h>
-#include <par-res-kern_omp.h>
+#include "prk_util.h"
 
 #include <math.h> /* sin, cos */
  
@@ -294,7 +293,7 @@ int main(int argc, char ** argv)
     aj += bj + SCALAR*cj;
   }
   for (j=0; j<stream_size; j++) {
-    num_error += MAX(ABS(a[j]-aj)>epsilon,num_error);
+    num_error += MAX(fabs(a[j]-aj)>epsilon,num_error);
   }
   if (num_error>0) {
     printf("ERROR: Thread %d encountered errors in private work\n",
@@ -311,8 +310,8 @@ int main(int argc, char ** argv)
   refcounter1 = (double)(iterations+2);
   refcounter2 = (double)(iterations+1);
 #endif
-  if ((ABS(COUNTER1-refcounter1)>epsilon) || 
-      (ABS(COUNTER2-refcounter2)>epsilon)) {
+  if ((fabs(COUNTER1-refcounter1)>epsilon) || 
+      (fabs(COUNTER2-refcounter2)>epsilon)) {
      printf("ERROR: Incorrect or inconsistent counter values %13.10lf %13.10lf; ",
             COUNTER1, COUNTER2);
      printf("should be %13.10lf, %13.10lf\n", refcounter1, refcounter2);

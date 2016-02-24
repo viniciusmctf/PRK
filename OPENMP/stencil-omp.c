@@ -61,8 +61,7 @@ HISTORY: - Written by Rob Van der Wijngaart, November 2006.
   
 *******************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_omp.h>
+#include "prk_util.h"
 
 #ifdef DOUBLE
   #define DTYPE   double
@@ -313,7 +312,7 @@ int main(int argc, char ** argv) {
   #pragma omp for reduction(+:norm)
 #endif
   for (j=RADIUS; j<n-RADIUS; j++) for (i=RADIUS; i<n-RADIUS; i++) {
-    norm += (DTYPE)ABS(OUT(i,j));
+    norm += (DTYPE)fabs(OUT(i,j));
   }
 #ifndef PARALLELFOR
   } /* end of OPENMP parallel region                                             */
@@ -330,7 +329,7 @@ int main(int argc, char ** argv) {
 
 /* verify correctness                                                            */
   reference_norm = (DTYPE) (iterations+1) * (COEFX + COEFY);
-  if (ABS(norm-reference_norm) > EPSILON) {
+  if (fabs(norm-reference_norm) > EPSILON) {
     printf("ERROR: L1 norm = "FSTR", Reference L1 norm = "FSTR"\n",
            norm, reference_norm);
     exit(EXIT_FAILURE);

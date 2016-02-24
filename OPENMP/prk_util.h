@@ -30,53 +30,40 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifdef _OPENMP
-#include <omp.h>
-#else
+#include <stdio.h>
 #include <stdlib.h>
-#warning Your compiler - probably Clang - does not support OpenMP, so dummy symbols will be used.
-/* utility API */
-int omp_get_thread_num() { return 0; }
-int omp_get_num_threads() { return 1; }
-void omp_set_num_threads(int i) { return; }
-/* locks API */
-typedef int omp_lock_t;
-void omp_init_lock(omp_lock_t * l)
-{
-    *l=0;
-}
-void omp_destroy_lock(omp_lock_t * l)
-{
-    /* "It is illegal to call this routine with a lock variable that is not initialized." */
-    if (*l==-1) abort();
-    *l=-1;
-}
-void omp_set_lock(omp_lock_t * l)
-{
-    if (*l==-1) abort();
-    if (*l==0) *l=1;
-}
-void omp_unset_lock(omp_lock_t * l)
-{
-    if (*l==-1) abort();
-    if (*l==1) l=0;
-}
-int omp_test_lock(omp_lock_t * l)
-{
-    if (*l==-1) abort();
-    if (*l==0) {
-        *l=1;
-        return 1;
-    } else {
-        return 0;
-    }
-}
+#include <stdbool.h>
+#include <string.h>
+#include <assert.h>
+
+/* We can include this here, because no conflict with tgmath.h
+ * is possible, because tgmath.h requires C99. */
+#include <math.h>
+
+/* This is not ISO C.  It is Linux/Unix. */
+#include <unistd.h>
+
+#ifndef MIN
+#define MIN(x,y) ((x)<(y)?(x):(y))
+#endif
+#ifndef MAX
+#define MAX(x,y) ((x)>(y)?(x):(y))
 #endif
 
-#ifndef MAXTHREADS
-  #define MAX_THREADS 512
+#include "prk_openmp.h"
+#include "prk_wtime.h"
+#include "prk_malloc.h"
+
+/* Define 64-bit types and corresponding format strings for printf() */
+#ifdef LONG_IS_64BITS
+  typedef unsigned long      u64Int;
+  typedef long               s64Int;
+  #define FSTR64             "%16ld"
+  #define FSTR64U            "%16lu"
 #else
-  #define MAX_THREADS MAXTHREADS
+  typedef unsigned long long u64Int;
+  typedef long long          s64Int;
+  #define FSTR64             "%16ll"
+  #define FSTR64U            "%16llu"
 #endif
 
-extern void bail_out(int);

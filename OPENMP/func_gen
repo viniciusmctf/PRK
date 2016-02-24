@@ -55,7 +55,8 @@ echo "Generating $nfunc functions with matrix order $n"
 cp /dev/null func.c
 
 # insert the right header file
-echo "#include <par-res-kern_general.h>"                                                >> func.c
+echo "#include \"prk_util.h\""                                                      >> func.c
+echo "#include <math.h>"                                                            >> func.c
 #create some global read-only arrays
 echo "static int one[$n], zero[$n];"                                                >> func.c
 
@@ -73,7 +74,7 @@ while [ $j -lt $n ]; do
     echo "  x3 = (x1 + (VERSION+1)*x2) % $n;"                                       >> $NAME
     echo "  x1 += (x2 - x3 + $n ) % $n;"                                            >> $NAME
     echo "  x2 += (x1 - 5*x3 + 7 * $n ) % $n;"                                      >> $NAME
-    echo "  x3 = (x1 + 4*x2) % $n;"                                                 >> $NAME 
+    echo "  x3 = (x1 + 4*x2) % $n;"                                                 >> $NAME
     if [ $i -ne $j ]; then
       echo "  a[$j][$i] = zero[x3];"                                                >> $NAME
     else
@@ -88,8 +89,8 @@ done
 echo "  for (j=0; j<$n; j++) for (i=0; i<$n; i++)"                                  >> $NAME
 echo "    b[j][i] = (a[i][j]+a[j][i])/2;"                                           >> $NAME
 echo "  for (j=0; j<$n; j++) for (i=0; i<$n; i++)"                                  >> $NAME
-echo "    if (i != j) error += ABS(b[j][i]);"                                       >> $NAME
-echo "  for (i=0; i<$n; i++) error += ABS(1-b[i][i]);"                              >> $NAME
+echo "    if (i != j) error += fabs(b[j][i]);"                                      >> $NAME
+echo "  for (i=0; i<$n; i++) error += fabs(1-b[i][i]);"                             >> $NAME
   
 echo "  if (error) return(0);"                                                      >> $NAME
 echo "  else       return(index);"                                                  >> $NAME
