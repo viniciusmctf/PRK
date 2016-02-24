@@ -67,8 +67,8 @@ HISTORY: Written by Rob Van der Wijngaart, October 2006.
   
 ***********************************************************************************/
 
-#include <"prk_util.h">
-#include <"prk_mpi_util.h">
+#include "prk_util.h"
+#include "prk_mpi_util.h"
 
 /* linearize the grid index                                                       */
 #define LIN(i,j) (i+((j)<<lsize))

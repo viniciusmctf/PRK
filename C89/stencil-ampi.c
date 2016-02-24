@@ -68,11 +68,9 @@ HISTORY: - Written by Rob Van der Wijngaart, November 2006.
   
 *********************************************************************************/
  
-#include <"prk_util.h">
-#include <"prk_mpi_util.h">
+#include "prk_util.h"
+#include "prk_mpi_util.h"
 
-#include <math.h>
- 
 #ifdef DOUBLE
   #define DTYPE     double
   #define MPI_DTYPE MPI_DOUBLE

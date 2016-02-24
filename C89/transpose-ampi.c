@@ -119,8 +119,8 @@ o The original and transposed matrices are called A and B
 |           |           |           |                             |
  -----------------------------------------------------------------*/
 
-#include <"prk_util.h">
-#include <"prk_mpi_util.h">
+#include "prk_util.h"
+#include "prk_mpi_util.h"
 
 #define A(i,j)        A_p[(i+istart)+order*(j)]
 #define B(i,j)        B_p[(i+istart)+order*(j)]

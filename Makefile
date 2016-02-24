@@ -71,8 +71,10 @@ help:
 	@echo "       \"make veryclean\"    removes some generated source files as well"
 
 all: alldarwin allfreaks
-alldarwin: allserial allopenmp allmpi1 allfgmpi allmpiopenmp allmpirma allshmem allmpishm allupc allfortran allc99
-allfreaks: allcharm++ allampi allgrappa
+
+alldarwin: allserial allopenmp allmpi1 allampi allfgmpi allmpiopenmp allmpirma allshmem allmpishm allupc allfortran allc99
+
+allfreaks: allcharm++ allgrappa
 
 allmpi1:
 	make -C C89 allmpi1 MATRIX_RANK=$(matrix_rank) NUMBER_OF_FUNCTIONS=$(number_of_functions)
@@ -81,9 +83,9 @@ allampi:
 	make -C C89 allampi MATRIX_RANK=$(matrix_rank) NUMBER_OF_FUNCTIONS=$(number_of_functions)
 
 allfgmpi:
-	cd scripts/small;              $(MAKE) -f  Makefile_FG_MPI runfgmpi
-	cd scripts/wide;               $(MAKE) -f  Makefile_FG_MPI runfgmpi
 	make -C C89 allfgmpi MATRIX_RANK=$(matrix_rank) NUMBER_OF_FUNCTIONS=$(number_of_functions)
+	cd scripts/small; $(MAKE) -f  Makefile_FG_MPI runfgmpi
+	cd scripts/wide;  $(MAKE) -f  Makefile_FG_MPI runfgmpi
 
 allmpiopenmp:
 	make -C C89 allmpiomp MATRIX_RANK=$(matrix_rank) NUMBER_OF_FUNCTIONS=$(number_of_functions)

@@ -64,8 +64,8 @@ HISTORY: Written by Rob Van der Wijngaart, March 2006.
   
 *******************************************************************/
 
-#include <"prk_util.h">
-#include <"prk_mpi_util.h">
+#include "prk_util.h"
+#include "prk_mpi_util.h"
 
 
 int main(int argc, char ** argv)

@@ -91,6 +91,12 @@ branch-omp: branch-omp.c func.o
 branch-mpi1: branch-mpi1.c func.o
 	$(MPICC) $(CFLAGS) $< func.o -o $@
 
+branch-fgmpi: branch-fgmpi.c func.o
+	$(FGMPICC) $(CFLAGS) $< func.o -o $@
+
+branch-ampi: branch-ampi.c func.o
+	$(AMPICC) $(CFLAGS) $< func.o -o $@
+
 stencil-ser: stencil-ser.c loop_body_star.incl loop_body_compact.incl
 	$(CC) $(CFLAGS) $< -o $@
 
