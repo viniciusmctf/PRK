@@ -1,4 +1,4 @@
-include ../common/UPC.defs
+include ../common/make.defs
 include ../common/PRKVERSION
 
 ifndef RADIUS

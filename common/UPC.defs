@@ -1,4 +1,0 @@
-include ../common/make.defs
-ifeq ($(UPCC),)
-    UPCC=true
-endif
