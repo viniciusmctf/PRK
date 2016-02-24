@@ -64,9 +64,8 @@ HISTORY: Written by Rob Van der Wijngaart, March 2006.
   
 *******************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_mpi.h>
-
+#include "prk_util.h"
+#include "prk_mpi_util.h"
 
 int main(int argc, char ** argv)
 {
@@ -182,7 +181,7 @@ int main(int argc, char ** argv)
     element_value = iterations+2.0+
       (iterations*iterations+5.0*iterations+4.0)*(Num_procs-1.0)/2;
     for (i=0; i<vector_length; i++) {
-      if (ABS(vector[i] - element_value) >= epsilon) {
+      if (fabs(vector[i] - element_value) >= epsilon) {
         error = 1;
 #ifdef VERBOSE
         printf("ERROR at i=%d; value: %lf; reference value: %lf\n",

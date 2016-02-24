@@ -68,11 +68,9 @@ HISTORY: - Written by Rob Van der Wijngaart, November 2006.
   
 *********************************************************************************/
  
-#include <par-res-kern_general.h>
-#include <par-res-kern_mpi.h>
+#include "prk_util.h"
+#include "prk_mpi_util.h"
 
-#include <math.h>
- 
 #ifdef DOUBLE
   #define DTYPE     double
   #define MPI_DTYPE MPI_DOUBLE
@@ -438,7 +436,7 @@ int main(int argc, char ** argv) {
   local_norm = (DTYPE) 0.0;
   for (j=MAX(jstart,RADIUS); j<=MIN(n-RADIUS-1,jend); j++) {
     for (i=MAX(istart,RADIUS); i<=MIN(n-RADIUS-1,iend); i++) {
-      local_norm += (DTYPE)ABS(OUT(i,j));
+      local_norm += (DTYPE)fabs(OUT(i,j));
     }
   }
  
@@ -457,7 +455,7 @@ int main(int argc, char ** argv) {
     else {
       reference_norm = (DTYPE) 0.0;
     }
-    if (ABS(norm-reference_norm) > EPSILON) {
+    if (fabs(norm-reference_norm) > EPSILON) {
       printf("ERROR: L1 norm = "FSTR", Reference L1 norm = "FSTR"\n",
              norm, reference_norm);
       error = 1;

@@ -137,8 +137,8 @@ HISTORY: Written by Rob Van der Wijngaart, December 2007.
   
 ************************************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_mpi.h>
+#include "prk_util.h"
+#include "prk_mpi_util.h"
 
 /* Define 64-bit types and corresponding format strings for printf() and constants */
 /* PERIOD = (2^63-1)/7 = 7*73*127*337*92737*649657                                 */

@@ -50,18 +50,18 @@ History:   Written by Rob Van der Wijngaart, December 2015
 
 **********************************************************************/
 
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 #include <math.h>
 #include <stdint.h>
 #include <inttypes.h>
 #include <limits.h>
 
-#include <random_draw.h>
+#include "random_draw.h"
 
 #define NMAX 64
 static uint64_t  LCG_a = 6364136223846793005;
 static uint64_t  LCG_c = 1442695040888963407;
-static uint64_t  LCG_seed_init = 27182818285; //used to (re)set seed 
+static uint64_t  LCG_seed_init = 27182818285; /* used to (re)set seed */
 static uint64_t  LCG_seed      = 27182818285;
 static uint64_t  LCG_A[NMAX];
 #ifdef __OPENMP

@@ -61,8 +61,8 @@ HISTORY: Written by Rob Van der Wijngaart, December 2005.
   
 *******************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_mpi.h>
+#include "prk_util.h"
+#include "prk_mpi_util.h"
 
 #define EOS '\0'
 

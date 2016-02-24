@@ -63,10 +63,8 @@ HISTORY: Written by Rob Van der Wijngaart, December 2007
   
 ***********************************************************************************/
 
-#include "par-res-kern_general.h"
-#include "par-res-kern_mpi.h"
-
-#include <math.h>
+#include "prk_util.h"
+#include "prk_mpi_util.h"
 
 #define A(i,j) (a[(j)*lda+i])
 #define B(i,j) (b[(j)*ldb+i])
@@ -330,7 +328,7 @@ int main(int argc, char *argv[])
   ref_checksum *= (iterations+1);
 
   if (my_ID == root) { 
-    if (ABS((checksum - ref_checksum)/ref_checksum) > epsilon) {
+    if (fabs((checksum - ref_checksum)/ref_checksum) > epsilon) {
       printf("ERROR: Checksum = %lf, Reference checksum = %lf\n",
              checksum, ref_checksum);
       error = 1;

@@ -31,6 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <mpi.h>
+#include "prk_mpi_bailout.h"
 
 /* This code appears in MADNESS, which is GPL, but it was
  * written by Jeff Hammond and contributed to multiple projects
@@ -126,5 +127,3 @@ int PRK_Win_free(MPI_Win * win)
     return MPI_SUCCESS;
 #endif
 }
-
-extern void bail_out(int);

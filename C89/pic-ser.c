@@ -61,7 +61,7 @@ HISTORY: - Written by Evangelos Georganas, August 2015.
 **********************************************************************************/
 
 #include "prk_util.h"
-#include <random_draw.h>
+#include "random_draw.h"
 
 #include <math.h>
 /* M_PI is not defined in strict C99 */
@@ -109,8 +109,8 @@ typedef struct particle_t {
   /* The following variables are used only for verification/debug purposes */
   double   x0;
   double   y0;
-  int64_t  k; //  determines how many cells particles move per time step in the x direction 
-  int64_t  m; //  determines how many cells particles move per time step in the y direction 
+  int64_t  k; /* determines how many cells particles move per time step in the x direction */
+  int64_t  m; /* determines how many cells particles move per time step in the y direction */
 } particle_t;
 
 /* Initializes the grid of charges
@@ -325,8 +325,8 @@ void computeCoulomb(double x_dist, double y_dist, double q1, double q2, double *
   double   r = sqrt(r2);
   double   f_coulomb = q1 * q2 / r2;
    
-  (*fx) = f_coulomb * x_dist/r; // f_coulomb * cos_theta
-  (*fy) = f_coulomb * y_dist/r; // f_coulomb * sin_theta
+  (*fx) = f_coulomb * x_dist/r; /* f_coulomb * cos_theta */
+  (*fy) = f_coulomb * y_dist/r; /* f_coulomb * sin_theta */
   return;
 }
 
@@ -376,24 +376,24 @@ int bad_patch(bbox_t *patch, bbox_t *patch_contain) {
 
 int main(int argc, char ** argv) {
 
-  int         args_used = 1;     // keeps track of # consumed arguments
-  uint64_t    g;                 // dimension of grid in points
-  uint64_t    L;                 // dimension of grid in cells
-  uint64_t    iterations;        // total number of simulation steps
-  uint64_t    n;                 // total number of particles in the simulation
-  char        *init_mode;        // particle initialization mode (char)
-  uint64_t    particle_mode;     // particle initialization mode (int)
-  double      rho;               // attenuation factor for geometric particle distribution
-  int64_t     k, m;              // determine initial horizontal and vertical velocity of 
-                                 // particles-- (2*k)+1 cells per time step 
-  double      alpha, beta;       // slope and offset values for linear particle distribution
-  bbox_t      grid_patch,        // whole grid
-              init_patch;        // subset of grid used for localized initialization
-  int         particles_per_cell;// number of particles per cell to be injected
-  int         correctness = 1;   // determines whether simulation was correct
-  double      *Qgrid;            // field of fixed charges
-  particle_t  *particles, *p;    // the particles array
-  uint64_t    iter, i;           // dummies
+  int         args_used = 1;     /* keeps track of # consumed arguments                         */
+  uint64_t    g;                 /* dimension of grid in points                                 */
+  uint64_t    L;                 /* dimension of grid in cells                                  */
+  uint64_t    iterations;        /* total number of simulation steps                            */
+  uint64_t    n;                 /* total number of particles in the simulation                 */
+  char        *init_mode;        /* particle initialization mode (char)                         */
+  uint64_t    particle_mode;     /* particle initialization mode (int)                          */
+  double      rho;               /* attenuation factor for geometric particle distribution      */
+  int64_t     k, m;              /* determine initial horizontal and vertical velocity of       */
+                                 /* particles-- (2*k)+1 cells per time step                     */
+  double      alpha, beta;       /* slope and offset values for linear particle distribution    */
+  bbox_t      grid_patch,        /* whole grid                                                  */
+              init_patch;        /* subset of grid used for localized initialization            */
+  int         particles_per_cell;/* number of particles per cell to be injected                 */
+  int         correctness = 1;   /* determines whether simulation was correct                   */
+  double      *Qgrid;            /* field of fixed charges                                      */
+  particle_t  *particles, *p;    /* the particles array                                         */
+  uint64_t    iter, i;           /* dummies                                                     */
   double      fx, fy, ax, ay, simulation_time;
   int         error;
   double      avg_time;

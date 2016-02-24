@@ -30,6 +30,9 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef PRK_WTIME_H
+#define PRK_WTIME_H
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -57,3 +60,5 @@ static double wtime(void)
 #endif
   return time_seconds;
 }
+
+#endif /* PRK_WTIME_H */

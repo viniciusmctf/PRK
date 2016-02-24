@@ -116,8 +116,8 @@ HISTORY: Written by Rob Van der Wijngaart, May 2006.
   
 *******************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_mpi.h>
+#include "prk_util.h"
+#include "prk_mpi_util.h"
 
 /* the following values are only used as labels                                  */
 #define VECTOR_STOP       66

@@ -119,8 +119,8 @@ o The original and transposed matrices are called A and B
 |           |           |           |                             |
  -----------------------------------------------------------------*/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_mpi.h>
+#include "prk_util.h"
+#include "prk_mpi_util.h"
 
 #define A(i,j)        A_p[(i+istart)+order*(j)]
 #define B(i,j)        B_p[(i+istart)+order*(j)]
@@ -357,7 +357,7 @@ int main(int argc, char ** argv)
   istart = 0;
   double addit = ((double)(iterations+1) * (double) (iterations))/2.0;
   for (j=0;j<Block_order;j++) for (i=0;i<order; i++) {
-      abserr += ABS(B(i,j) - (double)((order*i + j+colstart)*(iterations+1)+addit));
+      abserr += fabs(B(i,j) - (double)((order*i + j+colstart)*(iterations+1)+addit));
   }
 
   MPI_Reduce(&abserr, &abserr_tot, 1, MPI_DOUBLE, MPI_SUM, root, MPI_COMM_WORLD);

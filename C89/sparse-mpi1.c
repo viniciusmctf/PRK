@@ -67,8 +67,8 @@ HISTORY: Written by Rob Van der Wijngaart, October 2006.
   
 ***********************************************************************************/
 
-#include <par-res-kern_general.h>
-#include <par-res-kern_mpi.h>
+#include "prk_util.h"
+#include "prk_mpi_util.h"
 
 /* linearize the grid index                                                       */
 #define LIN(i,j) (i+((j)<<lsize))
@@ -391,7 +391,7 @@ int main(int argc, char **argv){
   MPI_Reduce(&vector_sum, &check_sum, 1, MPI_DOUBLE, MPI_SUM, root, MPI_COMM_WORLD);
 
   if (my_ID == root) {
-    if (ABS(check_sum-reference_sum) > epsilon) {
+    if (fabs(check_sum-reference_sum) > epsilon) {
       printf("ERROR: Vector sum = %lf, Reference vector sum = %lf, my_ID = %d\n",
              check_sum, reference_sum, my_ID);
       error = 1;

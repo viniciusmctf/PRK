@@ -116,9 +116,9 @@ REVISION:  Modified by Rob Van der Wijngaart, November 2014, replaced
            accumulation: a[] += b[] + scalar*c[]
 **********************************************************************/
  
-#include <par-res-kern_general.h>
-#include <par-res-kern_mpi.h>
- 
+#include "prk_util.h"
+#include "prk_mpi_util.h"
+
 #define SCALAR  3.0
  
 static int checkTRIADresults(int, long int, double *);
@@ -284,7 +284,7 @@ int checkTRIADresults (int iterations, long int length, double *a) {
   printf ("        Observed checksum: %f\n",asum);
 #endif
  
-  if (ABS(aj-asum)/asum > epsilon) {
+  if (fabs(aj-asum)/asum > epsilon) {
     printf ("Failed Validation on output array\n");
 #ifndef VERBOSE
     printf ("        Expected checksum: %f \n",aj);

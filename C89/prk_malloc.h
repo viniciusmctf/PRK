@@ -30,6 +30,9 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef PRK_MALLOC_H
+#define PRK_MALLOC_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -105,3 +108,5 @@ static void prk_free(void* p)
     free(p);
 #endif
 }
+
+#endif /* PRK_MALLOC_H */
