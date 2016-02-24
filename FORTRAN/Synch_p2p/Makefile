@@ -30,6 +30,7 @@ run: $(PROGRAM)
 clean:
 	-rm -f *.o
 	-rm -f *.i90
+	-rm -f *__genmod.f90
 	-rm -f *.optrpt
 	-rm -f *.dwarf
 	-rm -rf *.dSYM
