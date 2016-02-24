@@ -14,16 +14,7 @@ UPCFLAGS += -DRADIUS=$(RADIUS) $(STARFLAG) $(DOUBLEFLAG)
 
 .PHONY: all clean
 
-all: p2p-upc stencil-upc transpose-upc
-
-stencil-upc: stencil.upc
-	$(UPCC) $(UPCFLAGS) $< -o $@
-
-p2p-upc: p2p.upc
-	$(UPCC) $(UPCFLAGS) $< -o $@
-
-transpose-upc: transpose.upc
-	$(UPCC) $(UPCFLAGS) $< -o $@
+all: 
 
 clean:
 	-rm -f *.o

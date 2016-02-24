@@ -1,4 +1,4 @@
-include ../common/make.defs
+include ../common/UPC.defs
 include ../common/PRKVERSION
 
 ifndef RADIUS
@@ -12,9 +12,17 @@ CFLAGS  = $(DEFAULT_OPT_FLAGS)
 CFLAGS += -DPRKVERSION=$(CPRKVERSION)
 CFLAGS += -DRADIUS=$(RADIUS) $(STARFLAG) $(DOUBLEFLAG)
 
-.PHONY: all clean
+UPCFLAGS = $(CFLAGS)
 
-all: p2p stencil transpose stencil-omp transpose-omp # p2p-omp # transpose-1d
+.PHONY: all clean allser allomp allupc
+
+all: allser allomp allupc
+
+allser: p2p stencil transpose # transpose-1d
+
+allomp: stencil-omp transpose-omp # p2p-omp
+
+allupc: p2p-upc stencil-upc transpose-upc
 
 stencil: stencil.c
 	$(CC) $(CFLAGS) $< -o $@
@@ -34,6 +42,15 @@ p2p-omp: p2p.c
 transpose-omp: transpose.c
 	$(CC) $(CFLAGS) $(OPENMPFLAG) $< -o $@
 
+stencil-upc: stencil.upc
+	$(UPCC) $(UPCFLAGS) $< -o $@
+
+p2p-upc: p2p.upc
+	$(UPCC) $(UPCFLAGS) $< -o $@
+
+transpose-upc: transpose.upc
+	$(UPCC) $(UPCFLAGS) $< -o $@
+
 extra:
 	make PRK_LOOP_INDEX_TYPE=int32_t transpose-omp-int32_t
 	make PRK_LOOP_INDEX_TYPE=uint32_t transpose-omp-uint32_t
@@ -49,11 +66,14 @@ clean:
 	-rm -f *.dwarf
 	-rm -rf *.dSYM
 	-rm -f p2p
-	-rm -f p2p-omp
 	-rm -f stencil
-	-rm -f stencil-omp
 	-rm -f transpose
+	-rm -f p2p-omp
+	-rm -f stencil-omp
 	-rm -f transpose-omp
+	-rm -f p2p-upc
+	-rm -f stencil-upc
+	-rm -f transpose-upc
 	-rm -f transpose-1d
 	-rm -f transpose-omp-*int*_t
 
