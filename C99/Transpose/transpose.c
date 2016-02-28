@@ -90,7 +90,7 @@ int main(int argc, char * argv[])
   }
 
   int iterations  = atoi(argv[1]); /* number of times to do the transpose */
-  if (iterations < 1) {
+  if (iterations < 0) {
     printf("ERROR: iterations must be >= 1 : %d \n", iterations);
     exit(EXIT_FAILURE);
   }
@@ -189,6 +189,12 @@ int main(int argc, char * argv[])
       { trans_time = wtime() - trans_time; }
 
   } /* end OMP_PARALLEL */
+
+      for (prk_index_t j=0;j<order;j++) {
+        for (prk_index_t i=0;i<order; i++) {
+          printf("%s: %d,%d,%lf\n","AFTER",j,i,B[j][i]);
+        }
+      }
 
   /*********************************************************************
   ** Analyze and output results.

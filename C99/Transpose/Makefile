@@ -4,13 +4,14 @@ include ../../common/make.defs
 include ../../common/PRKVERSION
 
 CFLAGS  = $(DEFAULT_OPT_FLAGS)
+CFLAGS += -std=c99
 CFLAGS += -DPRKVERSION=$(CPRKVERSION)
 CFLAGS += -DRADIUS=$(RADIUS) $(STARFLAG)
 CFLAGS += -I..
 
 .PHONY: all clean run
 
-all: $(PROGRAM) $(PROGRAM)-omp $(PROGRAM)-1d
+all: $(PROGRAM) $(PROGRAM)-omp $(PROGRAM)-1d $(PROGRAM)-rma $(PROGRAM)-a2a
 
 extra:
 	make PRK_LOOP_INDEX_TYPE=int32_t $(PROGRAM)-omp-int32_t
@@ -26,6 +27,12 @@ $(PROGRAM)-omp: $(PROGRAM).c
 
 $(PROGRAM)-omp-$(PRK_LOOP_INDEX_TYPE): $(PROGRAM).c
 	$(CC) $(CFLAGS) $(OPENMPFLAG) -DPRK_LOOP_INDEX_TYPE=$(PRK_LOOP_INDEX_TYPE) $< -o $@
+
+$(PROGRAM)-a2a: $(PROGRAM)-a2a.c
+	$(MPICC) $(CFLAGS) $< -o $@
+
+$(PROGRAM)-rma: $(PROGRAM)-rma.c
+	$(MPICC) $(CFLAGS) $< -o $@
 
 run: $(PROGRAM)
 	$(PROGRAM) 10 4000 32
