@@ -137,7 +137,9 @@ allfortranopenmp:
 	make -C FORTRAN openmp
 
 allfortrancoarray:
-	make -C FORTRAN coarray
+	cd FORTRAN/Stencil;         $(MAKE) stencil-coarray
+	cd FORTRAN/Synch_p2p;       $(MAKE) p2p-coarray
+	cd FORTRAN/Transpose;       $(MAKE) transpose-coarray
 
 clean:
 	make -C C89 clean
