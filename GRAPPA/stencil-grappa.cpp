@@ -56,7 +56,7 @@ HISTORY: - Written by Rob Van der Wijngaart, November 2006.
            with global timing of all iterations across all ranks
  
 *********************************************************************************/
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 #include <math.h>
 #include <Grappa.hpp>
 #include <FullEmpty.hpp>

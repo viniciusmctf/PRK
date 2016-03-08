@@ -31,7 +31,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 ///////////////////////////////////////////////////////////////////////
  
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 #include <Grappa.hpp>
 #include <FullEmpty.hpp>
  

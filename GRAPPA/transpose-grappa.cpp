@@ -120,7 +120,7 @@ o The original and transposed matrices are called A and B
 |           |           |           |                             |
  -----------------------------------------------------------------*/
 
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 #include <Grappa.hpp>
 #include <FullEmpty.hpp>
 
