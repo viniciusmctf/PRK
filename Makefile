@@ -112,9 +112,7 @@ allopenmp:
 	make -C C89 allomp MATRIX_RANK=$(matrix_rank) NUMBER_OF_FUNCTIONS=$(number_of_functions)
 
 allcharm++:
-	cd CHARM++/Synch_p2p;       $(MAKE) p2p       "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
-	cd CHARM++/Stencil;         $(MAKE) stencil   "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
-	cd CHARM++/Transpose;       $(MAKE) transpose "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
+	make -C CHARM++ all
 
 allgrappa:
 	cd GRAPPA/Synch_p2p;       $(MAKE) p2p        "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
@@ -127,12 +125,8 @@ allc99:
 allserial:
 	make -C C89 allser MATRIX_RANK=$(matrix_rank) NUMBER_OF_FUNCTIONS=$(number_of_functions)
 
-<<<<<<< HEAD
 allfortran:
 	make -C FORTRAN all
-=======
-allfortran: allfortranserial allfortranopenmp allfortrancoarray allfortranpretty
->>>>>>> fortran-pretty-stencil
 
 allfortranserial:
 	make -C FORTRAN serial
@@ -144,9 +138,7 @@ allfortrancoarray:
 	make -C FORTRAN coarray
 
 allfortranpretty:
-	cd FORTRAN/Stencil;         $(MAKE) stencil-pretty
-	#cd FORTRAN/Synch_p2p;       $(MAKE) p2p-pretty
-	cd FORTRAN/Transpose;       $(MAKE) transpose-pretty
+	make -C FORTRAN pretty
 
 clean:
 	make -C C89 clean
