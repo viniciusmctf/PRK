@@ -338,14 +338,14 @@ int main(int argc, char ** argv) {
   total_length_out *= height[0];
   total_length_out *= sizeof(DTYPE);
  
-  in  = (DTYPE *) prk_malloc(total_length_in);
-  out = (DTYPE *) prk_malloc(total_length_out);
+  in  = (DTYPE *) prk_shmem_malloc(total_length_in);
+  out = (DTYPE *) prk_shmem_malloc(total_length_out);
   if (!in || !out) {
     printf("ERROR: rank %d could not allocate space for input/output array\n",
             my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
 
   shmem_barrier_all();
 
@@ -375,12 +375,12 @@ int main(int argc, char ** argv) {
   }
 
   /* allocate communication buffers for halo values                            */
-  top_buf_out=(DTYPE*)prk_malloc(2*sizeof(DTYPE)*RADIUS*maxwidth[0]);
+  top_buf_out=(DTYPE*)prk_shmem_malloc(2*sizeof(DTYPE)*RADIUS*maxwidth[0]);
   if (!top_buf_out) {
     printf("ERROR: Rank %d could not allocate output comm buffers for y-direction\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
   bottom_buf_out = top_buf_out+RADIUS*maxwidth[0];
 
   top_buf_in[0]=(DTYPE*)prk_shmem_align(prk_get_alignment(),4*sizeof(DTYPE)*RADIUS*maxwidth[0]);
@@ -389,18 +389,18 @@ int main(int argc, char ** argv) {
     printf("ERROR: Rank %d could not allocate input comm buffers for y-direction\n", my_ID);
     error=1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
 
   top_buf_in[1]    = top_buf_in[0]    + RADIUS*maxwidth[0];
   bottom_buf_in[0] = top_buf_in[1]    + RADIUS*maxwidth[0];
   bottom_buf_in[1] = bottom_buf_in[0] + RADIUS*maxwidth[0];
  
-  right_buf_out=(DTYPE*)prk_malloc(2*sizeof(DTYPE)*RADIUS*maxheight[0]);
+  right_buf_out=(DTYPE*)prk_shmem_malloc(2*sizeof(DTYPE)*RADIUS*maxheight[0]);
   if (!right_buf_out) {
     printf("ERROR: Rank %d could not allocate output comm buffers for x-direction\n", my_ID);
     error = 1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
   left_buf_out=right_buf_out+RADIUS*maxheight[0];
 
   right_buf_in[0]=(DTYPE*)prk_shmem_align(prk_get_alignment(),4*sizeof(DTYPE)*RADIUS*maxheight[0]);
@@ -409,7 +409,7 @@ int main(int argc, char ** argv) {
     printf("ERROR: Rank %d could not allocate input comm buffers for x-dimension\n", my_ID);
     error=1;
   }
-  bail_out(error);
+  shmem_bail_out(error);
   right_buf_in[1] = right_buf_in[0] + RADIUS*maxheight[0];
   left_buf_in[0]  = right_buf_in[1] + RADIUS*maxheight[0];
   left_buf_in[1]  = left_buf_in[0]  + RADIUS*maxheight[0];
@@ -582,11 +582,11 @@ int main(int argc, char ** argv) {
            1.0E-06 * flops/avgtime, avgtime);
   }
 
-  prk_shmem_free(top_buf_in);
-  prk_shmem_free(right_buf_in);
-  free(top_buf_out);
-  free(right_buf_out);
-
+  prk_shmem_free(top_buf_in[0]);
+  prk_shmem_free(right_buf_in[0]);
+  prk_shmem_free(top_buf_out);
+  prk_shmem_free(right_buf_out);
+  
   prk_shmem_free(pSync_bcast);
   prk_shmem_free(pSync_reduce);
   prk_shmem_free(pWrk_time);

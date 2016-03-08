@@ -38,7 +38,7 @@ OPENMP_PROGRAMS = branch-omp dgemm-omp nstream-omp p2p-omp \
 SHMEM_PROGRAMS = p2p-shmem stencil-shmem transpose-shmem
 MPI1_PROGRAMS = branch-mpi1 dgemm-mpi1 nstream-mpi1 p2p-mpi1 \
                 random-mpi1 reduce-mpi1 sparse-mpi1 \
-                stencil-mpi1 transpose-mpi1
+                stencil-mpi1 transpose-mpi1 pic-mpi1
 AMPI_PROGRAMS = branch-ampi dgemm-ampi nstream-ampi p2p-ampi \
                 random-ampi reduce-ampi sparse-ampi \
                 stencil-ampi transpose-ampi
@@ -81,6 +81,9 @@ random_draw.o: random_draw.c
 
 pic-ser: pic-ser.c random_draw.o
 	$(CC) $(CFLAGS) $< random_draw.o -o $@
+
+pic-mpi1: pic-mpi1.c random_draw.o
+	$(MPICC) $(CFLAGS) $< random_draw.o -o $@
 
 branch-ser: branch-ser.c func.o
 	$(CC) $(CFLAGS) $< func.o -o $@
