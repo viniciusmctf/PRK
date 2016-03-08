@@ -18,7 +18,7 @@ all: serial openmp coarray pretty
 serial: stencil transpose p2p
 openmp: stencil-omp transpose-omp # p2p-omp
 coarray: stencil-coarray transpose-coarray p2p-coarray
-pretty: transpose-pretty # stencil-pretty # p2p-pretty
+pretty: transpose-pretty stencil-pretty # p2p-pretty
 
 %: %.f90
 	$(FC) $(FCFLAGS) $< -o $@

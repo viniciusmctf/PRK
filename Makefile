@@ -127,8 +127,12 @@ allc99:
 allserial:
 	make -C C89 allser MATRIX_RANK=$(matrix_rank) NUMBER_OF_FUNCTIONS=$(number_of_functions)
 
+<<<<<<< HEAD
 allfortran:
 	make -C FORTRAN all
+=======
+allfortran: allfortranserial allfortranopenmp allfortrancoarray allfortranpretty
+>>>>>>> fortran-pretty-stencil
 
 allfortranserial:
 	make -C FORTRAN serial
@@ -138,6 +142,11 @@ allfortranopenmp:
 
 allfortrancoarray:
 	make -C FORTRAN coarray
+
+allfortranpretty:
+	cd FORTRAN/Stencil;         $(MAKE) stencil-pretty
+	#cd FORTRAN/Synch_p2p;       $(MAKE) p2p-pretty
+	cd FORTRAN/Transpose;       $(MAKE) transpose-pretty
 
 clean:
 	make -C C89 clean
