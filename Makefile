@@ -144,9 +144,7 @@ clean:
 	make -C C89 clean
 	make -C C99 clean
 	make -C FORTRAN clean
-	cd CHARM++/Stencil;         $(MAKE) clean
-	cd CHARM++/Synch_p2p;       $(MAKE) clean
-	cd CHARM++/Transpose;       $(MAKE) clean
+	make -C CHARM++ clean
 	cd GRAPPA/Synch_p2p;        $(MAKE) clean
 	cd GRAPPA/Stencil;          $(MAKE) clean
 	cd GRAPPA/Transpose;        $(MAKE) clean
