@@ -1,5 +1,5 @@
 #include "p2p.decl.h"
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 
 #define EPSILON    1.e-8
 #define ARRAY(i,j) vector[i+1+(j)*(width+1)]
@@ -111,7 +111,7 @@ public:
       // flip sign of time if grouping is applied (cheating)                       
       if (grp>1) totalTime *= -1.0;
       flops = (double) (2*(n-1)) * (double) (m-1)*maxiterations;
-      diff = ABS(result-corner_val);
+      diff = fabs(result-corner_val);
       if (diff < EPSILON) {
         CkPrintf("Solution validates\n");
         CkPrintf("Rate (MFlops): %lf Avg time (s) %lf\n", flops/totalTime/1.e6, totalTime/maxiterations);

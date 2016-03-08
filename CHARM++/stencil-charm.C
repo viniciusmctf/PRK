@@ -1,5 +1,5 @@
 #include "stencil.decl.h"
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 
 #include <math.h>
 
@@ -159,7 +159,7 @@ public:
       result   /= (n-2.0*RADIUS)*(n-2.0*RADIUS);
       totalTime = endTime - startTime;
       flops     = (double) (2*(4*RADIUS+1)+1) * (n-2*RADIUS)*(double)(n-2*RADIUS)*maxiterations;
-      diff      = ABS(result-ref_norm);
+      diff      = fabs(result-ref_norm);
       if (diff < EPSILON) {
         CkPrintf("Solution validates\n");
         CkPrintf("Rate (MFlops): %lf Avg time (s) %lf\n", flops/totalTime/1.e6, totalTime/maxiterations);

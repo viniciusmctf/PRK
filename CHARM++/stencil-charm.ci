@@ -1,5 +1,5 @@
 mainmodule stencil {
-  include "ci_reqs.h";
+  include "charm_ci_reqs.h";
   readonly CProxy_Main mainProxy;
   readonly int n;
   readonly int num_chare_rows;

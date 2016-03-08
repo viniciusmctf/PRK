@@ -1,5 +1,5 @@
 #include "transpose.decl.h"
-#include <par-res-kern_general.h>
+#include "prk_util.h"
 
 #define A(i,j)        A_p[(i+istart)+order*(j)]
 #define B(i,j)        B_p[(i+istart)+order*(j)]
@@ -219,7 +219,7 @@ public:
     int istart = 0;
     double addit = ((double)(iterations+1) * (double) (iterations))/2.0;
     for (int j=0;j<Block_order;j++) for (int i=0;i<order; i++) {
-      local_error += ABS(B(i,j) - (double)((order*i + j+colstart)*(iterations+1) +addit));
+      local_error += fabs(B(i,j) - (double)((order*i + j+colstart)*(iterations+1) +addit));
     }
   }
 
