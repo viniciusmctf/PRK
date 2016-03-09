@@ -60,7 +60,7 @@ HISTORY: Written by  Rob Van der Wijngaart, February 2009.
          Modernized by Jeff Hammond, February 2016.
 *******************************************************************/
 
-#include <prk_util.h>
+#include "prk_util.h"
 
 #ifdef PRK_LOOP_INDEX_TYPE
 typedef PRK_LOOP_INDEX_TYPE prk_index_t;
