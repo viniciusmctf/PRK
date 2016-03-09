@@ -115,9 +115,7 @@ allcharm++:
 	make -C CHARM++ all
 
 allgrappa:
-	cd GRAPPA/Synch_p2p;       $(MAKE) p2p        "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
-	cd GRAPPA/Stencil;         $(MAKE) stencil    "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
-	cd GRAPPA/Transpose;       $(MAKE) transpose  "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
+	make -C Cxx11 allgrappa
 
 allc99:
 	make -C C99 all
@@ -145,9 +143,7 @@ clean:
 	make -C C99 clean
 	make -C FORTRAN clean
 	make -C CHARM++ clean
-	cd GRAPPA/Synch_p2p;        $(MAKE) clean
-	cd GRAPPA/Stencil;          $(MAKE) clean
-	cd GRAPPA/Transpose;        $(MAKE) clean
+	make -C Cxx11 clean
 	rm -f stats.json
 
 veryclean: clean
