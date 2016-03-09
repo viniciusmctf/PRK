@@ -51,7 +51,7 @@ MPIOMP_PROGRAMS = p2p-mpiomp stencil-mpiomp transpose-mpiomp
 
 .PHONY: all clean allser allomp allshmem allmpi allmpi1 allmpirma allmpishm allmpiomp allampi allfgmpi
 
-all: allser allomp allshmem allmpi allmpi1 allmpirma allmpishm allmpiomp allampi allfgmpi
+all: func.o allser allomp allshmem allmpi allmpi1 allmpirma allmpishm allmpiomp allampi allfgmpi
 
 allmpi: allmpi1 allmpirma allmpiomp allmpishm allampi allfgmpi
 
