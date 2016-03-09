@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2013, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions 
@@ -30,46 +30,43 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <cstdio>  // atoi
-#include <cstdlib> // getenv
-#include <cmath>   // fabs
-#include <cassert>
+#ifndef PRK_UTIL_H
+#define PRK_UTIL_H
 
-#include <iostream>
-#include <iomanip> // std::setprecision
-#include <exception>
-#include <chrono>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <assert.h>
 
-#if !(defined(__cplusplus) && (__cplusplus >= 201103L))
-#error You need a C++11 compiler.
+/* We can include this here, because no conflict with tgmath.h
+ * is possible, because tgmath.h requires C99. */
+#include <math.h>
+
+/* This is not ISO C.  It is Linux/Unix. */
+#include <unistd.h>
+
+#ifndef MIN
+#define MIN(x,y) ((x)<(y)?(x):(y))
+#endif
+#ifndef MAX
+#define MAX(x,y) ((x)>(y)?(x):(y))
 #endif
 
-namespace prk {
+#include "prk_wtime.h"
+#include "prk_malloc.h"
 
-    static inline double wtime(void)
-    {
-        using t = std::chrono::high_resolution_clock;
-        auto c = t::now().time_since_epoch().count();
-        auto n = t::period::num;
-        auto d = t::period::den;
-        double r = static_cast<double>(c)/static_cast<double>(d)*static_cast<double>(n);
-        return r;
-    }
-
-    /* This function is separate from prk_malloc() because
-     * we need it when calling prk_shmem_align(..)           */
-    static inline int get_alignment(void)
-    {
-        /* a := alignment */
-#ifdef PRK_ALIGNMENT
-        int a = PRK_ALIGNMENT;
+/* Define 64-bit types and corresponding format strings for printf() */
+#ifdef LONG_IS_64BITS
+  typedef unsigned long      u64Int;
+  typedef long               s64Int;
+  #define FSTR64             "%16ld"
+  #define FSTR64U            "%16lu"
 #else
-        char* temp = getenv("PRK_ALIGNMENT");
-        int a = (temp!=NULL) ? atoi(temp) : 64;
-        if (a < 8) a = 8;
-        assert( (a & (~a+1)) == a ); /* is power of 2? */
+  typedef unsigned long long u64Int;
+  typedef long long          s64Int;
+  #define FSTR64             "%16ll"
+  #define FSTR64U            "%16llu"
 #endif
-        return a;
-    }
 
-} // namespace prk
+#endif /* PRK_UTIL_H */

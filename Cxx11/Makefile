@@ -71,6 +71,7 @@ clean:
 	-rm -f *.optrpt
 	-rm -f *.dwarf
 	-rm -rf *.dSYM
+	-rm -f $(CXX11_PROGRAMS)
 	-rm -f $(GRAPPA_PROGRAMS)
 
 veryclean: clean
