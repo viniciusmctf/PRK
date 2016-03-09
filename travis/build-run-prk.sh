@@ -27,30 +27,33 @@ case "$PRK_TARGET" in
         which python
         python --version
         export PRK_TARGET_PATH=PYTHON
-        python $PRK_TARGET_PATH/p2p.py             10 1024 1024
-        python $PRK_TARGET_PATH/p2p-numpy.py       10 1024 1024
-        python $PRK_TARGET_PATH/stencil.py         10 1000
-        python $PRK_TARGET_PATH/stencil-numpy.py   10 1000
-        python $PRK_TARGET_PATH/transpose.py       10 1024
-        python $PRK_TARGET_PATH/transpose-numpy.py 10 1024
+        export PRK_SUFFIX=.py
+        python $PRK_TARGET_PATH/p2p$PRK_SUFFIX             10 1024 1024
+        python $PRK_TARGET_PATH/stencil$PRK_SUFFIX         10 1000
+        python $PRK_TARGET_PATH/transpose$PRK_SUFFIX       10 1024
+        export PRK_SUFFIX=-numpy.py
+        python $PRK_TARGET_PATH/p2p-numpy$PRK_SUFFIX       10 1024 1024
+        python $PRK_TARGET_PATH/stencil-numpy$PRK_SUFFIX   10 1000
+        python $PRK_TARGET_PATH/transpose-numpy$PRK_SUFFIX 10 1024
         ;;
     allserial)
         echo "Serial"
         echo "CC=$PRK_COMPILER -std=c99" >> common/make.defs
         make $PRK_TARGET
-        export PRK_TARGET_PATH=SERIAL
-        $PRK_TARGET_PATH/Synch_p2p/p2p       10 1024 1024
-        $PRK_TARGET_PATH/Stencil/stencil     10 1000
-        $PRK_TARGET_PATH/Transpose/transpose 10 1024 32
-        $PRK_TARGET_PATH/Reduce/reduce       10 1024
-        $PRK_TARGET_PATH/Random/random       64 10 16384
-        $PRK_TARGET_PATH/Nstream/nstream     10 16777216 32
-        $PRK_TARGET_PATH/Sparse/sparse       10 10 5
-        $PRK_TARGET_PATH/DGEMM/dgemm         10 1024 32
-        $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 1 2 GEOMETRIC 0.99
-        $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 0 1 SINUSOIDAL
-        $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 1 0 LINEAR 1.0 3.0
-        $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 1 0 PATCH 0 200 100 200
+        export PRK_TARGET_PATH=C89
+        export PRK_SUFFIX=-ser
+        $PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024
+        $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
+        $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 32
+        $PRK_TARGET_PATH/reduce$PRK_SUFFIX    10 1024
+        $PRK_TARGET_PATH/random$PRK_SUFFIX    64 10 16384
+        $PRK_TARGET_PATH/nstream$PRK_SUFFIX   10 16777216 32
+        $PRK_TARGET_PATH/sparse$PRK_SUFFIX    10 10 5
+        $PRK_TARGET_PATH/dgemm$PRK_SUFFIX     10 1024 32
+        $PRK_TARGET_PATH/pic$PRK_SUFFIX       10 1000 1000000 1 2 GEOMETRIC 0.99
+        $PRK_TARGET_PATH/pic$PRK_SUFFIX       10 1000 1000000 0 1 SINUSOIDAL
+        $PRK_TARGET_PATH/pic$PRK_SUFFIX       10 1000 1000000 1 0 LINEAR 1.0 3.0
+        $PRK_TARGET_PATH/pic$PRK_SUFFIX       10 1000 1000000 1 0 PATCH 0 200 100 200
         ;;
     allfortran)
         echo "Fortran"
@@ -78,100 +81,110 @@ case "$PRK_TARGET" in
         esac
         make $PRK_TARGET
         export PRK_TARGET_PATH=FORTRAN
-        $PRK_TARGET_PATH/Synch_p2p/p2p               10 1024 1024
-        $PRK_TARGET_PATH/Stencil/stencil             10 1000
-        $PRK_TARGET_PATH/Transpose/transpose         10 1024 1
-        $PRK_TARGET_PATH/Transpose/transpose         10 1024 32
+        export PRK_SUFFIX=
+        $PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024
+        $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
+        $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 1
+        $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 32
         # pretty versions do not support tiling...
-        #$PRK_TARGET_PATH/Synch_p2p/p2p-pretty        10 1024 1024
-        $PRK_TARGET_PATH/Stencil/stencil-pretty      10 1000
-        $PRK_TARGET_PATH/Transpose/transpose-pretty  10 1024
+        export PRK_SUFFIX=-pretty
+        #$PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024
+        $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
+        $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024
         export OMP_NUM_THREADS=2
-        $PRK_TARGET_PATH/Synch_p2p/p2p-omp           10 1024 1024 # not threaded yet
-        $PRK_TARGET_PATH/Stencil/stencil-omp         10 1000
-        $PRK_TARGET_PATH/Transpose/transpose-omp     10 1024 1
-        $PRK_TARGET_PATH/Transpose/transpose-omp     10 1024 32
+        export PRK_SUFFIX=-omp
+        $PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024 # not threaded yet
+        $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
+        $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 1
+        $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 32
         # FIXME: only testing with a single image right now.
-        $PRK_TARGET_PATH/Synch_p2p/p2p-coarray       10 1024 1024
-        $PRK_TARGET_PATH/Stencil/stencil-coarray     10 1000
-        $PRK_TARGET_PATH/Transpose/transpose-coarray 10 1024 1
-        $PRK_TARGET_PATH/Transpose/transpose-coarray 10 1024 32
+        export PRK_SUFFIX=-coarray
+        $PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024
+        $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
+        $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 1
+        $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 32
         ;;
     allopenmp)
         echo "OpenMP"
         echo "CC=$PRK_COMPILER -std=c99\nOPENMPFLAG=-fopenmp" >> common/make.defs
         make $PRK_TARGET
-        export PRK_TARGET_PATH=OPENMP
+        export PRK_TARGET_PATH=C89
+        export PRK_SUFFIX=-omp
         export OMP_NUM_THREADS=4
-        $PRK_TARGET_PATH/Synch_p2p/p2p            $OMP_NUM_THREADS 10 1024 1024
-        $PRK_TARGET_PATH/Stencil/stencil          $OMP_NUM_THREADS 10 1000
-        $PRK_TARGET_PATH/Transpose/transpose      $OMP_NUM_THREADS 10 1024 32
-        $PRK_TARGET_PATH/Reduce/reduce            $OMP_NUM_THREADS 10 16777216
-        $PRK_TARGET_PATH/Nstream/nstream          $OMP_NUM_THREADS 10 16777216 32
-        $PRK_TARGET_PATH/Sparse/sparse            $OMP_NUM_THREADS 10 10 5
-        $PRK_TARGET_PATH/DGEMM/dgemm              $OMP_NUM_THREADS 10 1024 32
-        $PRK_TARGET_PATH/Synch_global/global      $OMP_NUM_THREADS 10 16384
-        $PRK_TARGET_PATH/RefCount_private/private $OMP_NUM_THREADS 16777216
-        $PRK_TARGET_PATH/RefCount_shared/shared   $OMP_NUM_THREADS 16777216 1024
+        $PRK_TARGET_PATH/p2p$PRK_SUFFIX       $OMP_NUM_THREADS 10 1024 1024
+        $PRK_TARGET_PATH/stencil$PRK_SUFFIX   $OMP_NUM_THREADS 10 1000
+        $PRK_TARGET_PATH/transpose$PRK_SUFFIX $OMP_NUM_THREADS 10 1024 32
+        $PRK_TARGET_PATH/reduce$PRK_SUFFIX    $OMP_NUM_THREADS 10 1024
+        $PRK_TARGET_PATH/random$PRK_SUFFIX    $OMP_NUM_THREADS 64 10 16384
+        $PRK_TARGET_PATH/nstream$PRK_SUFFIX   $OMP_NUM_THREADS 10 16777216 32
+        $PRK_TARGET_PATH/sparse$PRK_SUFFIX    $OMP_NUM_THREADS 10 10 5
+        $PRK_TARGET_PATH/dgemm$PRK_SUFFIX     $OMP_NUM_THREADS 10 1024 32
+        $PRK_TARGET_PATH/global$PRK_SUFFIX    $OMP_NUM_THREADS 10 16384
+        $PRK_TARGET_PATH/private$PRK_SUFFIX   $OMP_NUM_THREADS 16777216
+        $PRK_TARGET_PATH/shared$PRK_SUFFIX    $OMP_NUM_THREADS 16777216 1024
         # random is broken right now it seems
-        #$PRK_TARGET_PATH/Random/random $OMP_NUM_THREADS 10 16384 32
+        $PRK_TARGET_PATH/random$PRK_SUFFIX    $OMP_NUM_THREADS 10 16384 32
         ;;
     allmpi1)
         echo "MPI-1"
         echo "MPICC=$MPI_ROOT/bin/mpicc" >> common/make.defs
         make $PRK_TARGET
-        export PRK_TARGET_PATH=MPI1
+        export PRK_TARGET_PATH=C89
+        export PRK_SUFFIX=-mpi1
         export PRK_MPI_PROCS=4
         export PRK_LAUNCHER=$MPI_ROOT/bin/mpirun
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Synch_p2p/p2p       10 1024 1024
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Stencil/stencil     10 1000
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Transpose/transpose 10 1024 32
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Reduce/reduce       10 16777216
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Nstream/nstream     10 16777216 32
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Sparse/sparse       10 10 5
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/DGEMM/dgemm         10 1024 32 1
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Random/random       32 20
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Synch_global/global 10 16384
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/PIC-static/pic      10 1000 1000000 1 2 GEOMETRIC 0.99
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/PIC-static/pic      10 1000 1000000 0 1 SINUSOIDAL
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/PIC-static/pic      10 1000 1000000 1 0 LINEAR 1.0 3.0
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/PIC-static/pic      10 1000 1000000 1 0 PATCH 0 200 100 200 
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 32
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/reduce$PRK_SUFFIX    10 1024
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/random$PRK_SUFFIX    64 10 16384
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/nstream$PRK_SUFFIX   10 16777216 32
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/sparse$PRK_SUFFIX    10 10 5
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/dgemm$PRK_SUFFIX     10 1024 32
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/global$PRK_SUFFIX    10 16384
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/pic$PRK_SUFFIX       10 1000 1000000 1 2 GEOMETRIC 0.99
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/pic$PRK_SUFFIX       10 1000 1000000 0 1 SINUSOIDAL
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/pic$PRK_SUFFIX       10 1000 1000000 1 0 LINEAR 1.0 3.0
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/pic$PRK_SUFFIX       10 1000 1000000 1 0 PATCH 0 200 100 200
         ;;
     allmpio*mp)
         echo "MPI+OpenMP"
         echo "MPICC=$MPI_ROOT/bin/mpicc\nOPENMPFLAG=-fopenmp" >> common/make.defs
         make $PRK_TARGET
-        export PRK_TARGET_PATH=MPIOPENMP
+        export PRK_TARGET_PATH=C89
         export PRK_MPI_PROCS=2
         export OMP_NUM_THREADS=2
         export PRK_LAUNCHER=$MPI_ROOT/bin/mpirun
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Synch_p2p/p2p       $OMP_NUM_THREADS 10 1024 1024
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Stencil/stencil     $OMP_NUM_THREADS 10 1000
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Transpose/transpose $OMP_NUM_THREADS 10 1024 32
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Nstream/nstream     $OMP_NUM_THREADS 10 16777216 32
+        export PRK_SUFFIX=-mpiomp
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/p2p$PRK_SUFFIX       $OMP_NUM_THREADS 10 1024 1024
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/stencil$PRK_SUFFIX   $OMP_NUM_THREADS 10 1000
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/transpose$PRK_SUFFIX $OMP_NUM_THREADS 10 1024 32
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/nstream$PRK_SUFFIX   $OMP_NUM_THREADS 10 16777216 32
         ;;
     allmpirma)
         echo "MPI-RMA"
         echo "MPICC=$MPI_ROOT/bin/mpicc" >> common/make.defs
         make $PRK_TARGET
-        export PRK_TARGET_PATH=MPIRMA
+        export PRK_TARGET_PATH=C89
+        export PRK_SUFFIX=-mpirma
         export PRK_MPI_PROCS=4
         export PRK_LAUNCHER=$MPI_ROOT/bin/mpirun
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Synch_p2p/p2p       10 1024 1024
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Stencil/stencil     10 1000
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Transpose/transpose 10 1024 32
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 32
         ;;
     allmpishm)
         echo "MPI+MPI"
         echo "MPICC=$MPI_ROOT/bin/mpicc" >> common/make.defs
         make $PRK_TARGET
-        export PRK_TARGET_PATH=MPISHM
+        export PRK_TARGET_PATH=C89
+        export PRK_SUFFIX=-mpishm
         export PRK_MPI_PROCS=4
         export PRK_MPISHM_RANKS=$(($PRK_MPI_PROCS/2))
         export PRK_LAUNCHER=$MPI_ROOT/bin/mpirun
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Synch_p2p/p2p                         10 1024 1024
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Stencil/stencil     $PRK_MPISHM_RANKS 10 1000
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Transpose/transpose $PRK_MPISHM_RANKS 10 1024 32
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/p2p$PRK_SUFFIX                         10 1024 1024
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/stencil$PRK_SUFFIX   $PRK_MPISHM_RANKS 10 1000
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/transpose$PRK_SUFFIX $PRK_MPISHM_RANKS 10 1024 32
         ;;
     allshmem)
         echo "SHMEM"
@@ -180,13 +193,14 @@ case "$PRK_TARGET" in
         export SHMEM_ROOT=$TRAVIS_ROOT/sandia-openshmem
         echo "SHMEMTOP=$SHMEM_ROOT\nSHMEMCC=$SHMEM_ROOT/bin/oshcc" >> common/make.defs
         make $PRK_TARGET
-        export PRK_TARGET_PATH=SHMEM
+        export PRK_TARGET_PATH=C89
+        export PRK_SUFFIX=-shmem
         export PRK_SHMEM_PROCS=4
         export OSHRUN_LAUNCHER=$TRAVIS_ROOT/hydra/bin/mpirun
         export PRK_LAUNCHER=$SHMEM_ROOT/bin/oshrun
-        $PRK_LAUNCHER -n $PRK_SHMEM_PROCS $PRK_TARGET_PATH/Synch_p2p/p2p       10 1024 1024
-        $PRK_LAUNCHER -n $PRK_SHMEM_PROCS $PRK_TARGET_PATH/Stencil/stencil     10 1000
-        $PRK_LAUNCHER -n $PRK_SHMEM_PROCS $PRK_TARGET_PATH/Transpose/transpose 10 1024 32
+        $PRK_LAUNCHER -n $PRK_SHMEM_PROCS $PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024
+        $PRK_LAUNCHER -n $PRK_SHMEM_PROCS $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
+        $PRK_LAUNCHER -n $PRK_SHMEM_PROCS $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 32
         ;;
     allupc)
         echo "UPC"
@@ -239,10 +253,11 @@ case "$PRK_TARGET" in
                 make $PRK_TARGET default_opt_flags="-Wc,-O3"
                 ;;
         esac
-        export PRK_TARGET_PATH=UPC
-        $PRK_LAUNCHER $PRK_TARGET_PATH/Synch_p2p/p2p       $PRK_LAUNCHER_ARGS 10 1024 1024
-        $PRK_LAUNCHER $PRK_TARGET_PATH/Stencil/stencil     $PRK_LAUNCHER_ARGS 10 1024
-        $PRK_LAUNCHER $PRK_TARGET_PATH/Transpose/transpose $PRK_LAUNCHER_ARGS 10 1024 32
+        export PRK_TARGET_PATH=C99
+        export PRK_SUFFIX=-upc
+        $PRK_LAUNCHER $PRK_TARGET_PATH/p2p$PRK_SUFFIX       $PRK_LAUNCHER_ARGS 10 1024 1024
+        $PRK_LAUNCHER $PRK_TARGET_PATH/stencil$PRK_SUFFIX   $PRK_LAUNCHER_ARGS 10 1000
+        $PRK_LAUNCHER $PRK_TARGET_PATH/transpose$PRK_SUFFIX $PRK_LAUNCHER_ARGS 10 1024 32
         ;;
     allcharm++)
         echo "Charm++"
@@ -260,13 +275,14 @@ case "$PRK_TARGET" in
         echo "CHARMTOP=$CHARM_ROOT" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=CHARM++
+        export PRK_SUFFIX=-charm
         export PRK_CHARM_PROCS=4
         export PRK_LAUNCHER=$CHARM_ROOT/bin/charmrun
         export PRK_LAUNCHER_ARGS="+p$PRK_CHARM_PROCS ++local"
-        # For Charm++, the last argument is the overdecomposition factor -->               \|/
-        $PRK_LAUNCHER $PRK_TARGET_PATH/Synch_p2p/p2p       $PRK_LAUNCHER_ARGS 10 1024 1024  1
-        $PRK_LAUNCHER $PRK_TARGET_PATH/Stencil/stencil     $PRK_LAUNCHER_ARGS 10 1000       1
-        $PRK_LAUNCHER $PRK_TARGET_PATH/Transpose/transpose $PRK_LAUNCHER_ARGS 10 1024 32    1
+        # For Charm++, the last argument is the overdecomposition factor -->     \|/
+        $PRK_LAUNCHER $PRK_TARGET_PATH/p2p$PRK_SUFFIX       $PRK_LAUNCHER_ARGS 10 1024 1024  1
+        $PRK_LAUNCHER $PRK_TARGET_PATH/stencil$PRK_SUFFIX   $PRK_LAUNCHER_ARGS 10 1000       1
+        $PRK_LAUNCHER $PRK_TARGET_PATH/transpose$PRK_SUFFIX $PRK_LAUNCHER_ARGS 10 1024 32    1
         ;;
     allampi)
         echo "Adaptive MPI (AMPI)"
@@ -283,42 +299,48 @@ case "$PRK_TARGET" in
         esac
         echo "CHARMTOP=$CHARM_ROOT" >> common/make.defs
         make $PRK_TARGET
-        export PRK_TARGET_PATH=AMPI
+        export PRK_TARGET_PATH=C89
+        export PRK_SUFFIX=-ampi
         export PRK_CHARM_PROCS=4
         export PRK_LAUNCHER=$CHARM_ROOT/bin/charmrun
         export PRK_LAUNCHER_ARGS="+p$PRK_CHARM_PROCS +vp$PRK_CHARM_PROCS +isomalloc_sync ++local"
-        $PRK_LAUNCHER $PRK_TARGET_PATH/Synch_p2p/p2p       $PRK_LAUNCHER_ARGS 10 1024 1024
-        $PRK_LAUNCHER $PRK_TARGET_PATH/Stencil/stencil     $PRK_LAUNCHER_ARGS 10 1000
-        $PRK_LAUNCHER $PRK_TARGET_PATH/Transpose/transpose $PRK_LAUNCHER_ARGS 10 1024 32
+        $PRK_LAUNCHER $PRK_TARGET_PATH/p2p$PRK_SUFFIX       $PRK_LAUNCHER_ARGS 10 1024 1024
+        $PRK_LAUNCHER $PRK_TARGET_PATH/stencil$PRK_SUFFIX   $PRK_LAUNCHER_ARGS 10 1000
+        $PRK_LAUNCHER $PRK_TARGET_PATH/transpose$PRK_SUFFIX $PRK_LAUNCHER_ARGS 10 1024 32
         # FIXME Fails with timeout - bug in AMPI?
-        #$PRK_LAUNCHER $PRK_TARGET_PATH/Reduce/reduce       $PRK_LAUNCHER_ARGS 10 16777216
-        $PRK_LAUNCHER $PRK_TARGET_PATH/Nstream/nstream     $PRK_LAUNCHER_ARGS 10 16777216 32
-        $PRK_LAUNCHER $PRK_TARGET_PATH/Sparse/sparse       $PRK_LAUNCHER_ARGS 10 10 5
-        $PRK_LAUNCHER $PRK_TARGET_PATH/DGEMM/dgemm         $PRK_LAUNCHER_ARGS 10 1024 32 1
+        #$PRK_LAUNCHER $PRK_TARGET_PATH/reduce$PRK_SUFFIX    $PRK_LAUNCHER_ARGS 10 1024
         # FIXME This one hangs - bug in AMPI?
-        #$PRK_LAUNCHER $PRK_TARGET_PATH/Random/random       $PRK_LAUNCHER_ARGS 32 20
-        $PRK_LAUNCHER $PRK_TARGET_PATH/Synch_global/global $PRK_LAUNCHER_ARGS 10 16384
+        #$PRK_LAUNCHER $PRK_TARGET_PATH/random$PRK_SUFFIX    $PRK_LAUNCHER_ARGS 64 10 16384
+        $PRK_LAUNCHER $PRK_TARGET_PATH/nstream$PRK_SUFFIX   $PRK_LAUNCHER_ARGS 10 16777216 32
+        $PRK_LAUNCHER $PRK_TARGET_PATH/sparse$PRK_SUFFIX    $PRK_LAUNCHER_ARGS 10 10 5
+        $PRK_LAUNCHER $PRK_TARGET_PATH/dgemm$PRK_SUFFIX     $PRK_LAUNCHER_ARGS 10 1024 32 1
+        $PRK_LAUNCHER $PRK_TARGET_PATH/global$PRK_SUFFIX    $PRK_LAUNCHER_ARGS 10 16384
+        #$PRK_LAUNCHER $PRK_TARGET_PATH/pic$PRK_SUFFIX       $PRK_LAUNCHER_ARGS 10 1000 1000000 1 2 GEOMETRIC 0.99
+        #$PRK_LAUNCHER $PRK_TARGET_PATH/pic$PRK_SUFFIX       $PRK_LAUNCHER_ARGS 10 1000 1000000 0 1 SINUSOIDAL
+        #$PRK_LAUNCHER $PRK_TARGET_PATH/pic$PRK_SUFFIX       $PRK_LAUNCHER_ARGS 10 1000 1000000 1 0 LINEAR 1.0 3.0
+        #$PRK_LAUNCHER $PRK_TARGET_PATH/pic$PRK_SUFFIX       $PRK_LAUNCHER_ARGS 10 1000 1000000 1 0 PATCH 0 200 100 200
         ;;
     allfgmpi)
         echo "Fine-Grain MPI (FG-MPI)"
         export FGMPI_ROOT=$TRAVIS_ROOT/fgmpi
         echo "FGMPITOP=$FGMPI_ROOT\nFGMPICC=$FGMPI_ROOT/bin/mpicc" >> common/make.defs
         make $PRK_TARGET
-        export PRK_TARGET_PATH=FG_MPI
+        export PRK_TARGET_PATH=C89
+        export PRK_SUFFIX=-fgmpi
         export PRK_MPI_PROCS=2
         export PRK_FGMPI_THREADS=2
         export PRK_LAUNCHER=$FGMPI_ROOT/bin/mpiexec
-        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/Synch_p2p/p2p       10 1024 1024
+        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024
         # FIXME Fails with:
         # ERROR: rank 2 has work tile smaller then stencil radius
-        #$PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/Stencil/stencil     10 1000
-        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/Transpose/transpose 10 1024 32
-        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/Reduce/reduce       10 16777216
-        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/Nstream/nstream     10 16777216 32
-        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/Sparse/sparse       10 10 5
-        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/DGEMM/dgemm         10 1024 32 1
-        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/Random/random       32 20
-        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/Synch_global/global 10 16384
+        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
+        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 32
+        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/reduce$PRK_SUFFIX    10 16777216
+        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/nstream$PRK_SUFFIX   10 16777216 32
+        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/sparse$PRK_SUFFIX    10 10 5
+        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/dgemm$PRK_SUFFIX     10 1024 32 1
+        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/random$PRK_SUFFIX    32 20
+        $PRK_LAUNCHER -np $PRK_MPI_PROCS -nfg $PRK_FGMPI_THREADS $PRK_TARGET_PATH/global$PRK_SUFFIX    10 16384
         ;;
     allgrappa)
         echo "Grappa"
@@ -330,11 +352,12 @@ case "$PRK_TARGET" in
         echo "GRAPPATOP=$TRAVIS_ROOT/grappa" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=GRAPPA
+        export PRK_SUFFIX=-grappa
         export PRK_MPI_PROCS=2
         export PRK_LAUNCHER=$MPI_ROOT/bin/mpirun
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Synch_p2p/p2p       10 1024 1024
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Stencil/stencil     10 1000
-        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Transpose/transpose 10 1024 32
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
+        $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 32
         ;;
     allchapel)
         echo "Nothing to do yet"
