@@ -93,7 +93,7 @@ case "$PRK_TARGET" in
         $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024
         export OMP_NUM_THREADS=2
         export PRK_SUFFIX=-omp
-        $PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024 # not threaded yet
+        #$PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024 # not threaded yet
         $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
         $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 1
         $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024 32
