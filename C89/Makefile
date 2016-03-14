@@ -28,6 +28,8 @@ CFLAGS += -DPRKVERSION=$(CPRKVERSION)
 CFLAGS += -DRADIUS=$(RADIUS) $(STARFLAG) $(DOUBLEFLAG)
 CFLAGS += -DRESTRICT=$(RESTRICTFLAG)
 
+LIBS = -lm
+
 SERIAL_PROGRAMS = branch-ser dgemm-ser nstream-ser p2p-ser \
                   random-ser reduce-ser sparse-ser \
                   stencil-ser transpose-ser pic-ser
@@ -80,70 +82,70 @@ random_draw.o: random_draw.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 pic-ser: pic-ser.c random_draw.o
-	$(CC) $(CFLAGS) $< random_draw.o -o $@
+	$(CC) $(CFLAGS) $< random_draw.o $(LIBS) -o $@
 
 pic-mpi1: pic-mpi1.c random_draw.o
-	$(MPICC) $(CFLAGS) $< random_draw.o -o $@
+	$(MPICC) $(CFLAGS) $< random_draw.o $(LIBS) -o $@
 
 branch-ser: branch-ser.c func.o
-	$(CC) $(CFLAGS) $< func.o -o $@
+	$(CC) $(CFLAGS) $< func.o $(LIBS) -o $@
 
 branch-omp: branch-omp.c func.o
-	$(CC) $(CFLAGS) $(OPENMPFLAG) $< func.o -o $@
+	$(CC) $(CFLAGS) $(OPENMPFLAG) $< func.o $(LIBS) -o $@
 
 branch-mpi1: branch-mpi1.c func.o
-	$(MPICC) $(CFLAGS) $< func.o -o $@
+	$(MPICC) $(CFLAGS) $< func.o $(LIBS) -o $@
 
 branch-fgmpi: branch-fgmpi.c func.o
-	$(FGMPICC) $(CFLAGS) $< func.o -o $@
+	$(FGMPICC) $(CFLAGS) $< func.o $(LIBS) -o $@
 
 branch-ampi: branch-ampi.c func.o
-	$(AMPICC) $(CFLAGS) $< func.o -o $@
+	$(AMPICC) $(CFLAGS) $< func.o $(LIBS) -o $@
 
 stencil-ser: stencil-ser.c loop_body_star.incl loop_body_compact.incl
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $<  $(LIBS)-o $@
 
 stencil-omp: stencil-omp.c loop_body_star.incl loop_body_compact.incl
-	$(CC) $(CFLAGS) $(OPENMPFLAG) $< -o $@
+	$(CC) $(CFLAGS) $(OPENMPFLAG) $< $(LIBS) -o $@
 
 stencil-mpi1: stencil-mpi1.c loop_body_star.incl loop_body_compact.incl
-	$(MPICC) $(CFLAGS) $< -o $@
+	$(MPICC) $(CFLAGS) $< $(LIBS) -o $@
 
 stencil-ampi: stencil-ampi.c loop_body_star.incl loop_body_compact.incl
-	$(AMPICC) $(CFLAGS) $< -o $@
+	$(AMPICC) $(CFLAGS) $< $(LIBS) -o $@
 
 stencil-fgmpi: stencil-fgmpi.c loop_body_star.incl loop_body_compact.incl
-	$(FGMPICC) $(CFLAGS) $< -o $@
+	$(FGMPICC) $(CFLAGS) $< $(LIBS) -o $@
 
 stencil-shmem: stencil-shmem.c loop_body_star.incl loop_body_compact.incl
-	$(OSHCC) $(CFLAGS) $< -o $@
+	$(OSHCC) $(CFLAGS) $< $(LIBS) -o $@
 
 %-ser: %-ser.c
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $< $(LIBS) -o $@
 
 %-omp: %-omp.c
-	$(CC) $(CFLAGS) $(OPENMPFLAG) $< -o $@
+	$(CC) $(CFLAGS) $(OPENMPFLAG) $< $(LIBS) -o $@
 
 %-mpi1: %-mpi1.c
-	$(MPICC) $(CFLAGS) $< -o $@
+	$(MPICC) $(CFLAGS) $< $(LIBS) -o $@
 
 %-mpirma: %-mpirma.c
-	$(MPICC) $(CFLAGS) $< -o $@
+	$(MPICC) $(CFLAGS) $< $(LIBS) -o $@
 
 %-mpishm: %-mpishm.c
-	$(MPICC) $(CFLAGS) $< -o $@
+	$(MPICC) $(CFLAGS) $< $(LIBS) -o $@
 
 %-mpiomp: %-mpiomp.c
-	$(MPICC) $(CFLAGS) $(OPENMPFLAG) $< -o $@
+	$(MPICC) $(CFLAGS) $(OPENMPFLAG) $< $(LIBS) -o $@
 
 %-ampi: %-ampi.c
-	$(AMPICC) $(CFLAGS) $< -o $@
+	$(AMPICC) $(CFLAGS) $< $(LIBS) -o $@
 
 %-fgmpi: %-fgmpi.c
-	$(FGMPICC) $(CFLAGS) $< -o $@
+	$(FGMPICC) $(CFLAGS) $< $(LIBS) -o $@
 
 %-shmem: %-shmem.c
-	$(OSHCC) $(CFLAGS) $< -o $@
+	$(OSHCC) $(CFLAGS) $< $(LIBS) -o $@
 
 func.c:
 	@echo "############################################################"
