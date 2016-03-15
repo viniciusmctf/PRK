@@ -28,13 +28,13 @@ case "$PRK_TARGET" in
         python --version
         export PRK_TARGET_PATH=PYTHON
         export PRK_SUFFIX=.py
-        python $PRK_TARGET_PATH/p2p$PRK_SUFFIX             10 1024 1024
-        python $PRK_TARGET_PATH/stencil$PRK_SUFFIX         10 1000
-        python $PRK_TARGET_PATH/transpose$PRK_SUFFIX       10 1024
+        python $PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024
+        python $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
+        python $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024
         export PRK_SUFFIX=-numpy.py
-        python $PRK_TARGET_PATH/p2p-numpy$PRK_SUFFIX       10 1024 1024
-        python $PRK_TARGET_PATH/stencil-numpy$PRK_SUFFIX   10 1000
-        python $PRK_TARGET_PATH/transpose-numpy$PRK_SUFFIX 10 1024
+        python $PRK_TARGET_PATH/p2p$PRK_SUFFIX       10 1024 1024
+        python $PRK_TARGET_PATH/stencil$PRK_SUFFIX   10 1000
+        python $PRK_TARGET_PATH/transpose$PRK_SUFFIX 10 1024
         ;;
     allserial)
         echo "Serial"
