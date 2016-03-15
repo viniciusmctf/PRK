@@ -191,7 +191,7 @@ case "$PRK_TARGET" in
         # This should be fixed by rpath (https://github.com/regrant/sandia-shmem/issues/83)
         export LD_LIBRARY_PATH=$TRAVIS_ROOT/sandia-openshmem/lib:$TRAVIS_ROOT/libfabric/lib:$LD_LIBRARY_PATH
         export SHMEM_ROOT=$TRAVIS_ROOT/sandia-openshmem
-        echo "SHMEMTOP=$SHMEM_ROOT\nSHMEMCC=$SHMEM_ROOT/bin/oshcc" >> common/make.defs
+        echo "OSHCC=$SHMEM_ROOT/bin/oshcc" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=C89
         export PRK_SUFFIX=-shmem
