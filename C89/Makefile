@@ -103,7 +103,7 @@ branch-ampi: branch-ampi.c func.o
 	$(AMPICC) $(CFLAGS) $< func.o $(LIBS) -o $@
 
 stencil-ser: stencil-ser.c loop_body_star.incl loop_body_compact.incl
-	$(CC) $(CFLAGS) $<  $(LIBS)-o $@
+	$(CC) $(CFLAGS) $< $(LIBS) -o $@
 
 stencil-omp: stencil-omp.c loop_body_star.incl loop_body_compact.incl
 	$(CC) $(CFLAGS) $(OPENMPFLAG) $< $(LIBS) -o $@
