@@ -28,6 +28,8 @@ CFLAGS += -DPRKVERSION=$(CPRKVERSION)
 CFLAGS += -DRADIUS=$(RADIUS) $(STARFLAG) $(DOUBLEFLAG)
 CFLAGS += -DRESTRICT=$(RESTRICTFLAG)
 
+AMPICFLAGS = $(CFLAGS) -DADAPTIVE_MPI
+
 LIBS = -lm
 
 SERIAL_PROGRAMS = branch-ser dgemm-ser nstream-ser p2p-ser \
@@ -100,7 +102,7 @@ branch-fgmpi: branch-fgmpi.c func.o
 	$(FGMPICC) $(CFLAGS) $< func.o $(LIBS) -o $@
 
 branch-ampi: branch-ampi.c func.o
-	$(AMPICC) $(CFLAGS) $< func.o $(LIBS) -o $@
+	$(AMPICC) $(AMPICFLAGS) $< func.o $(LIBS) -o $@
 
 stencil-ser: stencil-ser.c loop_body_star.incl loop_body_compact.incl
 	$(CC) $(CFLAGS) $< $(LIBS) -o $@
@@ -112,7 +114,7 @@ stencil-mpi1: stencil-mpi1.c loop_body_star.incl loop_body_compact.incl
 	$(MPICC) $(CFLAGS) $< $(LIBS) -o $@
 
 stencil-ampi: stencil-ampi.c loop_body_star.incl loop_body_compact.incl
-	$(AMPICC) $(CFLAGS) $< $(LIBS) -o $@
+	$(AMPICC) $(AMPICFLAGS) $< $(LIBS) -o $@
 
 stencil-fgmpi: stencil-fgmpi.c loop_body_star.incl loop_body_compact.incl
 	$(FGMPICC) $(CFLAGS) $< $(LIBS) -o $@
@@ -139,7 +141,7 @@ stencil-shmem: stencil-shmem.c loop_body_star.incl loop_body_compact.incl
 	$(MPICC) $(CFLAGS) $(OPENMPFLAG) $< $(LIBS) -o $@
 
 %-ampi: %-ampi.c
-	$(AMPICC) $(CFLAGS) $< $(LIBS) -o $@
+	$(AMPICC) $(AMPICFLAGS) $< $(LIBS) -o $@
 
 %-fgmpi: %-fgmpi.c
 	$(FGMPICC) $(CFLAGS) $< $(LIBS) -o $@
