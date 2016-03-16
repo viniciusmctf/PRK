@@ -14,7 +14,7 @@ CFLAGS += -DRADIUS=$(RADIUS) $(STARFLAG) $(DOUBLEFLAG)
 CFLAGS += -std=gnu99 # -std=c99 breaks GUPC
 
 # BUPC_FLAG_PREFIX=-Wc,
-UPCFLAGS = $(BUPC_FLAG_PREFIX)$(CFLAGS)
+UPCFLAGS = $(BUPC_FLAG_PREFIX)"$(CFLAGS)"
 
 .PHONY: all clean allser allomp allupc
 
