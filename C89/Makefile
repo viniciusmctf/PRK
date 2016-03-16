@@ -42,13 +42,13 @@ OPENMP_PROGRAMS = branch-omp dgemm-omp nstream-omp p2p-omp \
 SHMEM_PROGRAMS = p2p-shmem stencil-shmem transpose-shmem
 MPI1_PROGRAMS = branch-mpi1 dgemm-mpi1 nstream-mpi1 p2p-mpi1 \
                 random-mpi1 reduce-mpi1 sparse-mpi1 \
-                stencil-mpi1 transpose-mpi1 pic-mpi1
+                stencil-mpi1 transpose-mpi1 pic-mpi1 global-mpi1
 AMPI_PROGRAMS = branch-ampi dgemm-ampi nstream-ampi p2p-ampi \
                 random-ampi reduce-ampi sparse-ampi \
-                stencil-ampi transpose-ampi
+                stencil-ampi transpose-ampi global-ampi
 FGMPI_PROGRAMS = branch-fgmpi dgemm-fgmpi nstream-fgmpi p2p-fgmpi \
                  random-fgmpi reduce-fgmpi sparse-fgmpi \
-                 stencil-fgmpi transpose-fgmpi
+                 stencil-fgmpi transpose-fgmpi global-fgmpi
 MPIRMA_PROGRAMS = p2p-mpirma stencil-mpirma transpose-mpirma
 MPISHM_PROGRAMS = p2p-mpishm stencil-mpishm transpose-mpishm
 MPIOMP_PROGRAMS = p2p-mpiomp stencil-mpiomp transpose-mpiomp
