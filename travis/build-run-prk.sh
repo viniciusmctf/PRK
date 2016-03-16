@@ -227,7 +227,7 @@ case "$PRK_TARGET" in
                 ;;
             bupc)
                 export UPC_ROOT=$TRAVIS_ROOT/bupc-$CC
-                echo "UPCC=$UPC_ROOT/bin/upcc" >> common/make.defs
+                echo "UPCC=$UPC_ROOT/bin/upcc\nBUPC_FLAG_PREFIX=-Wc," >> common/make.defs
                 # -N $nodes -n UPC threads -c $cores_per_node
                 # -localhost is only for UDP
                 case "$GASNET_CONDUIT" in
