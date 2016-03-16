@@ -110,10 +110,11 @@ case "$PRK_TARGET" in
         make $PRK_TARGET
         export PRK_TARGET_PATH=C89
         export PRK_SUFFIX=-omp
-        export OMP_NUM_THREADS=4
+        export OMP_NUM_THREADS=2
         # random is broken right now it seems
         $PRK_TARGET_PATH/p2p$PRK_SUFFIX       $OMP_NUM_THREADS 10 1024 1024
         $PRK_TARGET_PATH/stencil$PRK_SUFFIX   $OMP_NUM_THREADS 10 1000
+        # transpose hangs in Travis
         $PRK_TARGET_PATH/transpose$PRK_SUFFIX $OMP_NUM_THREADS 10 1024 32
         $PRK_TARGET_PATH/reduce$PRK_SUFFIX    $OMP_NUM_THREADS 10 1024
         #$PRK_TARGET_PATH/random$PRK_SUFFIX    $OMP_NUM_THREADS 64 10 16384
