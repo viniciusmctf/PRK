@@ -297,7 +297,7 @@ case "$PRK_TARGET" in
                 #export CHARM_ROOT=$TRAVIS_ROOT/charm-6.7.0/multicore-linux64
                 ;;
         esac
-        echo "CHARMTOP=$CHARM_ROOT" >> common/make.defs
+        echo "AMPICC=$CHARM_ROOT/bin/ampicc" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=C89
         export PRK_SUFFIX=-ampi
