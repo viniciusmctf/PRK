@@ -36,8 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 #include <inttypes.h>
 #include <math.h>
-#include <limits.h>
- 
+
 extern void     LCG_init(void);
 extern uint64_t LCG_next(uint64_t);
 extern void     LCG_get_chunk(uint64_t *, uint64_t *, int, int, uint64_t);
