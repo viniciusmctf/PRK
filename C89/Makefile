@@ -51,7 +51,7 @@ FGMPI_PROGRAMS = branch-fgmpi dgemm-fgmpi nstream-fgmpi p2p-fgmpi \
                  stencil-fgmpi transpose-fgmpi global-fgmpi
 MPIRMA_PROGRAMS = p2p-mpirma stencil-mpirma transpose-mpirma
 MPISHM_PROGRAMS = p2p-mpishm stencil-mpishm transpose-mpishm
-MPIOMP_PROGRAMS = p2p-mpiomp stencil-mpiomp transpose-mpiomp
+MPIOMP_PROGRAMS = p2p-mpiomp stencil-mpiomp transpose-mpiomp nstream-mpiomp
 
 .PHONY: all clean allser allomp allshmem allmpi allmpi1 allmpirma allmpishm allmpiomp allampi allfgmpi
 
