@@ -52,10 +52,10 @@ FUNCTIONS CALLED:
          Other than standard C functions, the following functions are used in 
          this program:
          initializeGrid() 
-         initializeParticlesGeometric()
-         initializeParticlesSinusoidal()
-         initializeParticlesLinear()
-         initializeParticlesPatch()
+         initializeGeometric()
+         initializeSinusoidal()
+         initializeLinear()
+         initializePatch()
          finishParticlesInitialization()
          find_owner()
          computeCoulomb()
@@ -154,7 +154,7 @@ double *initializeGrid(bbox_t tile) {
   n_columns = tile.right-tile.left+1;
   n_rows = tile.top-tile.bottom+1;
    
-  grid = (double*) malloc(n_columns*n_rows*sizeof(double));
+  grid = (double*) prk_malloc(n_columns*n_rows*sizeof(double));
   if (grid == NULL) {
     MPI_Comm_rank(MPI_COMM_WORLD, &my_ID);
     printf("ERROR: Process %d could not allocate space for grid\n", my_ID);
@@ -163,9 +163,9 @@ double *initializeGrid(bbox_t tile) {
   mpi_bail_out(error);
    
   /* So far supporting only initialization with dipoles */
-  for (y=0; y<n_rows; y++) {
+  for (y=tile.bottom; y<=tile.top; y++) {
     for (x=tile.left; x<=tile.right; x++) {
-      grid[y+(x-tile.left)*n_rows] = (x%2 == 0) ? Q : -Q;
+      grid[y-tile.bottom+(x-tile.left)*n_rows] = (x%2 == 0) ? Q : -Q;
     }
   }
   return grid;
@@ -205,19 +205,17 @@ void finishParticlesInitialization(uint64_t n, particle_t *p) {
 }
 
 /* Initializes the particles following the geometric distribution as described in the spec */
-particle_t *initializeParticlesGeometric(uint64_t n_input, uint64_t L, double rho, 
-                                         bbox_t tile, double k, double m,
-					 uint64_t *n_placed, uint64_t *n_size) {
+particle_t *initializeGeometric(uint64_t n_input, uint64_t L, double rho, 
+                                bbox_t tile, double k, double m,
+		                uint64_t *n_placed, uint64_t *n_size) {
   particle_t  *particles;
   double      A;
-  uint64_t     x, y, p, pi, actual_particles, start_index;
+  uint64_t    x, y, p, pi, actual_particles, start_index;
 
   /* initialize random number generator */
   LCG_init();  
    
   /* first determine total number of particles, then allocate and place them               */
-
-  /* Place number of particles to each cell to form distribution decribed in spec.         */
   /* Each cell in the i-th column of cells contains p(i) = A * rho^i particles */
   A = n_input * ((1.0-rho) / (1.0-pow(rho, L))) / (double) L;
 
@@ -232,7 +230,7 @@ particle_t *initializeParticlesGeometric(uint64_t n_input, uint64_t L, double rh
 
   /* use some slack in allocating memory to avoid fine-grain memory management */
   (*n_size) = ((*n_placed)*(1+MEMORYSLACK))/MEMORYSLACK;
-  particles = (particle_t*) malloc((*n_size) * sizeof(particle_t));
+  particles = (particle_t*) prk_malloc((*n_size) * sizeof(particle_t));
   if (particles == NULL) return(particles);
 
   for (pi=0,x=tile.left; x<tile.right; x++) {
@@ -256,9 +254,9 @@ particle_t *initializeParticlesGeometric(uint64_t n_input, uint64_t L, double rh
 }
 
 /* Initialize with a sinusodial particle distribution */
-particle_t *initializeParticlesSinusoidal(uint64_t n_input, uint64_t L, 
-                                          bbox_t tile, double k, double m,
-                                          uint64_t *n_placed, uint64_t *n_size) {
+particle_t *initializeSinusoidal(uint64_t n_input, uint64_t L, 
+                                 bbox_t tile, double k, double m,
+                                 uint64_t *n_placed, uint64_t *n_size) {
   particle_t  *particles;
   double      step;
   uint64_t     x, y, pi, p, actual_particles, start_index;
@@ -279,7 +277,7 @@ particle_t *initializeParticlesSinusoidal(uint64_t n_input, uint64_t L,
    
   /* use some slack in allocating memory to avoid fine-grain memory management */
   (*n_size) = ((*n_placed)*(1+MEMORYSLACK))/MEMORYSLACK;
-  particles = (particle_t*) malloc((*n_size) * sizeof(particle_t));
+  particles = (particle_t*) prk_malloc((*n_size) * sizeof(particle_t));
   if (particles == NULL) return(particles);
 
   for (pi=0,x=tile.left; x<tile.right; x++) {
@@ -303,9 +301,9 @@ particle_t *initializeParticlesSinusoidal(uint64_t n_input, uint64_t L,
 
 /* Initialize particles with "linearly-decreasing" distribution */
 /* The linear function is f(x) = -alpha * x + beta , x in [0,1]*/
-particle_t *initializeParticlesLinear(uint64_t n_input, uint64_t L, double alpha, double beta, 
-                                      bbox_t tile, double k, double m, 
-                                      uint64_t *n_placed, uint64_t *n_size) {
+particle_t *initializeLinear(uint64_t n_input, uint64_t L, double alpha, double beta, 
+                             bbox_t tile, double k, double m, 
+                             uint64_t *n_placed, uint64_t *n_size) {
   particle_t  *particles;
   double      total_weight, step, current_weight;
   uint64_t     x, y, p, pi, actual_particles, start_index;
@@ -329,7 +327,7 @@ particle_t *initializeParticlesLinear(uint64_t n_input, uint64_t L, double alpha
 
   /* use some slack in allocating memory to avoid fine-grain memory management */
   (*n_size) = ((*n_placed)*(1+MEMORYSLACK))/MEMORYSLACK;
-  particles = (particle_t*) malloc((*n_size) * sizeof(particle_t));
+  particles = (particle_t*) prk_malloc((*n_size) * sizeof(particle_t));
   if (particles == NULL) return(particles);
 
   for (pi=0,x=tile.left; x<tile.right; x++) {
@@ -352,9 +350,9 @@ particle_t *initializeParticlesLinear(uint64_t n_input, uint64_t L, double alpha
 }
 
 /* Initialize uniformly particles within a "patch" */
-particle_t *initializeParticlesPatch(uint64_t n_input, uint64_t L, bbox_t patch, 
-                                     bbox_t tile, double k, double m,
-                                     uint64_t *n_placed, uint64_t *n_size) {
+particle_t *initializePatch(uint64_t n_input, uint64_t L, bbox_t patch, 
+                            bbox_t tile, double k, double m,
+                            uint64_t *n_placed, uint64_t *n_size) {
   particle_t *particles;
   uint64_t   x, y, total_cells, pi, p, actual_particles, start_index;
   double     particles_per_cell;
@@ -377,7 +375,7 @@ particle_t *initializeParticlesPatch(uint64_t n_input, uint64_t L, bbox_t patch,
 
   /* use some slack in allocating memory to avoid fine-grain memory management */
   (*n_size) = ((*n_placed)*(1+MEMORYSLACK))/MEMORYSLACK;
-  particles = (particle_t*) malloc((*n_size) * sizeof(particle_t));
+  particles = (particle_t*) prk_malloc((*n_size) * sizeof(particle_t));
   if (particles == NULL) return(particles);
 
   for (pi=0,x=tile.left; x<tile.right; x++) {
@@ -517,14 +515,14 @@ void add_particle_to_buffer(particle_t p, particle_t **buffer, uint64_t *positio
 
    if (cur_pos == cur_buf_size) {
       /* Have to resize buffer */
-      temp_buf = (particle_t*) malloc(2 * cur_buf_size * sizeof(particle_t));
+      temp_buf = (particle_t*) prk_malloc(2 * cur_buf_size * sizeof(particle_t));
       if (!temp_buf) {
         printf("Could not increase particle buffer size\n");
         /* do not attempt graceful exit; just allow code to abort */
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
       }
       memcpy(temp_buf, cur_buffer, cur_buf_size*sizeof(particle_t));
-      free(cur_buffer);
+      prk_free(cur_buffer);
       cur_buffer = temp_buf;
       (*buffer) = temp_buf;
       (*buffer_size) = cur_buf_size * 2;
@@ -544,14 +542,14 @@ void attach_particles(particle_t **dst_buffer, uint64_t *position, uint64_t *buf
    
    if ((cur_pos + n_src_particles) > cur_buf_size) {
       /* Have to resize buffer */
-      temp_buf = (particle_t*) malloc(2 *(cur_buf_size + n_src_particles) * sizeof(particle_t));
+      temp_buf = (particle_t*) prk_malloc(2 *(cur_buf_size + n_src_particles) * sizeof(particle_t));
       if (!temp_buf) {
         printf("Could not increase particle buffer size\n");
         /* do not attempt graceful exit; just allow code to abort */
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
       }
       memcpy(temp_buf, cur_buffer, cur_pos*sizeof(particle_t));
-      free(cur_buffer);
+      prk_free(cur_buffer);
       cur_buffer = temp_buf;
       (*dst_buffer) = temp_buf;
       (*buffer_size) = 2*(cur_buf_size + n_src_particles);
@@ -571,14 +569,14 @@ void attach_received_particles(particle_t **dst_buffer, uint64_t *position, uint
    
    if ((cur_pos + n_src_particles + n_src_particles2 ) > cur_buf_size) {
       /* Have to resize buffer */
-      temp_buf = (particle_t*) malloc((cur_buf_size + 2*(n_src_particles + n_src_particles2)) * sizeof(particle_t));
+      temp_buf = (particle_t*) prk_malloc((cur_buf_size + 2*(n_src_particles + n_src_particles2)) * sizeof(particle_t));
       if (!temp_buf) {
         printf("Could not increase particle buffer size\n");
         /* do not attempt graceful exit; just allow code to abort */
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
       }
       memcpy(temp_buf, cur_buffer, cur_pos*sizeof(particle_t));
-      free(cur_buffer);
+      prk_free(cur_buffer);
       cur_buffer = temp_buf;
       (*dst_buffer) = temp_buf;
       (*buffer_size) = cur_buf_size + 2*(n_src_particles + n_src_particles2);
@@ -596,8 +594,8 @@ void resize_buffer(particle_t **buffer, uint64_t *size, uint64_t new_size)
    uint64_t cur_size = (*size);
    
    if (new_size > cur_size) {
-      free(*buffer);
-      (*buffer) = (particle_t*) malloc(2*new_size*sizeof(particle_t));
+      prk_free(*buffer);
+      (*buffer) = (particle_t*) prk_malloc(2*new_size*sizeof(particle_t));
       if (!(*buffer)) {
         printf("Could not increase particle buffer size\n");
         /* do not attempt graceful exit; just allow code to abort */
@@ -899,20 +897,20 @@ int main(int argc, char ** argv) {
 
   switch(particle_mode){
   case GEOMETRIC: 
-    particles = initializeParticlesGeometric(n, L, rho, my_tile, k, m,
-                                             &particles_count, &particles_size);
+    particles = initializeGeometric(n, L, rho, my_tile, k, m,
+                                     &particles_count, &particles_size);
     break;
   case LINEAR:
-    particles = initializeParticlesLinear(n, L, alpha, beta, my_tile, k, m, 
-                                             &particles_count, &particles_size);
+    particles = initializeLinear(n, L, alpha, beta, my_tile, k, m, 
+                                     &particles_count, &particles_size);
     break;
   case SINUSOIDAL:
-    particles = initializeParticlesSinusoidal(n, L, my_tile, k, m, 
-                                             &particles_count, &particles_size);
+    particles = initializeSinusoidal(n, L, my_tile, k, m, 
+                                     &particles_count, &particles_size);
     break;
   case PATCH:
-    particles = initializeParticlesPatch(n, L, init_patch, my_tile, k, m,
-                                             &particles_count, &particles_size);
+    particles = initializePatch(n, L, init_patch, my_tile, k, m,
+                                     &particles_count, &particles_size);
   }
 
   if (!particles) {
@@ -943,8 +941,8 @@ int main(int argc, char ** argv) {
   for (i=0; i<8; i++) {
     sendbuf_size[i] = MAX(1,n/(MEMORYSLACK*Num_procs));
     recvbuf_size[i] = MAX(1,n/(MEMORYSLACK*Num_procs));
-    sendbuf[i] = (particle_t*) malloc(sendbuf_size[i] * sizeof(particle_t));
-    recvbuf[i] = (particle_t*) malloc(recvbuf_size[i] * sizeof(particle_t));
+    sendbuf[i] = (particle_t*) prk_malloc(sendbuf_size[i] * sizeof(particle_t));
+    recvbuf[i] = (particle_t*) prk_malloc(recvbuf_size[i] * sizeof(particle_t));
     if (!sendbuf[i] || !recvbuf[i]) error++;
   }
   if (error) printf("Rank %d could not allocate communication buffers\n", my_ID);

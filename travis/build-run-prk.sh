@@ -111,7 +111,7 @@ case "$PRK_TARGET" in
         export PRK_TARGET_PATH=C89
         export PRK_SUFFIX=-omp
         export OMP_NUM_THREADS=2
-        # random is broken right now it seems
+        export OMP_NUM_THREADS=4
         $PRK_TARGET_PATH/p2p$PRK_SUFFIX       $OMP_NUM_THREADS 10 1024 1024
         $PRK_TARGET_PATH/stencil$PRK_SUFFIX   $OMP_NUM_THREADS 10 1000
         # transpose hangs in Travis
@@ -122,8 +122,8 @@ case "$PRK_TARGET" in
         $PRK_TARGET_PATH/sparse$PRK_SUFFIX    $OMP_NUM_THREADS 10 10 5
         $PRK_TARGET_PATH/dgemm$PRK_SUFFIX     $OMP_NUM_THREADS 10 1024 32
         $PRK_TARGET_PATH/global$PRK_SUFFIX    $OMP_NUM_THREADS 10 16384
-        $PRK_TARGET_PATH/private$PRK_SUFFIX   $OMP_NUM_THREADS 16777216
-        $PRK_TARGET_PATH/shared$PRK_SUFFIX    $OMP_NUM_THREADS 16777216 1024
+        $PRK_TARGET_PATH/refcount$PRK_SUFFIX  $OMP_NUM_THREADS 16777216 1024
+        # random is broken right now it seems
         #$PRK_TARGET_PATH/random$PRK_SUFFIX    $OMP_NUM_THREADS 10 16384 32
         ;;
     allmpi1)

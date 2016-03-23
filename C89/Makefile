@@ -2,6 +2,53 @@ include ../common/make.defs
 
 include ../common/PRKVERSION
 
+# for refcount...
+ifndef DEPENDENT
+  DEPENDENT=0
+endif
+#description: default update of counter pair is independent
+
+ifndef CONTENDED
+  CONTENDED=1
+endif
+#description: default counter access type is contended
+
+ifndef LOCK
+  LOCK=2
+endif
+#description: default counter update is protected with a lock
+
+ifndef INTEGER
+  INTEGER=0
+endif
+#description: default counter type is floating point
+
+ifndef STREAM
+  STREAM=1
+endif
+#description: assume there will be some private work for each thread
+
+ifeq ($(DEPENDENT),1)
+  override INTEGER=0
+  ifeq ($(CONTENDED),1)
+    override LOCK=2
+  else
+    ifeq ($(LOCK),1)
+      override LOCK=2
+    endif
+  endif
+endif
+
+DEPENDENTFLAG=-DDEPENDENT=$(DEPENDENT)
+INTEGERFLAG=-DINTEGER=$(INTEGER)
+CONTENDEDFLAG=-DCONTENDED=$(CONTENDED)
+LOCKFLAG=-DLOCK=$(LOCK)
+STREAMFLAG=-DSTREAM=$(STREAM)
+
+TUNEFLAGS = $(DEPENDENTFLAG) $(DEBUGFLAG) $(NTHREADFLAG) $(USERFLAGS) \
+            $(LOCKFLAG) $(INTEGERFLAG) $(CONTENDEDFLAG) $(STREAMFLAG)
+# ... end for refcount
+
 ifndef NUMBER_OF_FUNCTIONS
   NUMBER_OF_FUNCTIONS=40
 endif
@@ -27,6 +74,7 @@ CFLAGS += #-std=c89 #-ansi -pedantic
 CFLAGS += -DPRKVERSION=$(CPRKVERSION)
 CFLAGS += -DRADIUS=$(RADIUS) $(STARFLAG) $(DOUBLEFLAG)
 CFLAGS += -DRESTRICT=$(RESTRICTFLAG)
+CFLAGS += $(TUNEFLAGS)
 
 AMPICFLAGS = $(CFLAGS) -DADAPTIVE_MPI
 
@@ -38,7 +86,7 @@ SERIAL_PROGRAMS = branch-ser dgemm-ser nstream-ser p2p-ser \
 OPENMP_PROGRAMS = branch-omp dgemm-omp nstream-omp p2p-omp \
                   random-omp reduce-omp sparse-omp \
                   stencil-omp transpose-omp \
-                  global-omp private-omp shared-omp
+                  global-omp refcount-omp
 SHMEM_PROGRAMS = p2p-shmem stencil-shmem transpose-shmem
 MPI1_PROGRAMS = branch-mpi1 dgemm-mpi1 nstream-mpi1 p2p-mpi1 \
                 random-mpi1 reduce-mpi1 sparse-mpi1 \
