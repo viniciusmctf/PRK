@@ -294,7 +294,7 @@ int main(int argc, char ** argv)
     }
 
     if ((Num_procs==1) && (TID==0)) { /* first thread waits for corner value       */
-      int temp;
+      volatile int temp;
       #pragma omp atomic read
       temp = flag(0,0);
       while (temp == true) {
@@ -319,7 +319,7 @@ int main(int argc, char ** argv)
         }
       }
       else {
-        int temp;
+        volatile int temp;
         #pragma omp atomic read
         temp = flag(TID-1,j);
 	while (temp == false) {
@@ -339,7 +339,7 @@ int main(int argc, char ** argv)
       /* if not on right boundary, signal right neighbor it has new data */
       if (TID < nthread-1) {
 #if SYNCHRONOUS 
-        int temp;
+        volatile int temp;
         #pragma omp atomic read
         temp = flag(TID,j);
         while (temp == true) {
@@ -372,7 +372,7 @@ int main(int argc, char ** argv)
                 to bottom left corner to create dependency and signal completion  */
         ARRAY(0,0) = -ARRAY(m-1,n-1);
 #if SYNCHRONOUS
-        int temp;
+        volatile int temp;
         #pragma omp atomic read
         temp = flag(0,0);
         while (temp == false) {
