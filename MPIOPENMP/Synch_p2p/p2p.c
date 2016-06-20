@@ -296,13 +296,17 @@ int main(int argc, char ** argv)
     }
 
     if ((Num_procs==1) && (TID==0)) { /* first thread waits for corner value       */
-      while (flag(0,0) == true) {
-        #pragma omp flush
+      int temp;
+      #pragma omp atomic read
+      temp = flag(0,0);
+      while (temp == true) {
+        #pragma omp atomic read
+        temp = flag(0,0);
       }
 #if SYNCHRONOUS
+      #pragma omp atomic write
       flag(0,0)= true;
-      #pragma omp flush
-#endif      
+#endif
     }
 
     /* execute pipeline algorithm for grid lines 1 through n-1 (skip bottom line) */
@@ -317,13 +321,17 @@ int main(int argc, char ** argv)
         }
       }
       else {
-	while (flag(TID-1,j) == false) {
-           #pragma omp flush
+        int temp;
+        #pragma omp atomic read
+        temp = flag(TID-1,j);
+	while (temp == false) {
+           #pragma omp atomic read
+           temp = flag(TID-1,j);
         }
 #if SYNCHRONOUS
+        #pragma omp atomic write
         flag(TID-1,j)= false;
-        #pragma omp flush
-#endif      
+#endif
       }
  
       for (i=tstart[TID]; i<= tend[TID]; i++) {
@@ -333,12 +341,16 @@ int main(int argc, char ** argv)
       /* if not on right boundary, signal right neighbor it has new data */
       if (TID < nthread-1) {
 #if SYNCHRONOUS 
-        while (flag(TID,j) == true) {
-          #pragma omp flush
+        int temp;
+        #pragma omp atomic read
+        temp = flag(TID,j);
+        while (temp == true) {
+          #pragma omp atomic read
+          temp = flag(TID,j);
         }
 #endif 
-        flag(TID,j) = true;
-        #pragma omp flush
+        #pragma omp atomic write
+        flag(TID,j)= false;
       }
       else { /* if not on the right boundary, send data to my right neighbor      */  
         if (my_ID < Num_procs-1) {
@@ -362,15 +374,19 @@ int main(int argc, char ** argv)
                 to bottom left corner to create dependency and signal completion  */
         ARRAY(0,0) = -ARRAY(m-1,n-1);
 #if SYNCHRONOUS
-        while (flag(0,0) == false) {
-          #pragma omp flush
+        int temp;
+        #pragma omp atomic read
+        temp = flag(0,0);
+        while (temp == false) {
+          #pragma omp atomic read
+          temp = flag(0,0);
         }
+        #pragma omp atomic write
         flag(0,0) = false;
 #else
-        #pragma omp flush
+        #pragma omp atomic write
         flag(0,0) = true;
 #endif
-        #pragma omp flush
       }
     }
  
