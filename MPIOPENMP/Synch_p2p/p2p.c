@@ -112,7 +112,7 @@ int main(int argc, char ** argv)
   }
 
   if (requested<provided) {
-    if (my_ID==0) printf("ERROR: requested=%d less than provided=%s\n",
+    if (my_ID==0) printf("ERROR: requested=%s less than provided=%s\n",
                          PRK_MPI_THREAD_STRING(requested),PRK_MPI_THREAD_STRING(provided));
     bail_out(requested-provided);
   }
@@ -152,13 +152,13 @@ int main(int argc, char ** argv)
     m = atol(*++argv);
     n = atol(*++argv);
     if (m < 1 || n < 1){
-      printf("ERROR: grid dimensions must be positive: %d, %d \n", m, n);
+      printf("ERROR: grid dimensions must be positive: %ld, %ld \n", m, n);
       error = 1;
       goto ENDOFTESTS;
     }
  
     if (m<Num_procs) {
-      printf("ERROR: First grid dimension %d smaller than number of ranks %d\n", 
+      printf("ERROR: First grid dimension %ld smaller than number of ranks %d\n", 
              m, Num_procs);
       error = 1;
       goto ENDOFTESTS;
@@ -207,7 +207,7 @@ int main(int argc, char ** argv)
   total_length = ((end-start+1)+1)*n;
   vector = (double *) prk_malloc(sizeof(double)*total_length);
   if (vector == NULL) {
-    printf("Could not allocate space for grid slice of %d by %d points", 
+    printf("Could not allocate space for grid slice of %ld by %ld points", 
            segment_size, n);
     printf(" on rank %d\n", my_ID);
     error = 1;
@@ -295,13 +295,14 @@ int main(int argc, char ** argv)
     }
 
     if ((Num_procs==1) && (TID==0)) { /* first thread waits for corner value       */
-      while (flag(0,0) == true) {
-        #pragma omp flush
+      while (__atomic_load_n(&(flag(0,0)),__ATOMIC_ACQUIRE) == true) {
+          printf("line %d\n",__LINE__);
+          __atomic_thread_fence(__ATOMIC_RELAXED);
       }
 #if SYNCHRONOUS
-      flag(0,0)= true;
-      #pragma omp flush
-#endif      
+      __atomic_store_n(&(flag(0,0)),true,__ATOMIC_RELEASE);
+      __atomic_thread_fence(__ATOMIC_RELAXED);
+#endif
     }
 
     /* execute pipeline algorithm for grid lines 1 through n-1 (skip bottom line) */
@@ -316,13 +317,14 @@ int main(int argc, char ** argv)
         }
       }
       else {
-	while (flag(TID-1,j) == false) {
-           #pragma omp flush
+	while (__atomic_load_n(&(flag(TID-1,j)),__ATOMIC_ACQUIRE) == false) {
+          printf("line %d\n",__LINE__);
+          __atomic_thread_fence(__ATOMIC_RELAXED);
         }
 #if SYNCHRONOUS
-        flag(TID-1,j)= false;
-        #pragma omp flush
-#endif      
+        __atomic_store_n(&(flag(TID-1,j)),false,__ATOMIC_RELEASE);
+        __atomic_thread_fence(__ATOMIC_RELAXED);
+#endif
       }
  
       for (i=tstart[TID]; i<= tend[TID]; i++) {
@@ -331,13 +333,14 @@ int main(int argc, char ** argv)
  
       /* if not on right boundary, signal right neighbor it has new data */
       if (TID < nthread-1) {
-#if SYNCHRONOUS 
-        while (flag(TID,j) == true) {
-          #pragma omp flush
+#if SYNCHRONOUS
+        while (__atomic_load_n(&(flag(TID,j)),__ATOMIC_ACQUIRE) == true) {
+          printf("line %d\n",__LINE__);
+          __atomic_thread_fence(__ATOMIC_RELAXED);
         }
-#endif 
-        flag(TID,j) = true;
-        #pragma omp flush
+#endif
+        __atomic_store_n(&(flag(TID,j)),true,__ATOMIC_RELEASE);
+        __atomic_thread_fence(__ATOMIC_RELAXED);
       }
       else { /* if not on the right boundary, send data to my right neighbor      */  
         if (my_ID < Num_procs-1) {
@@ -361,15 +364,16 @@ int main(int argc, char ** argv)
                 to bottom left corner to create dependency and signal completion  */
         ARRAY(0,0) = -ARRAY(m-1,n-1);
 #if SYNCHRONOUS
-        while (flag(0,0) == false) {
-          #pragma omp flush
+        while (__atomic_load_n(&(flag(0,0)),__ATOMIC_ACQUIRE) == false) {
+          printf("line %d\n",__LINE__);
+          __atomic_thread_fence(__ATOMIC_RELAXED);
         }
-        flag(0,0) = false;
+        __atomic_store_n(&(flag(0,0)),false,__ATOMIC_RELEASE);
 #else
-        #pragma omp flush
-        flag(0,0) = true;
+        __atomic_thread_fence(__ATOMIC_RELAXED);
+        __atomic_store_n(&(flag(0,0)),true,__ATOMIC_RELEASE);
 #endif
-        #pragma omp flush
+        __atomic_thread_fence(__ATOMIC_RELAXED);
       }
     }
  
@@ -387,7 +391,7 @@ int main(int argc, char ** argv)
   /* verify correctness, using top right value                                     */
   corner_val = (double) ((iterations+1)*(m+n-2));
   if (my_ID == final) {
-    if (abs(ARRAY(end,n-1)-corner_val)/corner_val >= epsilon) {
+    if (fabs(ARRAY(end,n-1)-corner_val)/corner_val >= epsilon) {
       printf("ERROR: checksum %lf does not match verification value %lf\n",
              ARRAY(end,n-1), corner_val);
       error = 1;
