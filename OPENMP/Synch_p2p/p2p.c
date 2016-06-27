@@ -235,7 +235,7 @@ int main(int argc, char ** argv) {
     if (TID==0) { /* first thread waits for corner value to be copied            */
       while (__atomic_load_n(&(flag(0,0)),__ATOMIC_ACQUIRE) == true);
 #if SYNCHRONOUS
-      __atomic_thread_fence(__ATOMIC_RELAXED);
+      //__atomic_thread_fence(__ATOMIC_RELAXED);
       __atomic_store_n(&(flag(0,0)),true,__ATOMIC_RELEASE);
 #endif
     }
@@ -248,7 +248,7 @@ int main(int argc, char ** argv) {
       if (TID > 0) {
         while (__atomic_load_n(&(flag(TID-1,j)),__ATOMIC_ACQUIRE) == false);
 #if SYNCHRONOUS
-        __atomic_thread_fence(__ATOMIC_RELAXED);
+        //__atomic_thread_fence(__ATOMIC_RELAXED);
         __atomic_store_n(&(flag(TID-1,j)),false,__ATOMIC_RELEASE);
 #endif
       }
@@ -263,7 +263,7 @@ int main(int argc, char ** argv) {
 #if SYNCHRONOUS
         while (__atomic_load_n(&(flag(TID,j)),__ATOMIC_ACQUIRE) == true);
 #endif
-        __atomic_thread_fence(__ATOMIC_RELAXED);
+        //__atomic_thread_fence(__ATOMIC_RELAXED);
         __atomic_store_n(&(flag(TID,j)),true,__ATOMIC_RELEASE);
       }
     }
@@ -275,7 +275,7 @@ int main(int argc, char ** argv) {
         while (__atomic_load_n(&(flag(0,0)),__ATOMIC_ACQUIRE) == false);
         __atomic_store_n(&(flag(0,0)),false,__ATOMIC_RELEASE);
 #else
-        __atomic_thread_fence(__ATOMIC_RELAXED);
+        //__atomic_thread_fence(__ATOMIC_RELAXED);
         __atomic_store_n(&(flag(0,0)),true,__ATOMIC_RELEASE);
 #endif
     }
