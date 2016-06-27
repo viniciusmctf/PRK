@@ -294,13 +294,14 @@ int main(int argc, char ** argv)
     }
 
     if ((Num_procs==1) && (TID==0)) { /* first thread waits for corner value       */
-      while (flag(0,0) == true) {
-        #pragma omp flush
+      while (__atomic_load_n(&(flag(0,0)),__ATOMIC_ACQUIRE) == true) {
+          printf("line %d\n",__LINE__);
+          __atomic_thread_fence(__ATOMIC_RELAXED);
       }
 #if SYNCHRONOUS
-      flag(0,0)= true;
-      #pragma omp flush
-#endif      
+      __atomic_store_n(&(flag(0,0)),true,__ATOMIC_RELEASE);
+      __atomic_thread_fence(__ATOMIC_RELAXED);
+#endif
     }
 
     /* execute pipeline algorithm for grid lines 1 through n-1 (skip bottom line) */
@@ -315,13 +316,14 @@ int main(int argc, char ** argv)
         }
       }
       else {
-	while (flag(TID-1,j) == false) {
-           #pragma omp flush
+	while (__atomic_load_n(&(flag(TID-1,j)),__ATOMIC_ACQUIRE) == false) {
+          printf("line %d\n",__LINE__);
+          __atomic_thread_fence(__ATOMIC_RELAXED);
         }
 #if SYNCHRONOUS
-        flag(TID-1,j)= false;
-        #pragma omp flush
-#endif      
+        __atomic_store_n(&(flag(TID-1,j)),false,__ATOMIC_RELEASE);
+        __atomic_thread_fence(__ATOMIC_RELAXED);
+#endif
       }
  
       for (i=tstart[TID]; i<= tend[TID]; i++) {
@@ -330,13 +332,14 @@ int main(int argc, char ** argv)
  
       /* if not on right boundary, signal right neighbor it has new data */
       if (TID < nthread-1) {
-#if SYNCHRONOUS 
-        while (flag(TID,j) == true) {
-          #pragma omp flush
+#if SYNCHRONOUS
+        while (__atomic_load_n(&(flag(TID,j)),__ATOMIC_ACQUIRE) == true) {
+          printf("line %d\n",__LINE__);
+          __atomic_thread_fence(__ATOMIC_RELAXED);
         }
-#endif 
-        flag(TID,j) = true;
-        #pragma omp flush
+#endif
+        __atomic_store_n(&(flag(TID,j)),true,__ATOMIC_RELEASE);
+        __atomic_thread_fence(__ATOMIC_RELAXED);
       }
       else { /* if not on the right boundary, send data to my right neighbor      */  
         if (my_ID < Num_procs-1) {
@@ -360,15 +363,16 @@ int main(int argc, char ** argv)
                 to bottom left corner to create dependency and signal completion  */
         ARRAY(0,0) = -ARRAY(m-1,n-1);
 #if SYNCHRONOUS
-        while (flag(0,0) == false) {
-          #pragma omp flush
+        while (__atomic_load_n(&(flag(0,0)),__ATOMIC_ACQUIRE) == false) {
+          printf("line %d\n",__LINE__);
+          __atomic_thread_fence(__ATOMIC_RELAXED);
         }
-        flag(0,0) = false;
+        __atomic_store_n(&(flag(0,0)),false,__ATOMIC_RELEASE);
 #else
-        #pragma omp flush
-        flag(0,0) = true;
+        __atomic_thread_fence(__ATOMIC_RELAXED);
+        __atomic_store_n(&(flag(0,0)),true,__ATOMIC_RELEASE);
 #endif
-        #pragma omp flush
+        __atomic_thread_fence(__ATOMIC_RELAXED);
       }
     }
  
