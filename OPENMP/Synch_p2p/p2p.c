@@ -233,13 +233,11 @@ int main(int argc, char ** argv) {
     }
 
     if (TID==0) { /* first thread waits for corner value to be copied            */
-      while (flag(0,0) == true) {
-        #pragma omp flush
-      }
+      while (__atomic_load_n(&(flag(0,0)),__ATOMIC_ACQUIRE) == true);
 #if SYNCHRONOUS
-      flag(0,0)= true;
-      #pragma omp flush
-#endif      
+      __atomic_thread_fence(__ATOMIC_RELAXED);
+      __atomic_store_n(&(flag(0,0)),true,__ATOMIC_RELEASE);
+#endif
     }
 
     for (j=1; j<n; j+=grp) { /* apply grouping                                   */
@@ -248,13 +246,11 @@ int main(int argc, char ** argv) {
 
       /* if not on left boundary,  wait for left neighbor to produce data        */
       if (TID > 0) {
-	while (flag(TID-1,j) == false) {
-           #pragma omp flush
-        }
+        while (__atomic_load_n(&(flag(TID-1,j)),__ATOMIC_ACQUIRE) == false);
 #if SYNCHRONOUS
-        flag(TID-1,j)= false;
-        #pragma omp flush
-#endif      
+        __atomic_thread_fence(__ATOMIC_RELAXED);
+        __atomic_store_n(&(flag(TID-1,j)),false,__ATOMIC_RELEASE);
+#endif
       }
 
       for (jj=j; jj<j+jjsize; jj++)
@@ -264,13 +260,11 @@ int main(int argc, char ** argv) {
 
       /* if not on right boundary, signal right neighbor it has new data         */
       if (TID < nthread-1) {
-#if SYNCHRONOUS 
-        while (flag(TID,j) == true) {
-          #pragma omp flush
-        }
-#endif 
-        flag(TID,j) = true;
-        #pragma omp flush
+#if SYNCHRONOUS
+        while (__atomic_load_n(&(flag(TID,j)),__ATOMIC_ACQUIRE) == true);
+#endif
+        __atomic_thread_fence(__ATOMIC_RELAXED);
+        __atomic_store_n(&(flag(TID,j)),true,__ATOMIC_RELEASE);
       }
     }
 
@@ -278,15 +272,12 @@ int main(int argc, char ** argv) {
                 to bottom left corner to create dependency and signal completion   */
         ARRAY(0,0) = -ARRAY(m-1,n-1);
 #if SYNCHRONOUS
-        while (flag(0,0) == false) {
-          #pragma omp flush
-        }
-        flag(0,0) = false;
+        while (__atomic_load_n(&(flag(0,0)),__ATOMIC_ACQUIRE) == false);
+        __atomic_store_n(&(flag(0,0)),false,__ATOMIC_RELEASE);
 #else
-        #pragma omp flush
-        flag(0,0) = true;
+        __atomic_thread_fence(__ATOMIC_RELAXED);
+        __atomic_store_n(&(flag(0,0)),true,__ATOMIC_RELEASE);
 #endif
-        #pragma omp flush
     }
 
   } /* end of iterations */
