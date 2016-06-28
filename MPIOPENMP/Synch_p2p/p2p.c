@@ -94,7 +94,6 @@ int main(int argc, char ** argv)
   int    nthread;       /* number of threads                                     */
   int    error=0;       /* error flag                                            */
   int    Num_procs;     /* Number of ranks                                       */
-  char  *name;          /* MPI threading mode suffix name                        */
   long   total_length;  /* total required length to store grid values            */
   int    provided;      /* MPI level of thread support                           */
   int    true, false;   /* toggled booleans used for synchronization             */
