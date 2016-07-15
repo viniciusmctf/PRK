@@ -1,0 +1,109 @@
+Thu Jul 14 15:09:06 PDT 2016
+srun: defined options for program `srun'
+srun: --------------- ---------------------
+srun: user           : `npadmana'
+srun: uid            : 41374
+srun: gid            : 41374
+srun: cwd            : /global/u2/n/npadmana/edison/myWork/github.com/Kernels/timings/MPI1/Transpose
+srun: ntasks         : 192 (set)
+srun: nodes          : 8 (set)
+srun: jobid          : 1147715 (default)
+srun: partition      : default
+srun: profile        : `NotSet'
+srun: job name       : `transpose_mpi_0008'
+srun: reservation    : `(null)'
+srun: burst_buffer   : `(null)'
+srun: wckey          : `(null)'
+srun: cpu_freq_min   : 4294967294
+srun: cpu_freq_max   : 4294967294
+srun: cpu_freq_gov   : 4294967294
+srun: switches       : -1
+srun: wait-for-switches : -1
+srun: distribution   : unknown
+srun: cpu_bind       : default
+srun: mem_bind       : default
+srun: verbose        : 1
+srun: slurmd_debug   : 0
+srun: immediate      : false
+srun: label output   : false
+srun: unbuffered IO  : false
+srun: overcommit     : false
+srun: threads        : 60
+srun: checkpoint_dir : /var/slurm/checkpoint
+srun: wait           : 0
+srun: nice           : -2
+srun: account        : (null)
+srun: comment        : (null)
+srun: dependency     : (null)
+srun: exclusive      : false
+srun: bcast          : false
+srun: qos            : (null)
+srun: constraints    : mem-per-node=64523M 
+srun: geometry       : (null)
+srun: reboot         : yes
+srun: rotate         : no
+srun: preserve_env   : false
+srun: network        : (null)
+srun: propagate      : NONE
+srun: prolog         : (null)
+srun: epilog         : (null)
+srun: mail_type      : NONE
+srun: mail_user      : (null)
+srun: task_prolog    : (null)
+srun: task_epilog    : (null)
+srun: multi_prog     : no
+srun: sockets-per-node  : -2
+srun: cores-per-socket  : -2
+srun: threads-per-core  : -2
+srun: ntasks-per-node   : -2
+srun: ntasks-per-socket : -2
+srun: ntasks-per-core   : -2
+srun: plane_size        : 4294967294
+srun: core-spec         : NA
+srun: power             : 
+srun: sicp              : 0
+srun: remote command    : `../../../MPI1/Transpose/transpose 25 49152'
+srun: Consumable Resources (CR) Node Selection plugin loaded with argument 50
+srun: launching 1147715.0 on host nid00125, 24 tasks: [0-23]
+srun: launching 1147715.0 on host nid00126, 24 tasks: [24-47]
+srun: launching 1147715.0 on host nid00127, 24 tasks: [48-71]
+srun: launching 1147715.0 on host nid00136, 24 tasks: [72-95]
+srun: launching 1147715.0 on host nid00137, 24 tasks: [96-119]
+srun: launching 1147715.0 on host nid00138, 24 tasks: [120-143]
+srun: launching 1147715.0 on host nid00139, 24 tasks: [144-167]
+srun: launching 1147715.0 on host nid00140, 24 tasks: [168-191]
+srun: route default plugin loaded
+srun: Node nid00125, 24 tasks started
+srun: Node nid00127, 24 tasks started
+srun: Node nid00136, 24 tasks started
+srun: Node nid00138, 24 tasks started
+srun: Node nid00126, 24 tasks started
+srun: Node nid00139, 24 tasks started
+srun: Node nid00140, 24 tasks started
+srun: Node nid00137, 24 tasks started
+Parallel Research Kernels version 2.16
+MPI matrix transpose: B = A^T
+Number of ranks      = 192
+Matrix order         = 49152
+Number of iterations = 25
+Tile size            = 32
+Non-Blocking messages
+Solution validates
+Rate (MB/s): 73066.305232 Avg time (s): 0.529036
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00125: tasks 0-23: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00126: tasks 24-47: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00137: tasks 96-119: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00139: tasks 144-167: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00138: tasks 120-143: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00140: tasks 168-191: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00136: tasks 72-95: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00127: tasks 48-71: Completed
+Thu Jul 14 15:09:29 PDT 2016
