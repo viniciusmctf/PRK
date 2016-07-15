@@ -1,0 +1,333 @@
+Thu Jul 14 17:43:32 PDT 2016
+srun: defined options for program `srun'
+srun: --------------- ---------------------
+srun: user           : `npadmana'
+srun: uid            : 41374
+srun: gid            : 41374
+srun: cwd            : /global/u2/n/npadmana/edison/myWork/github.com/Kernels/timings/MPI1/Transpose
+srun: ntasks         : 1536 (set)
+srun: nodes          : 64 (set)
+srun: jobid          : 1160279 (default)
+srun: partition      : default
+srun: profile        : `NotSet'
+srun: job name       : `transpose_mpi_0064'
+srun: reservation    : `(null)'
+srun: burst_buffer   : `(null)'
+srun: wckey          : `(null)'
+srun: cpu_freq_min   : 4294967294
+srun: cpu_freq_max   : 4294967294
+srun: cpu_freq_gov   : 4294967294
+srun: switches       : -1
+srun: wait-for-switches : -1
+srun: distribution   : unknown
+srun: cpu_bind       : default
+srun: mem_bind       : default
+srun: verbose        : 1
+srun: slurmd_debug   : 0
+srun: immediate      : false
+srun: label output   : false
+srun: unbuffered IO  : false
+srun: overcommit     : false
+srun: threads        : 60
+srun: checkpoint_dir : /var/slurm/checkpoint
+srun: wait           : 0
+srun: nice           : -2
+srun: account        : (null)
+srun: comment        : (null)
+srun: dependency     : (null)
+srun: exclusive      : false
+srun: bcast          : false
+srun: qos            : (null)
+srun: constraints    : mem-per-node=64523M 
+srun: geometry       : (null)
+srun: reboot         : yes
+srun: rotate         : no
+srun: preserve_env   : false
+srun: network        : (null)
+srun: propagate      : NONE
+srun: prolog         : (null)
+srun: epilog         : (null)
+srun: mail_type      : NONE
+srun: mail_user      : (null)
+srun: task_prolog    : (null)
+srun: task_epilog    : (null)
+srun: multi_prog     : no
+srun: sockets-per-node  : -2
+srun: cores-per-socket  : -2
+srun: threads-per-core  : -2
+srun: ntasks-per-node   : -2
+srun: ntasks-per-socket : -2
+srun: ntasks-per-core   : -2
+srun: plane_size        : 4294967294
+srun: core-spec         : NA
+srun: power             : 
+srun: sicp              : 0
+srun: remote command    : `../../../MPI1/Transpose/transpose 50 49152'
+srun: Consumable Resources (CR) Node Selection plugin loaded with argument 50
+srun: launching 1160279.0 on host nid00045, 24 tasks: [0-23]
+srun: launching 1160279.0 on host nid00046, 24 tasks: [24-47]
+srun: launching 1160279.0 on host nid00047, 24 tasks: [48-71]
+srun: launching 1160279.0 on host nid00048, 24 tasks: [72-95]
+srun: launching 1160279.0 on host nid00049, 24 tasks: [96-119]
+srun: launching 1160279.0 on host nid00050, 24 tasks: [120-143]
+srun: launching 1160279.0 on host nid00051, 24 tasks: [144-167]
+srun: launching 1160279.0 on host nid00052, 24 tasks: [168-191]
+srun: launching 1160279.0 on host nid00053, 24 tasks: [192-215]
+srun: launching 1160279.0 on host nid00054, 24 tasks: [216-239]
+srun: launching 1160279.0 on host nid00055, 24 tasks: [240-263]
+srun: launching 1160279.0 on host nid00056, 24 tasks: [264-287]
+srun: launching 1160279.0 on host nid00057, 24 tasks: [288-311]
+srun: launching 1160279.0 on host nid00058, 24 tasks: [312-335]
+srun: launching 1160279.0 on host nid00059, 24 tasks: [336-359]
+srun: launching 1160279.0 on host nid00060, 24 tasks: [360-383]
+srun: launching 1160279.0 on host nid00061, 24 tasks: [384-407]
+srun: launching 1160279.0 on host nid00062, 24 tasks: [408-431]
+srun: launching 1160279.0 on host nid00063, 24 tasks: [432-455]
+srun: launching 1160279.0 on host nid00072, 24 tasks: [456-479]
+srun: launching 1160279.0 on host nid00073, 24 tasks: [480-503]
+srun: launching 1160279.0 on host nid00074, 24 tasks: [504-527]
+srun: launching 1160279.0 on host nid00075, 24 tasks: [528-551]
+srun: launching 1160279.0 on host nid00076, 24 tasks: [552-575]
+srun: launching 1160279.0 on host nid00077, 24 tasks: [576-599]
+srun: launching 1160279.0 on host nid00078, 24 tasks: [600-623]
+srun: launching 1160279.0 on host nid00140, 24 tasks: [624-647]
+srun: launching 1160279.0 on host nid00141, 24 tasks: [648-671]
+srun: launching 1160279.0 on host nid00142, 24 tasks: [672-695]
+srun: launching 1160279.0 on host nid00143, 24 tasks: [696-719]
+srun: launching 1160279.0 on host nid00144, 24 tasks: [720-743]
+srun: launching 1160279.0 on host nid00145, 24 tasks: [744-767]
+srun: launching 1160279.0 on host nid00146, 24 tasks: [768-791]
+srun: launching 1160279.0 on host nid00147, 24 tasks: [792-815]
+srun: launching 1160279.0 on host nid00148, 24 tasks: [816-839]
+srun: launching 1160279.0 on host nid00149, 24 tasks: [840-863]
+srun: launching 1160279.0 on host nid00150, 24 tasks: [864-887]
+srun: launching 1160279.0 on host nid00151, 24 tasks: [888-911]
+srun: launching 1160279.0 on host nid00200, 24 tasks: [912-935]
+srun: launching 1160279.0 on host nid00201, 24 tasks: [936-959]
+srun: launching 1160279.0 on host nid00202, 24 tasks: [960-983]
+srun: launching 1160279.0 on host nid00203, 24 tasks: [984-1007]
+srun: launching 1160279.0 on host nid00204, 24 tasks: [1008-1031]
+srun: launching 1160279.0 on host nid00205, 24 tasks: [1032-1055]
+srun: launching 1160279.0 on host nid00206, 24 tasks: [1056-1079]
+srun: launching 1160279.0 on host nid00220, 24 tasks: [1080-1103]
+srun: launching 1160279.0 on host nid00221, 24 tasks: [1104-1127]
+srun: launching 1160279.0 on host nid00222, 24 tasks: [1128-1151]
+srun: launching 1160279.0 on host nid00223, 24 tasks: [1152-1175]
+srun: launching 1160279.0 on host nid00224, 24 tasks: [1176-1199]
+srun: launching 1160279.0 on host nid00225, 24 tasks: [1200-1223]
+srun: launching 1160279.0 on host nid00226, 24 tasks: [1224-1247]
+srun: launching 1160279.0 on host nid00227, 24 tasks: [1248-1271]
+srun: launching 1160279.0 on host nid00228, 24 tasks: [1272-1295]
+srun: launching 1160279.0 on host nid00229, 24 tasks: [1296-1319]
+srun: launching 1160279.0 on host nid00230, 24 tasks: [1320-1343]
+srun: launching 1160279.0 on host nid00231, 24 tasks: [1344-1367]
+srun: launching 1160279.0 on host nid00232, 24 tasks: [1368-1391]
+srun: launching 1160279.0 on host nid00233, 24 tasks: [1392-1415]
+srun: launching 1160279.0 on host nid00234, 24 tasks: [1416-1439]
+srun: launching 1160279.0 on host nid00235, 24 tasks: [1440-1463]
+srun: launching 1160279.0 on host nid00236, 24 tasks: [1464-1487]
+srun: launching 1160279.0 on host nid00237, 24 tasks: [1488-1511]
+srun: launching 1160279.0 on host nid00238, 24 tasks: [1512-1535]
+srun: route default plugin loaded
+srun: Node nid00059, 24 tasks started
+srun: Node nid00074, 24 tasks started
+srun: Node nid00206, 24 tasks started
+srun: Node nid00048, 24 tasks started
+srun: Node nid00063, 24 tasks started
+srun: Node nid00145, 24 tasks started
+srun: Node nid00148, 24 tasks started
+srun: Node nid00052, 24 tasks started
+srun: Node nid00072, 24 tasks started
+srun: Node nid00220, 24 tasks started
+srun: Node nid00076, 24 tasks started
+srun: Node nid00077, 24 tasks started
+srun: Node nid00204, 24 tasks started
+srun: Node nid00201, 24 tasks started
+srun: Node nid00151, 24 tasks started
+srun: Node nid00058, 24 tasks started
+srun: Node nid00221, 24 tasks started
+srun: Node nid00227, 24 tasks started
+srun: Node nid00057, 24 tasks started
+srun: Node nid00238, 24 tasks started
+srun: Node nid00051, 24 tasks started
+srun: Node nid00228, 24 tasks started
+srun: Node nid00223, 24 tasks started
+srun: Node nid00229, 24 tasks started
+srun: Node nid00200, 24 tasks started
+srun: Node nid00147, 24 tasks started
+srun: Node nid00202, 24 tasks started
+srun: Node nid00226, 24 tasks started
+srun: Node nid00055, 24 tasks started
+srun: Node nid00049, 24 tasks started
+srun: Node nid00203, 24 tasks started
+srun: Node nid00224, 24 tasks started
+srun: Node nid00073, 24 tasks started
+srun: Node nid00047, 24 tasks started
+srun: Node nid00075, 24 tasks started
+srun: Node nid00236, 24 tasks started
+srun: Node nid00205, 24 tasks started
+srun: Node nid00046, 24 tasks started
+srun: Node nid00222, 24 tasks started
+srun: Node nid00050, 24 tasks started
+srun: Node nid00237, 24 tasks started
+srun: Node nid00061, 24 tasks started
+srun: Node nid00225, 24 tasks started
+srun: Node nid00056, 24 tasks started
+srun: Node nid00143, 24 tasks started
+srun: Node nid00234, 24 tasks started
+srun: Node nid00053, 24 tasks started
+srun: Node nid00060, 24 tasks started
+srun: Node nid00062, 24 tasks started
+srun: Node nid00140, 24 tasks started
+srun: Node nid00141, 24 tasks started
+srun: Node nid00054, 24 tasks started
+srun: Node nid00150, 24 tasks started
+srun: Node nid00146, 24 tasks started
+srun: Node nid00231, 24 tasks started
+srun: Node nid00230, 24 tasks started
+srun: Node nid00149, 24 tasks started
+srun: Node nid00233, 24 tasks started
+srun: Node nid00235, 24 tasks started
+srun: Node nid00144, 24 tasks started
+srun: Node nid00232, 24 tasks started
+srun: Node nid00078, 24 tasks started
+srun: Node nid00142, 24 tasks started
+srun: Node nid00045, 24 tasks started
+Parallel Research Kernels version 2.16
+MPI matrix transpose: B = A^T
+Number of ranks      = 1536
+Matrix order         = 49152
+Number of iterations = 50
+Tile size            = 32
+Non-Blocking messages
+Solution validates
+Rate (MB/s): 335331.649877 Avg time (s): 0.115273
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00073: tasks 480-503: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00140: tasks 624-647: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00229: tasks 1296-1319: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00076: tasks 552-575: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00227: tasks 1248-1271: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00075: tasks 528-551: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00238: tasks 1512-1535: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00057: tasks 288-311: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00221: tasks 1104-1127: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00077: tasks 576-599: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00058: tasks 312-335: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00072: tasks 456-479: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00205: tasks 1032-1055: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00203: tasks 984-1007: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00220: tasks 1080-1103: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00151: tasks 888-911: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00230: tasks 1320-1343: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00061: tasks 384-407: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00148: tasks 816-839: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00204: tasks 1008-1031: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00055: tasks 240-263: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00228: tasks 1272-1295: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00236: tasks 1464-1487: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00224: tasks 1176-1199: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00059: tasks 336-359: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00046: tasks 24-47: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00051: tasks 144-167: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00206: tasks 1056-1079: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00047: tasks 48-71: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00201: tasks 936-959: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00147: tasks 792-815: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00222: tasks 1128-1151: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00237: tasks 1488-1511: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00232: tasks 1368-1391: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00048: tasks 72-95: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00074: tasks 504-527: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00060: tasks 360-383: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00202: tasks 960-983: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00149: tasks 840-863: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00049: tasks 96-119: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00146: tasks 768-791: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00200: tasks 912-935: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00078: tasks 600-623: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00150: tasks 864-887: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00235: tasks 1440-1463: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00142: tasks 672-695: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00053: tasks 192-215: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00234: tasks 1416-1439: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00223: tasks 1152-1175: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00063: tasks 432-455: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00056: tasks 264-287: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00145: tasks 744-767: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00231: tasks 1344-1367: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00050: tasks 120-143: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00233: tasks 1392-1415: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00144: tasks 720-743: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00045: tasks 0-23: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00225: tasks 1200-1223: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00054: tasks 216-239: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00062: tasks 408-431: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00143: tasks 696-719: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00226: tasks 1224-1247: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00052: tasks 168-191: Completed
+srun: Received task exit notification for 24 tasks (status=0x0000).
+srun: nid00141: tasks 648-671: Completed
+Thu Jul 14 17:43:50 PDT 2016
