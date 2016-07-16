@@ -8,7 +8,12 @@
 /* Define constants */
 config const order=64, 
              iterations=2, 
-             epsilon = 1.0e-8;
+             epsilon = 1.0e-8, 
+             tile=32;
+
+// Sanity checks
+const useTile=(tile>0);
+
 
 use Time;
 
@@ -16,6 +21,9 @@ use Time;
 proc main() {
   /* Define the matrices */
   var Dom = {0.. #order, 0.. #order};
+  var tileDom : domain(2, stridable=true);
+  if useTile then tileDom = Dom by tile;
+  
   var Ap : [Dom] real, 
       Bp : [Dom] real;
 
@@ -26,7 +34,11 @@ proc main() {
   writeln("Matrix Transpose: B= A^T");
 
   writef("Matrix order = %i\n", order);
-  writef("Untiled\n");
+  if useTile {
+    writef("Tile size=%i\n",tile);
+  } else {
+    writef("Untiled\n");
+  }
   writef("Number of iterations = %i\n", iterations);
 
   // Initialize A & B
@@ -44,9 +56,19 @@ proc main() {
       t.start();
     }
 
-    forall (i,j) in Dom {
-      Bp[j,i] += Ap[i,j];
-      Ap[i,j] += 1.0;
+    if useTile {
+      forall (i,j) in tileDom {
+        var dom1 = Dom[i.. #tile, j.. #tile];
+        for (i,j) in dom1 {
+          Bp[j,i] += Ap[i,j];
+          Ap[i,j] += 1.0;
+        }
+      }
+    } else {
+      forall (i,j) in Dom {
+        Bp[j,i] += Ap[i,j];
+        Ap[i,j] += 1.0;
+      }
     }
 
   }
