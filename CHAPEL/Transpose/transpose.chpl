@@ -105,7 +105,7 @@ proc main() {
             forall (i,j) in colBlock {
               var j0 = j+low;
               var i0 = i+istart;
-              workOut[i,j] = Ap.localAccess[j0,i0];
+              workOut.localAccess[i,j] = Ap.localAccess[j0,i0];
               Ap.localAccess[j0,i0] += 1.0;
             }
 
@@ -119,7 +119,7 @@ proc main() {
             // Copy data back
             istart = recv_from*colWidth;
             [(i,j) in colBlock] 
-              Bp.localAccess[i+low, j+istart] += workIn[i,j];
+              Bp.localAccess[i+low, j+istart] += workIn.localAccess[i,j];
 
           }
           // end local block
