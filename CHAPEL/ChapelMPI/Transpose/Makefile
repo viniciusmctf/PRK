@@ -9,4 +9,4 @@ transpose.x : transpose.chpl
 
 
 clean: 
-	-rm -f *.x *~
+	-rm -f *.x *~ *_real
