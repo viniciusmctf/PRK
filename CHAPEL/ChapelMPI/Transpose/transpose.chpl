@@ -42,7 +42,11 @@ proc main() {
   writeln("Matrix Transpose: B= A^T");
 
   writef("Matrix order = %i\n", order);
-  writef("Untiled\n");
+  if useTile {
+    writef("Tile size=%i\n",tile);
+  } else {
+    writef("Untiled\n");
+  }
   writef("Number of iterations = %i\n", iterations);
 
 
