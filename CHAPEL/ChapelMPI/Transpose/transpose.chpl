@@ -146,14 +146,16 @@ proc main() {
             // Post a send
             MPI_Isend(workOut[0,0], blockSize, MPI_DOUBLE,
                 send_to, phase:c_int, CHPL_COMM_WORLD, send_req);
+
+            // Wait until receive is complete and then copy data back
             MPI_Wait(recv_req, recv_status);
-            MPI_Wait(send_req, send_status);
-
-
-            // Copy data back
             istart = recv_from*colWidth;
             [(i,j) in colBlock] 
               Bp.localAccess[i+low, j+istart] += workIn[i,j];
+
+            // Wait until send is complete
+            MPI_Wait(send_req, send_status);
+
 
           }
           // end local block
