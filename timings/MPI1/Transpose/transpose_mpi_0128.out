@@ -1,11 +1,11 @@
-Mon Jul 18 13:39:12 PDT 2016
+Mon Jul 18 13:45:00 PDT 2016
 Parallel Research Kernels version 2.16
 MPI matrix transpose: B = A^T
-Number of ranks      = 192
+Number of ranks      = 3072
 Matrix order         = 49152
-Number of iterations = 25
+Number of iterations = 50
 Tile size            = 32
 Non-Blocking messages
 Solution validates
-Rate (MB/s): 75749.711748 Avg time (s): 0.510295
-Mon Jul 18 13:39:37 PDT 2016
+Rate (MB/s): 311492.000699 Avg time (s): 0.124095
+Mon Jul 18 13:45:37 PDT 2016

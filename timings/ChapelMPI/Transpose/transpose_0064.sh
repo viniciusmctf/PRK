@@ -9,5 +9,5 @@
 export AMMPI_MPI_THREAD=multiple
 export MPICH_MAX_THREAD_SAFETY=multiple
 date
-srun --nodes=64 --ntasks=64 --tasks-per-node=1 --cpus-per-task=48 ../../../CHAPEL/ChapelMPI/Transpose/transpose.x -nl 64 --iterations=25 --order=49152 --tile=32
+srun --nodes=64 --ntasks=64 --tasks-per-node=1 --cpus-per-task=48 ../../../CHAPEL/ChapelMPI/Transpose/transpose.x -nl 64 --iterations=50 --order=49152 --tile=32
 date

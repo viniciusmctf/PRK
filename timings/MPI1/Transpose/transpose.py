@@ -9,16 +9,20 @@ template="""#!/bin/bash -l
 
 # Run 25 iterations
 date
-srun -v -n %d ../../../MPI1/Transpose/transpose 25 49152
+srun -n %d ../../../MPI1/Transpose/transpose %d 49152
 date
 """
 
-nnodes=[1,2,4,8,16,32,64]
+nnodes=[1,2,4,8,16,32,64,128,256]
 procpernode=24 # On Edison
 
 for inode in nnodes :
   fn = "transpose_%04d.sh"%inode
-  comm=template%(inode,inode,inode,inode*procpernode)
+  if inode > 16 :
+    niter = 50
+  else :
+    niter = 25
+  comm=template%(inode,inode,inode,inode*procpernode, niter)
   ff = open(fn,"w")
   ff.write(comm)
   ff.close()

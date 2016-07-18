@@ -7,5 +7,5 @@
 
 # Run 25 iterations
 date
-srun -v -n 192 ../../../MPI1/Transpose/transpose 25 49152
+srun -n 192 ../../../MPI1/Transpose/transpose 25 49152
 date

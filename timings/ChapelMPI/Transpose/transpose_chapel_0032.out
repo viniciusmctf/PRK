@@ -1,4 +1,4 @@
-Mon Jul 18 12:39:42 PDT 2016
+Mon Jul 18 13:13:34 PDT 2016
 WARNING: Using GASNet's mpi-conduit, which exists for portability convenience.
 WARNING: This system appears to contain recognized network hardware: Cray Gemini (XE and XK) or Aries (XC)
 WARNING: which is supported by a GASNet native conduit, although
@@ -11,5 +11,5 @@ Matrix order = 49152
 Tile size=32
 Number of iterations = 25
 Solution validates
-Rate (MB/s): 1.15575e+05  Avg time (s): 0.334456
-Mon Jul 18 12:40:07 PDT 2016
+Rate (MB/s): 1.37992e+05  Avg time (s): 0.280122
+Mon Jul 18 13:13:57 PDT 2016
