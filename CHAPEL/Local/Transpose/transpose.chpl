@@ -57,8 +57,8 @@ proc main() {
     }
 
     if useTile {
-      forall (i,j) in tileDom {
-        var dom1 = Dom[i.. #tile, j.. #tile];
+      forall (i0,j0) in tileDom {
+        var dom1 = Dom[i0.. #tile, j0.. #tile];
         for (i,j) in dom1 {
           Bp[j,i] += Ap[i,j];
           Ap[i,j] += 1.0;
