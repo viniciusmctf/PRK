@@ -15,7 +15,11 @@ use BlockDist;
 /* Define constants */
 config const order=64, 
              iterations=2, 
-             epsilon = 1.0e-8;
+             epsilon = 1.0e-8,
+             tile=32;
+
+// Decide whether to tile or not
+const useTile=(tile>0);
 
 
 /* Verify that the numLocales divides order */
@@ -67,6 +71,10 @@ proc main() {
       const blockSize = (colWidth*colWidth):c_int;
       var workIn, workOut : [colBlock] real;
 
+      // Tiling
+      var tileDom : domain(2, stridable=true);
+      if useTile then tileDom = colBlock by tile;
+
       // Communication
       var send_to, recv_from : c_int;
       var send_req, recv_req : MPI_Request;
@@ -84,9 +92,19 @@ proc main() {
         local {
 
           // Do the local piece
-          forall (i,j) in colBlock {
-            Bp.localAccess[j+low,i+low] += Ap.localAccess[i+low,j+low];
-            Ap.localAccess[i+low,j+low] += 1.0;
+          if useTile {
+            forall (i0,j0) in tileDom {
+              var dom1 = colBlock[i0.. #tile, j0.. #tile];
+              for (i,j) in dom1 {
+                Bp.localAccess[j+low,i+low] += Ap.localAccess[i+low,j+low];
+                Ap.localAccess[i+low,j+low] += 1.0;
+              }
+            }
+          } else {
+            forall (i,j) in colBlock {
+              Bp.localAccess[j+low,i+low] += Ap.localAccess[i+low,j+low];
+              Ap.localAccess[i+low,j+low] += 1.0;
+            }
           }
 
 
@@ -102,11 +120,23 @@ proc main() {
 
             // Copy to work
             var istart = send_to*colWidth;
-            forall (i,j) in colBlock {
-              var j0 = j+low;
-              var i0 = i+istart;
-              workOut.localAccess[i,j] = Ap.localAccess[j0,i0];
-              Ap.localAccess[j0,i0] += 1.0;
+            if useTile {
+              forall (i0,j0) in tileDom {
+                var dom1 = colBlock[i0.. #tile, j0.. #tile];
+                for (i,j) in dom1 {
+                  var ip = i + istart;
+                  var jp = j + low;
+                  workOut[i,j] = Ap.localAccess[jp,ip];
+                  Ap.localAccess[jp,ip] += 1.0;
+                }
+              }
+            } else {
+              forall (i,j) in colBlock {
+                var ip = i + istart;
+                var jp = j + low;
+                workOut[i,j] = Ap.localAccess[jp,ip];
+                Ap.localAccess[jp,ip] += 1.0;
+              }
             }
 
             // Post a send
@@ -119,7 +149,7 @@ proc main() {
             // Copy data back
             istart = recv_from*colWidth;
             [(i,j) in colBlock] 
-              Bp.localAccess[i+low, j+istart] += workIn.localAccess[i,j];
+              Bp.localAccess[i+low, j+istart] += workIn[i,j];
 
           }
           // end local block
