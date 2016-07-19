@@ -1,0 +1,36 @@
+Tue Jul 19 11:15:54 PDT 2016
+Compilation command: chpl -o transpose.x -O --fast transpose.chpl 
+Chapel compiler version: 1.13.1.bbd420a
+Chapel environment:
+  CHPL_HOME: /global/homes/n/npadmana/edison/myWork/github.com/chapel
+  CHPL_ATOMICS: intrinsics
+  CHPL_AUX_FILESYS: none
+  CHPL_COMM: none
+  CHPL_COMM_SUBSTRATE: mpi
+  CHPL_GASNET_SEGMENT: none
+  CHPL_GMP: gmp
+  CHPL_HOST_COMPILER: gnu
+  CHPL_HOST_PLATFORM: cray-xc
+  CHPL_HWLOC: hwloc
+  CHPL_LAUNCHER: none
+  CHPL_LLVM: llvm
+  CHPL_LOCALE_MODEL: flat
+  CHPL_MAKE: gmake
+  CHPL_MEM: jemalloc
+  CHPL_NETWORK_ATOMICS: none
+  CHPL_REGEXP: re2
+  CHPL_TARGET_ARCH: sandybridge
+  CHPL_TARGET_COMPILER: cray-prgenv-gnu
+  CHPL_TARGET_PLATFORM: cray-xc
+  CHPL_TASKS: qthreads
+  CHPL_TIMERS: generic
+  CHPL_UNWIND: none
+  CHPL_WIDE_POINTERS: struct
+Parallel Research Kernels
+Matrix Transpose: B= A^T
+Matrix order = 49152
+Tile size=32
+Number of iterations = 25
+Solution validates
+Rate (MB/s): 15728.6  Avg time (s): 2.4576
+Tue Jul 19 11:17:23 PDT 2016
