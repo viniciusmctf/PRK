@@ -416,7 +416,7 @@ int main(int argc, char ** argv)
   double addit = ((double)(iterations+1) * (double) (iterations))/2.0;
   #pragma omp parallel for private (i)
   for (j=0;j<Block_order;j++) for (i=0;i<order; i++) {
-      abserr += ABS(B(i,j) - (double)((order*i + j+colstart)*(iterations+1)+addit));
+      abserr += ABS(B(i,j) - ((double)(order*i + j+colstart)*(iterations+1)+addit));
   }
 
   MPI_Reduce(&abserr, &abserr_tot, 1, MPI_DOUBLE, MPI_SUM, root, MPI_COMM_WORLD);
