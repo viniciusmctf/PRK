@@ -88,16 +88,17 @@ proc main() {
     // Do the local piece
     if useTile {
       forall (i0,j0) in tileDom {
-        var dom1 = colBlock[i0.. #tile, j0.. #tile];
+        var dom1 = colBlock[i0.. #tile, j0.. #tile].translate((low,low));
         for (i,j) in dom1 {
-          Bp[j+low,i+low] += Ap[i+low,j+low];
-          Ap[i+low,j+low] += 1.0;
+          Bp[j,i] += Ap[i,j];
+          Ap[i,j] += 1.0;
         }
       }
     } else {
-      forall (i,j) in colBlock {
-        Bp[j+low,i+low] += Ap[i+low,j+low];
-        Ap[i+low,j+low] += 1.0;
+      var dom1 = colBlock.translate((low,low));
+      forall (i,j) in dom1 {
+        Bp[j,i] += Ap[i,j];
+        Ap[i,j] += 1.0;
       }
     }
 
@@ -113,23 +114,23 @@ proc main() {
 
 
       // Copy to work
-      var istart = send_to*colWidth;
+      var jstart = send_to*colWidth;
       if useTile {
         forall (i0,j0) in tileDom {
           var dom1 = colBlock[i0.. #tile, j0.. #tile];
           for (i,j) in dom1 {
-            var ip = i + istart;
-            var jp = j + low;
-            workOut[i,j] = Ap[jp,ip];
-            Ap[jp,ip] += 1.0;
+            var ip = i + low;
+            var jp = j + jstart;
+            workOut[j,i] = Ap[ip,jp];
+            Ap[ip,jp] += 1.0;
           }
         }
       } else {
         forall (i,j) in colBlock {
-          var ip = i + istart;
-          var jp = j + low;
-          workOut[i,j] = Ap[jp,ip];
-          Ap[jp,ip] += 1.0;
+          var ip = i + low;
+          var jp = j + jstart;
+          workOut[j,i] = Ap[ip,jp];
+          Ap[ip,jp] += 1.0;
         }
       }
 
@@ -139,9 +140,12 @@ proc main() {
 
       // Wait until receive is complete and then copy data back
       MPI_Wait(recv_req, recv_status);
-      istart = recv_from*colWidth;
-      [(i,j) in colBlock] 
-        Bp[i+low, j+istart] += workIn[i,j];
+      jstart = recv_from*colWidth;
+      {
+        var off = (low,jstart);
+        [ij in colBlock] Bp[ij+off] += workIn[ij];
+      }
+
 
       // Wait until send is complete
       MPI_Wait(send_req, send_status);
