@@ -28,7 +28,7 @@ proc main() {
 
   /* Define the grid */
   var Space = {0.. #n, 0.. #m};
-  var IterSpaceI = {1..(m-1)};
+  var IterSpaceI = 1..(m-1);
   var IterSpaceJ = 1..(n-1);
   var A : [Space] real;
   A = 0.0;
