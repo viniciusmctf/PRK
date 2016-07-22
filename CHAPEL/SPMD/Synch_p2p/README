@@ -1,0 +1,9 @@
+Since this is a slightly more involved communication 
+pattern + dependencies, we build up to the full program 
+in steps :
+
+_serial.chpl -- A purely serial version of the code
+_task.chpl -- Threading, but single rank
+
+The full version will just be p2p.chpl
+
