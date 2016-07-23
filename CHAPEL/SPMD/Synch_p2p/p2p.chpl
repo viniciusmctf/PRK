@@ -70,7 +70,9 @@ proc main() {
 
   // Define communication buffers
   var sendBuffer : [IterSpaceJ] real;
-  var requests : [IterSpaceJ] MPI_Request = MPI_REQUEST_NULL;
+  var requests : [IterSpaceJ] MPI_Request;
+  // Use this to avoid blocking twice on MPI_REQUEST_NULL
+  var testRequests : [IterSpaceJ] bool = false; 
 
   
   // Get ready for iterations
@@ -131,9 +133,10 @@ proc main() {
         } else {
           if !finalRank {
             var stat : MPI_Status;
-            MPI_Wait(requests[j], stat);
+            if testRequests[j] then MPI_Wait(requests[j], stat);
             sendBuffer[j] = A[j, blockEnd];
             MPI_Isend(sendBuffer[j], 1, MPI_DOUBLE, rank+1, j:c_int, CHPL_COMM_WORLD, requests[j]);
+            testRequests[j]=true;
           }
         }
 
@@ -143,8 +146,9 @@ proc main() {
       if finalRank {
         var stat : MPI_Status;
         sendBuffer[n-1] = -A[n-1,m-1];
-        MPI_Wait(requests[n-1],stat);
+        if testRequests[n-1] then MPI_Wait(requests[n-1],stat);
         MPI_Isend(sendBuffer[n-1],1, MPI_DOUBLE, 0, 0, CHPL_COMM_WORLD, requests[n-1]);
+        testRequests[n-1]=true;
       } 
       if rank==0 {
         var stat : MPI_Status;
