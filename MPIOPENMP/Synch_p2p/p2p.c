@@ -295,7 +295,7 @@ int main(int argc, char ** argv)
 
     if ((Num_procs==1) && (TID==0)) { /* first thread waits for corner value       */
       while (__atomic_load_n(&(flag(0,0)),__ATOMIC_ACQUIRE) == true) {
-          printf("line %d\n",__LINE__);
+          //printf("line %d\n",__LINE__);
           __atomic_thread_fence(__ATOMIC_RELAXED);
       }
 #if SYNCHRONOUS
@@ -317,7 +317,7 @@ int main(int argc, char ** argv)
       }
       else {
 	while (__atomic_load_n(&(flag(TID-1,j)),__ATOMIC_ACQUIRE) == false) {
-          printf("line %d\n",__LINE__);
+          //printf("line %d\n",__LINE__);
           __atomic_thread_fence(__ATOMIC_RELAXED);
         }
 #if SYNCHRONOUS
