@@ -19,9 +19,9 @@ INCLUDEPATHS =
 ### End User configurable options ###
 
 ifndef SYNCHRONOUS
-  SYNCHRONOUS=0
+  SYNCHRONOUS=1
 endif
-#description: default handshake between threads is off
+#description: default handshake between threads is on with atomics
 
 ifndef RESTRICT_KEYWORD
   RESTRICT_KEYWORD=0
