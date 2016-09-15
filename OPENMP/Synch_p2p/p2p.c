@@ -77,7 +77,6 @@ int main(int argc, char ** argv) {
 
   int    TID;             /* Thread ID                                           */
   long   m, n;            /* grid dimensions                                     */
-  int    i, j, jj, iter, ID; /* dummies                                          */
   int    iterations;      /* number of times to run the pipeline algorithm       */
   int    *flag;           /* used for pairwise synchronizations                  */
   int    *start, *end;    /* starts and ends of grid slices                      */
@@ -160,11 +159,11 @@ int main(int argc, char ** argv) {
   }
   end = start + nthread_input;
   start[0] = 0;
-  for (ID=0; ID<nthread_input; ID++) {
+  for (int i=0; i<nthread_input; i++) {
     segment_size = m/nthread_input;
-    if (ID < (m%nthread_input)) segment_size++;
-    if (ID>0) start[ID] = end[ID-1]+1;
-    end[ID] = start[ID]+segment_size-1;
+    if (i < (m%nthread_input)) segment_size++;
+    if (i>0) start[i] = end[i-1]+1;
+    end[i] = start[i]+segment_size-1;
   }
 
   flag = (int *) prk_malloc(sizeof(int)*nthread_input*LINEWORDS*n);
@@ -173,7 +172,7 @@ int main(int argc, char ** argv) {
     exit(EXIT_FAILURE);
   }
 
-#pragma omp parallel private(i, j, jj, jjsize, TID, iter, true, false) 
+#pragma omp parallel private(jjsize, TID, true, false) 
   {
 
   #pragma omp master
@@ -203,20 +202,20 @@ int main(int argc, char ** argv) {
   TID = omp_get_thread_num();
 
   /* clear the array, assuming first-touch memory placement                      */
-  for (j=0; j<n; j++) for (i=start[TID]; i<=end[TID]; i++) ARRAY(i,j) = 0.0;
+  for (int j=0; j<n; j++) for (int i=start[TID]; i<=end[TID]; i++) ARRAY(i,j) = 0.0;
   /* set boundary values (bottom and left side of grid                           */
-  if (TID==0) for (j=0; j<n; j++) ARRAY(start[TID],j) = (double) j;
-  for (i=start[TID]; i<=end[TID]; i++) ARRAY(i,0) = (double) i;
+  if (TID==0) for (int j=0; j<n; j++) ARRAY(start[TID],j) = (double) j;
+  for (int i=start[TID]; i<=end[TID]; i++) ARRAY(i,0) = (double) i;
 
   /* set flags to zero to indicate no data is available yet                      */
   true = 1; false = !true;
-  for (j=0; j<n; j++) flag(TID,j) = false;
+  for (int j=0; j<n; j++) flag(TID,j) = false;
 
   /* we need a barrier after setting the flags, to make sure each is
      visible to all threads, and to synchronize before the iterations start      */
   #pragma omp barrier
 
-  for (iter = 0; iter<=iterations; iter++){
+  for (int iter = 0; iter<=iterations; iter++){
 
 #if !SYNCHRONOUS
     /* true and false toggle each iteration                                      */
@@ -242,7 +241,7 @@ int main(int argc, char ** argv) {
 #endif      
     }
 
-    for (j=1; j<n; j+=grp) { /* apply grouping                                   */
+    for (int j=1; j<n; j+=grp) { /* apply grouping                                   */
 
       jjsize = MIN(grp, n-j);
 
@@ -257,8 +256,8 @@ int main(int argc, char ** argv) {
 #endif      
       }
 
-      for (jj=j; jj<j+jjsize; jj++)
-      for (i=MAX(start[TID],1); i<= end[TID]; i++) {
+      for (int jj=j; jj<j+jjsize; jj++)
+      for (int i=MAX(start[TID],1); i<= end[TID]; i++) {
         ARRAY(i,jj) = ARRAY(i-1,jj) + ARRAY(i,jj-1) - ARRAY(i-1,jj-1);
       }
 
