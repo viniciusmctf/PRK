@@ -87,7 +87,6 @@ int main(int argc, char ** argv) {
   double corner_val;      /* verification value at top right corner of grid      */
   int    nthread_input,   /* thread parameters                                   */
          nthread;
-  int    grp;             /* grid line aggregation factor                        */
   double RESTRICT *vector;/* array holding grid values                           */
   long   total_length;    /* total required length to store grid values          */
   int    num_error=0;     /* flag that signals that requested and obtained
@@ -130,13 +129,6 @@ int main(int argc, char ** argv) {
     printf("ERROR: grid dimensions must be positive: %ld, %ld \n", m, n);
     exit(EXIT_FAILURE);
   }
-
-  if (argc==6) {
-    grp = atoi(*++argv);
-    if (grp < 1) grp = 1;
-    else if (grp >= n) grp = n-1;
-  }
-  else grp = 1;
 
   total_length = sizeof(double)*m*n;
   vector = (double *) prk_malloc(total_length);
@@ -187,8 +179,6 @@ int main(int argc, char ** argv) {
     printf("Number of threads         = %d\n",nthread_input);
     printf("Grid sizes                = %ld, %ld\n", m, n);
     printf("Number of iterations      = %d\n", iterations);
-    if (grp > 1)
-    printf("Group factor              = %d (cheating!)\n", grp);
 #if SYNCHRONOUS
     printf("Neighbor thread handshake = on\n");
 #else
@@ -253,9 +243,7 @@ int main(int argc, char ** argv) {
 #endif
     }
 
-    for (int j=1; j<n; j+=grp) { /* apply grouping                                   */
-
-      int jjsize = MIN(grp, n-j); /* actual line group size */
+    for (int j=1; j<n; j++) {
 
       /* if not on left boundary,  wait for left neighbor to produce data        */
       if (TID > 0) {
@@ -268,7 +256,7 @@ int main(int argc, char ** argv) {
 #endif
       }
 
-      for (int jj=j; jj<j+jjsize; jj++) {
+      for (int jj=j; jj<j+1; jj++) {
           for (int i=MAX(start[TID],1); i<= end[TID]; i++) {
             ARRAY(i,jj) = ARRAY(i-1,jj) + ARRAY(i,jj-1) - ARRAY(i-1,jj-1);
           }
@@ -331,8 +319,6 @@ int main(int argc, char ** argv) {
   printf("Solution validates\n");
 #endif
   avgtime = pipeline_time/iterations;
-  /* flip the sign of the execution time to indicate cheating                    */
-  if (grp>1) avgtime *= -1.0;
   printf("Rate (MFlops/s): %lf Avg time (s): %lf\n",
          1.0E-06 * 2 * ((double)((m-1)*(n-1)))/avgtime, avgtime);
 
