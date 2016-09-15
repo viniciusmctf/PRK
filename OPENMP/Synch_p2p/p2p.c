@@ -179,11 +179,7 @@ int main(int argc, char ** argv) {
     printf("Number of threads         = %d\n",nthread_input);
     printf("Grid sizes                = %ld, %ld\n", m, n);
     printf("Number of iterations      = %d\n", iterations);
-#if SYNCHRONOUS
     printf("Neighbor thread handshake = on\n");
-#else
-    printf("Neighbor thread handshake = off\n");
-#endif
   }
   }
   bail_out(num_error);
@@ -219,11 +215,6 @@ int main(int argc, char ** argv) {
 
   for (int iter = 0; iter<=iterations; iter++) {
 
-#if !SYNCHRONOUS
-    /* true and false toggle each iteration                                      */
-    true = (iter+1)%2; false = !true;
-#endif
-
     /* start timer after a warmup iteration                                      */
     if (iter == 1) {
       #pragma omp barrier
@@ -237,10 +228,8 @@ int main(int argc, char ** argv) {
       while (flag(0,0) == true) {
         #pragma omp flush
       }
-#if SYNCHRONOUS
       flag(0,0)= true;
       #pragma omp flush
-#endif
     }
 
     for (int j=1; j<n; j++) {
@@ -250,10 +239,8 @@ int main(int argc, char ** argv) {
 	while (flag(TID-1,j) == false) {
            #pragma omp flush
         }
-#if SYNCHRONOUS
         flag(TID-1,j)= false;
         #pragma omp flush
-#endif
       }
 
       for (int jj=j; jj<j+1; jj++) {
@@ -264,11 +251,9 @@ int main(int argc, char ** argv) {
 
       /* if not on right boundary, signal right neighbor it has new data         */
       if (TID < nthread-1) {
-#if SYNCHRONOUS
         while (flag(TID,j) == true) {
           #pragma omp flush
         }
-#endif
         flag(TID,j) = true;
         #pragma omp flush
       }
@@ -277,15 +262,10 @@ int main(int argc, char ** argv) {
     if (TID==nthread-1) { /* if on right boundary, copy top right corner value
                              to bottom left corner to create dependency and signal completion */
         ARRAY(0,0) = -ARRAY(m-1,n-1);
-#if SYNCHRONOUS
         while (flag(0,0) == false) {
           #pragma omp flush
         }
         flag(0,0) = false;
-#else
-        #pragma omp flush
-        flag(0,0) = true;
-#endif
         #pragma omp flush
     }
 

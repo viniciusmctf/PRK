@@ -17,11 +17,6 @@ INCLUDEPATHS =
 
 ### End User configurable options ###
 
-ifndef SYNCHRONOUS
-  SYNCHRONOUS=0
-endif
-#description: default handshake between threads is off
-
 ifndef RESTRICT_KEYWORD
   RESTRICT_KEYWORD=0
 endif
@@ -41,7 +36,6 @@ endif
 VERBOSEFLAG = -DVERBOSE=$(VERBOSE)
 RESTRICTFLAG= -DRESTRICT_KEYWORD=$(RESTRICT_KEYWORD)
 NTHREADFLAG = -DMAXTHREADS=$(MAXTHREADS)
-SYNCHFLAG   = -DSYNCHRONOUS=$(SYNCHRONOUS)
 
 OPTIONSSTRING="Make options:\n\
 OPTION                  MEANING                                  DEFAULT\n\
