@@ -82,13 +82,12 @@ int main(int argc, char ** argv) {
   int    *start, *end;    /* starts and ends of grid slices                      */
   int    segment_size;
   double pipeline_time,   /* timing parameters                                   */
-         avgtime; 
+         avgtime;
   double epsilon = 1.e-8; /* error tolerance                                     */
   double corner_val;      /* verification value at top right corner of grid      */
   int    nthread_input,   /* thread parameters                                   */
-         nthread; 
+         nthread;
   int    grp;             /* grid line aggregation factor                        */
-  int    jjsize;          /* actual line group size                              */
   double RESTRICT *vector;/* array holding grid values                           */
   long   total_length;    /* total required length to store grid values          */
   int    num_error=0;     /* flag that signals that requested and obtained
@@ -96,7 +95,7 @@ int main(int argc, char ** argv) {
   int    true, false;     /* toggled booleans used for synchronization           */
 
   /*******************************************************************************
-  ** process and test input parameters    
+  ** process and test input parameters
   ********************************************************************************/
 
   printf("Parallel Research Kernels version %s\n", PRKVERSION);
@@ -109,7 +108,7 @@ int main(int argc, char ** argv) {
   }
 
   /* Take number of threads to request from command line */
-  nthread_input = atoi(*++argv); 
+  nthread_input = atoi(*++argv);
 
   if ((nthread_input < 1) || (nthread_input > MAX_THREADS)) {
     printf("ERROR: Invalid number of threads: %d\n", nthread_input);
@@ -118,8 +117,8 @@ int main(int argc, char ** argv) {
 
   omp_set_num_threads(nthread_input);
 
-  iterations  = atoi(*++argv); 
-  if (iterations < 1){
+  iterations  = atoi(*++argv);
+  if (iterations < 1) {
     printf("ERROR: iterations must be >= 1 : %d \n",iterations);
     exit(EXIT_FAILURE);
   }
@@ -127,7 +126,7 @@ int main(int argc, char ** argv) {
   m  = atol(*++argv);
   n  = atol(*++argv);
 
-  if (m < 1 || n < 1){
+  if (m < 1 || n < 1) {
     printf("ERROR: grid dimensions must be positive: %ld, %ld \n", m, n);
     exit(EXIT_FAILURE);
   }
@@ -147,7 +146,7 @@ int main(int argc, char ** argv) {
   }
 
   if (m<nthread_input) {
-    printf("First grid dimension %ld smaller than number of threads requested: %d\n", 
+    printf("First grid dimension %ld smaller than number of threads requested: %d\n",
            m, nthread_input);
     exit(EXIT_FAILURE);
   }
@@ -172,7 +171,7 @@ int main(int argc, char ** argv) {
     exit(EXIT_FAILURE);
   }
 
-#pragma omp parallel private(jjsize, TID, true, false) 
+#pragma omp parallel private(TID, true, false)
   {
 
   #pragma omp master
@@ -183,7 +182,7 @@ int main(int argc, char ** argv) {
     printf("ERROR: number of requested threads %d does not equal ",
            nthread_input);
     printf("number of spawned threads %d\n", nthread);
-  } 
+  }
   else {
     printf("Number of threads         = %d\n",nthread_input);
     printf("Grid sizes                = %ld, %ld\n", m, n);
@@ -202,20 +201,33 @@ int main(int argc, char ** argv) {
   TID = omp_get_thread_num();
 
   /* clear the array, assuming first-touch memory placement                      */
-  for (int j=0; j<n; j++) for (int i=start[TID]; i<=end[TID]; i++) ARRAY(i,j) = 0.0;
+  for (int j=0; j<n; j++) {
+      for (int i=start[TID]; i<=end[TID]; i++) {
+          ARRAY(i,j) = 0.0;
+      }
+  }
   /* set boundary values (bottom and left side of grid                           */
-  if (TID==0) for (int j=0; j<n; j++) ARRAY(start[TID],j) = (double) j;
-  for (int i=start[TID]; i<=end[TID]; i++) ARRAY(i,0) = (double) i;
+  if (TID==0) {
+      for (int j=0; j<n; j++) {
+          ARRAY(start[TID],j) = (double) j;
+      }
+  }
+  for (int i=start[TID]; i<=end[TID]; i++) {
+      ARRAY(i,0) = (double) i;
+  }
 
   /* set flags to zero to indicate no data is available yet                      */
-  true = 1; false = !true;
-  for (int j=0; j<n; j++) flag(TID,j) = false;
+  true  = 1;
+  false = !true;
+  for (int j=0; j<n; j++) {
+      flag(TID,j) = false;
+  }
 
   /* we need a barrier after setting the flags, to make sure each is
      visible to all threads, and to synchronize before the iterations start      */
   #pragma omp barrier
 
-  for (int iter = 0; iter<=iterations; iter++){
+  for (int iter = 0; iter<=iterations; iter++) {
 
 #if !SYNCHRONOUS
     /* true and false toggle each iteration                                      */
@@ -223,7 +235,7 @@ int main(int argc, char ** argv) {
 #endif
 
     /* start timer after a warmup iteration                                      */
-    if (iter == 1) { 
+    if (iter == 1) {
       #pragma omp barrier
       #pragma omp master
       {
@@ -238,12 +250,12 @@ int main(int argc, char ** argv) {
 #if SYNCHRONOUS
       flag(0,0)= true;
       #pragma omp flush
-#endif      
+#endif
     }
 
     for (int j=1; j<n; j+=grp) { /* apply grouping                                   */
 
-      jjsize = MIN(grp, n-j);
+      int jjsize = MIN(grp, n-j); /* actual line group size */
 
       /* if not on left boundary,  wait for left neighbor to produce data        */
       if (TID > 0) {
@@ -253,28 +265,29 @@ int main(int argc, char ** argv) {
 #if SYNCHRONOUS
         flag(TID-1,j)= false;
         #pragma omp flush
-#endif      
+#endif
       }
 
-      for (int jj=j; jj<j+jjsize; jj++)
-      for (int i=MAX(start[TID],1); i<= end[TID]; i++) {
-        ARRAY(i,jj) = ARRAY(i-1,jj) + ARRAY(i,jj-1) - ARRAY(i-1,jj-1);
+      for (int jj=j; jj<j+jjsize; jj++) {
+          for (int i=MAX(start[TID],1); i<= end[TID]; i++) {
+            ARRAY(i,jj) = ARRAY(i-1,jj) + ARRAY(i,jj-1) - ARRAY(i-1,jj-1);
+          }
       }
 
       /* if not on right boundary, signal right neighbor it has new data         */
       if (TID < nthread-1) {
-#if SYNCHRONOUS 
+#if SYNCHRONOUS
         while (flag(TID,j) == true) {
           #pragma omp flush
         }
-#endif 
+#endif
         flag(TID,j) = true;
         #pragma omp flush
       }
     }
 
-    if (TID==nthread-1) { /* if on right boundary, copy top right corner value 
-                to bottom left corner to create dependency and signal completion   */
+    if (TID==nthread-1) { /* if on right boundary, copy top right corner value
+                             to bottom left corner to create dependency and signal completion */
         ARRAY(0,0) = -ARRAY(m-1,n-1);
 #if SYNCHRONOUS
         while (flag(0,0) == false) {
@@ -310,7 +323,7 @@ int main(int argc, char ** argv) {
     exit(EXIT_FAILURE);
   }
 
-#if VERBOSE   
+#if VERBOSE
   printf("Solution validates; verification value = %lf\n", corner_val);
   printf("Point-to-point synchronizations/s: %lf\n",
          ((float)((n-1)*(nthread-1)))/(avgtime));
