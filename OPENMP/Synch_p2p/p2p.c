@@ -67,18 +67,20 @@ HISTORY: - Written by Rob Van der Wijngaart, March 2006.
 #include <par-res-kern_general.h>
 #include <par-res-kern_omp.h>
 
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#include <stdbool.h>
+#include <stdatomic.h>
+#else
+#error You need C11 here.
+#endif
+
 /* define shorthand for indexing a multi-dimensional array                       */
 #define ARRAY(i,j) vector[i+(j)*(m)]
-/* define shorthand for flag with cache line padding                             */
-#define LINEWORDS  16
-#define flag(TID,j)    flag[((TID)+(j)*nthread)*LINEWORDS]
 
 int main(int argc, char ** argv) {
 
-  int    TID;             /* Thread ID                                           */
   long   m, n;            /* grid dimensions                                     */
   int    iterations;      /* number of times to run the pipeline algorithm       */
-  int    *flag;           /* used for pairwise synchronizations                  */
   int    *start, *end;    /* starts and ends of grid slices                      */
   int    segment_size;
   double pipeline_time,   /* timing parameters                                   */
@@ -91,7 +93,6 @@ int main(int argc, char ** argv) {
   long   total_length;    /* total required length to store grid values          */
   int    num_error=0;     /* flag that signals that requested and obtained
                              numbers of threads are the same                     */
-  int    true, false;     /* toggled booleans used for synchronization           */
 
   /*******************************************************************************
   ** process and test input parameters
@@ -157,13 +158,14 @@ int main(int argc, char ** argv) {
     end[i] = start[i]+segment_size-1;
   }
 
-  flag = (int *) prk_malloc(sizeof(int)*nthread_input*LINEWORDS*n);
-  if (!flag) {
-    printf("ERROR: COuld not allocate space for synchronization flags\n");
+  /* used for pairwise synchronizations */
+  atomic_int * ready = prk_malloc(nthread_input * n * sizeof(atomic_int));
+  if (!ready) {
+    printf("ERROR: Could not allocate space for synchronization flags\n");
     exit(EXIT_FAILURE);
   }
 
-#pragma omp parallel private(TID, true, false)
+#pragma omp parallel
   {
 
   #pragma omp master
@@ -184,30 +186,29 @@ int main(int argc, char ** argv) {
   }
   bail_out(num_error);
 
-  TID = omp_get_thread_num();
+  int me = omp_get_thread_num();
 
   /* clear the array, assuming first-touch memory placement                      */
   for (int j=0; j<n; j++) {
-      for (int i=start[TID]; i<=end[TID]; i++) {
+      for (int i=start[me]; i<=end[me]; i++) {
           ARRAY(i,j) = 0.0;
       }
   }
   /* set boundary values (bottom and left side of grid                           */
-  if (TID==0) {
+  if (me==0) {
       for (int j=0; j<n; j++) {
-          ARRAY(start[TID],j) = (double) j;
+          ARRAY(start[me],j) = (double) j;
       }
   }
-  for (int i=start[TID]; i<=end[TID]; i++) {
+  for (int i=start[me]; i<=end[me]; i++) {
       ARRAY(i,0) = (double) i;
   }
 
   /* set flags to zero to indicate no data is available yet                      */
-  true  = 1;
-  false = !true;
   for (int j=0; j<n; j++) {
-      flag(TID,j) = false;
+      atomic_store( &(ready[n*me+j]), -1);
   }
+  atomic_store( &(ready[n*0+0]), 0);
 
   /* we need a barrier after setting the flags, to make sure each is
      visible to all threads, and to synchronize before the iterations start      */
@@ -224,49 +225,34 @@ int main(int argc, char ** argv) {
       }
     }
 
-    if (TID==0) { /* first thread waits for corner value to be copied            */
-      while (flag(0,0) == true) {
-        #pragma omp flush
-      }
-      flag(0,0)= true;
-      #pragma omp flush
+    if (me==0) { /* first thread waits for corner value to be copied            */
+      while (iter != atomic_load( &(ready[0]) ));
+      atomic_store( &(ready[n*1+1]), iter);
     }
 
     for (int j=1; j<n; j++) {
 
       /* if not on left boundary,  wait for left neighbor to produce data        */
-      if (TID > 0) {
-	while (flag(TID-1,j) == false) {
-           #pragma omp flush
-        }
-        flag(TID-1,j)= false;
-        #pragma omp flush
+      if (me > 0) {
+        while (iter != atomic_load( &(ready[n*me+j]) ));
       }
 
       for (int jj=j; jj<j+1; jj++) {
-          for (int i=MAX(start[TID],1); i<= end[TID]; i++) {
-            ARRAY(i,jj) = ARRAY(i-1,jj) + ARRAY(i,jj-1) - ARRAY(i-1,jj-1);
+          for (int i=MAX(start[me],1); i<= end[me]; i++) {
+              ARRAY(i,jj) = ARRAY(i-1,jj) + ARRAY(i,jj-1) - ARRAY(i-1,jj-1);
           }
       }
 
       /* if not on right boundary, signal right neighbor it has new data         */
-      if (TID < nthread-1) {
-        while (flag(TID,j) == true) {
-          #pragma omp flush
-        }
-        flag(TID,j) = true;
-        #pragma omp flush
+      if (me < (nthread-1)) {
+        atomic_store( &(ready[n*me+(j+1)]), iter);
       }
     }
 
-    if (TID==nthread-1) { /* if on right boundary, copy top right corner value
-                             to bottom left corner to create dependency and signal completion */
+    if (me==(nthread-1)) { /* if on right boundary, copy top right corner value
+                               to bottom left corner to create dependency and signal completion */
         ARRAY(0,0) = -ARRAY(m-1,n-1);
-        while (flag(0,0) == false) {
-          #pragma omp flush
-        }
-        flag(0,0) = false;
-        #pragma omp flush
+        while (iter != atomic_load( &(ready[n*me]) ));
     }
 
   } /* end of iterations */
