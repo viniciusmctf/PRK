@@ -65,6 +65,72 @@ HISTORY: - Written by Rob Van der Wijngaart, February 2009.
 /* error tolerance */
 const double epsilon = 1.e-8;
 
+double p2p(int iterations, int m, int n, double (* restrict vector)[n])
+{
+  double pipeline_time = -9999.9999;
+
+#ifdef _OPENMP
+  _Pragma("omp parallel shared(iterations,m,n,vector,pipeline_time)")
+  {
+    int nt = omp_get_num_threads();
+    int me = omp_get_thread_num();
+
+    for (int iter = 0; iter<=iterations; iter++){
+
+      /* start timer after a warmup iteration */
+      if (iter == 1) {
+        _Pragma("omp barrier")
+        _Pragma("omp master")
+        pipeline_time = wtime();
+      }
+
+      _Pragma("omp master")
+      {
+        for (int i=1; i<m; i+=nt) {
+          for (int j=1; j<n; j++) {
+            vector[i][j] = vector[i][j-1] + vector[i-1][j] - vector[i-1][j-1];
+          }
+        }
+
+        /* copy top right corner value to bottom left corner to create dependency; we
+           need a barrier to make sure the latest value is used. This also guarantees
+           that the flags for the next iteration (if any) are not getting clobbered  */
+        vector[0][0] = -vector[m-1][n-1];
+      } /* omp master */
+    } /* iterations */
+
+    _Pragma("omp barrier")
+    _Pragma("omp master")
+    pipeline_time = wtime() - pipeline_time;
+  } /* omp parallel */
+
+#else /* SEQUENTIAL */
+
+  for (int iter = 0; iter<=iterations; iter++) {
+
+    /* start timer after a warmup iteration */
+    if (iter == 1) pipeline_time = wtime();
+
+    for (int i=1; i<m; i++) {
+      for (int j=1; j<n; j++) {
+        vector[i][j] = vector[i-1][j] + vector[i][j-1] - vector[i-1][j-1];
+      }
+    }
+
+    /* copy top right corner value to bottom left corner to create dependency; we
+       need a barrier to make sure the latest value is used. This also guarantees
+       that the flags for the next iteration (if any) are not getting clobbered  */
+    vector[0][0] = -vector[m-1][n-1];
+
+  } /* iterations */
+
+  pipeline_time = wtime() - pipeline_time;
+
+#endif
+
+  return pipeline_time;
+}
+
 int main(int argc, char ** argv)
 {
   /*******************************************************************************
@@ -123,26 +189,7 @@ int main(int argc, char ** argv)
     vector[i][0] = (double)i;
   }
 
-  double pipeline_time = 0.0; /* silence compiler warning */
-
-  for (int iter = 0; iter<=iterations; iter++){
-
-    /* start timer after a warmup iteration */
-    if (iter == 1) pipeline_time = wtime();
-
-    for (int i=1; i<m; i++) {
-      for (int j=1; j<n; j++) {
-        vector[i][j] = vector[i-1][j] + vector[i][j-1] - vector[i-1][j-1];
-      }
-    }
-
-    /* copy top right corner value to bottom left corner to create dependency; we
-       need a barrier to make sure the latest value is used. This also guarantees
-       that the flags for the next iteration (if any) are not getting clobbered  */
-    vector[0][0] = -vector[m-1][n-1];
-  }
-
-  pipeline_time = wtime() - pipeline_time;
+  double pipeline_time = p2p(iterations,m,n,vector);
 
   /*******************************************************************************
   ** Analyze and output results.
