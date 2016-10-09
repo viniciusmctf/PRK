@@ -67,6 +67,8 @@ HISTORY: - Written by Rob Van der Wijngaart, March 2006.
 #include <par-res-kern_general.h>
 #include <par-res-kern_omp.h>
 
+#include <math.h>
+
 /* define shorthand for indexing a multi-dimensional array                       */
 #define ARRAY(i,j) vector[i+(j)*(m)]
 /* define shorthand for flag with cache line padding                             */
@@ -259,6 +261,7 @@ int main(int argc, char ** argv) {
 
       for (jj=j; jj<j+jjsize; jj++)
       for (i=MAX(start[TID],1); i<= end[TID]; i++) {
+        printf("thread %d sweeping (%d,%d)\n", TID, i, jj);
         ARRAY(i,jj) = ARRAY(i-1,jj) + ARRAY(i,jj-1) - ARRAY(i-1,jj-1);
       }
 
