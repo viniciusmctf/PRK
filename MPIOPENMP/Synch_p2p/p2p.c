@@ -295,12 +295,12 @@ int main(int argc, char ** argv)
 
     if ((Num_procs==1) && (TID==0)) { /* first thread waits for corner value       */
       while (__atomic_load_n(&(flag(0,0)),__ATOMIC_ACQUIRE) == true) {
-          //printf("line %d\n",__LINE__);
-          //__atomic_thread_fence(__ATOMIC_RELAXED);
+          printf("line %d\n",__LINE__);
+          __atomic_thread_fence(__ATOMIC_RELAXED);
       }
 #if SYNCHRONOUS
       __atomic_store_n(&(flag(0,0)),true,__ATOMIC_RELEASE);
-      //__atomic_thread_fence(__ATOMIC_RELAXED);
+      __atomic_thread_fence(__ATOMIC_RELAXED);
 #endif
     }
 
@@ -317,12 +317,12 @@ int main(int argc, char ** argv)
       }
       else {
 	while (__atomic_load_n(&(flag(TID-1,j)),__ATOMIC_ACQUIRE) == false) {
-          //printf("line %d\n",__LINE__);
-          //__atomic_thread_fence(__ATOMIC_RELAXED);
+          printf("line %d\n",__LINE__);
+          __atomic_thread_fence(__ATOMIC_RELAXED);
         }
 #if SYNCHRONOUS
         __atomic_store_n(&(flag(TID-1,j)),false,__ATOMIC_RELEASE);
-        //__atomic_thread_fence(__ATOMIC_RELAXED);
+        __atomic_thread_fence(__ATOMIC_RELAXED);
 #endif
       }
  
@@ -334,12 +334,12 @@ int main(int argc, char ** argv)
       if (TID < nthread-1) {
 #if SYNCHRONOUS
         while (__atomic_load_n(&(flag(TID,j)),__ATOMIC_ACQUIRE) == true) {
-          //printf("line %d\n",__LINE__);
-          //__atomic_thread_fence(__ATOMIC_RELAXED);
+          printf("line %d\n",__LINE__);
+          __atomic_thread_fence(__ATOMIC_RELAXED);
         }
 #endif
         __atomic_store_n(&(flag(TID,j)),true,__ATOMIC_RELEASE);
-        //__atomic_thread_fence(__ATOMIC_RELAXED);
+        __atomic_thread_fence(__ATOMIC_RELAXED);
       }
       else { /* if not on the right boundary, send data to my right neighbor      */  
         if (my_ID < Num_procs-1) {
@@ -365,14 +365,14 @@ int main(int argc, char ** argv)
 #if SYNCHRONOUS
         while (__atomic_load_n(&(flag(0,0)),__ATOMIC_ACQUIRE) == false) {
           printf("line %d\n",__LINE__);
-          //__atomic_thread_fence(__ATOMIC_RELAXED);
+          __atomic_thread_fence(__ATOMIC_RELAXED);
         }
         __atomic_store_n(&(flag(0,0)),false,__ATOMIC_RELEASE);
 #else
-        //__atomic_thread_fence(__ATOMIC_RELAXED);
+        __atomic_thread_fence(__ATOMIC_RELAXED);
         __atomic_store_n(&(flag(0,0)),true,__ATOMIC_RELEASE);
 #endif
-        //__atomic_thread_fence(__ATOMIC_RELAXED);
+        __atomic_thread_fence(__ATOMIC_RELAXED);
       }
     }
  
