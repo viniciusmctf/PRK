@@ -70,6 +70,7 @@ program main
   !dec$ attributes align:64 :: A, B
   real(kind=REAL64), allocatable ::  A(:,:)         ! buffer to hold original matrix
   real(kind=REAL64), allocatable ::  B(:,:)         ! buffer to hold transposed matrix
+  real(kind=REAL64), allocatable ::  C(:,:)         ! temporary matrix for transpose
   integer(kind=INT64) ::  bytes                     ! combined size of matrices
   ! runtime variables
   integer(kind=INT32) ::  i, k
@@ -129,14 +130,29 @@ program main
     stop 1
   endif
 
+  allocate( C(order,order), stat=err )
+  if (err .ne. 0) then
+    write(*,'(a,i3)') 'allocation of C returned ',err
+    stop 1
+  endif
+
   ! Fill the original matrix
   A = reshape((/ (i, i = 0,order**2) /),(/order, order/))
   B = 0
+  C = 0
 
   do k=0,iterations
     ! start timer after a warmup iteration
     if (k.eq.1) t0 = prk_get_wtime()
-    B = B + transpose(A)
+    ! this allocates automatic arrays internally and crashes (with ifort)
+    !B = B + transpose(A)
+    ! this still allocates automatic arrays internally and crashes (with ifort)
+    !C = transpose(A)
+    !B = B + C
+    ! workaround
+    C = A
+    call prk_ip_transpose(C)
+    B = B + C
     A = A + 1
   enddo ! iterations
 
@@ -153,6 +169,7 @@ program main
       + real((iterations*(iterations+1))/2,REAL64)
   abserr = norm2(A-B)
 
+  deallocate( C )
   deallocate( B )
   deallocate( A )
 
@@ -170,3 +187,10 @@ program main
 
 end program main
 
+subroutine prk_ip_transpose(A)
+  use iso_fortran_env
+  implicit none
+  real(kind=REAL64) :: A(:,:)
+
+
+end subroutine prk_ip_transpose

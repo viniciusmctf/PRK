@@ -7,6 +7,8 @@ FCFLAGS  = $(DEFAULT_OPT_FLAGS)
 FCFLAGS += -DPRKVERSION=$(PRKVERSION)
 FCFLAGS += -DRADIUS=$(RADIUS) $(STARFLAG)
 
+#FCFLAGS += -heap-arrays
+
 .PHONY: all clean run
 
 all: $(PROGRAM) $(PROGRAM)-omp $(PROGRAM)-coarray $(PROGRAM)-pretty
