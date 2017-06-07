@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -e
 set -x
 
@@ -38,12 +39,23 @@ case "$PRK_TARGET" in
         which python
         python --version
         export PRK_TARGET_PATH=PYTHON
-        python $PRK_TARGET_PATH/p2p.py             10 1024 1024
+        python $PRK_TARGET_PATH/p2p.py             10 100 100
         python $PRK_TARGET_PATH/p2p-numpy.py       10 1024 1024
-        python $PRK_TARGET_PATH/stencil.py         10 1000
+        python $PRK_TARGET_PATH/stencil.py         10 100
         python $PRK_TARGET_PATH/stencil-numpy.py   10 1000
-        python $PRK_TARGET_PATH/transpose.py       10 1024
+        python $PRK_TARGET_PATH/transpose.py       10 100
         python $PRK_TARGET_PATH/transpose-numpy.py 10 1024
+        ;;
+    alloctave)
+        echo "Octave"
+        which octave
+        octave --version
+        export PRK_TARGET_PATH=OCTAVE
+        ./$PRK_TARGET_PATH/p2p.m               10 100 100
+        ./$PRK_TARGET_PATH/stencil.m           10 100
+        ./$PRK_TARGET_PATH/stencil-pretty.m    10 1000
+        ./$PRK_TARGET_PATH/transpose.m         10 100
+        ./$PRK_TARGET_PATH/transpose-pretty.m  10 1024
         ;;
     alljulia)
         echo "Julia"
@@ -77,8 +89,83 @@ case "$PRK_TARGET" in
         $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 1 2 GEOMETRIC 0.99
         $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 0 1 SINUSOIDAL
         $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 1 0 LINEAR 1.0 3.0
-        $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 1 0 PATCH 0 200 100 200 
+        $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 1 0 PATCH 0 200 100 200
         $PRK_TARGET_PATH/AMR/amr             10 1000 100 2 2 1 5
+        ;;
+    allrust)
+        echo "Rust"
+        which rustc
+        rustc --version
+        make $PRK_TARGET
+        export PRK_TARGET_PATH=RUST
+        ./$PRK_TARGET_PATH/p2p               10 100 100
+        ./$PRK_TARGET_PATH/stencil           10 100
+        ./$PRK_TARGET_PATH/transpose         10 100
+        ;;
+    allcxx)
+        echo "C++11"
+        export PRK_TARGET_PATH=Cxx11
+        for major in "-9" "-8" "-7" "-6" "-5" "-4" "-3" "-2" "-1" "" ; do
+          if [ -f "`which ${CXX}${major}`" ]; then
+              export PRK_CXX="${CXX}${major}"
+              echo "Found C++: $PRK_CXX"
+              break
+          fi
+        done
+        if [ "x$PRK_CXX" = "x" ] ; then
+            echo "No C++ compiler found!"
+            exit 9
+        fi
+        ${PRK_CXX} -v
+        echo "CXX=${PRK_CXX} -std=c++11" >> common/make.defs
+
+        # C++11 without external parallelism
+        make -C $PRK_TARGET_PATH valarray
+        $PRK_TARGET_PATH/transpose-valarray 10 1024 32
+
+        # C++11 without external parallelism
+        make -C $PRK_TARGET_PATH vector
+        $PRK_TARGET_PATH/p2p-vector         10 1024 1024
+        $PRK_TARGET_PATH/stencil-vector     10 1000
+        $PRK_TARGET_PATH/transpose-vector   10 1024 32
+
+        # C++11 with OpenMP
+        case "$CC" in
+            gcc)
+                # Host
+                echo "OPENMPFLAG=-fopenmp" >> common/make.defs
+                make -C $PRK_TARGET_PATH openmp
+                $PRK_TARGET_PATH/stencil-vector-openmp            10 1000
+                $PRK_TARGET_PATH/transpose-vector-openmp          10 1024 32
+                # Offload
+                echo "OFFLOADFLAG=-foffload=\"-O3 -v\"" >> common/make.defs
+                make -C $PRK_TARGET_PATH target
+                $PRK_TARGET_PATH/stencil-openmp-target     10 1000
+                $PRK_TARGET_PATH/transpose-openmp-target   10 1024 32
+                ;;
+            clang)
+                # Host
+                echo "Skipping MacOS Clang since OpenMP missing in default compiler"
+                #echo "OPENMPFLAG=-fopenmp" >> common/make.defs
+                #make -C $PRK_TARGET_PATH openmp
+                #$PRK_TARGET_PATH/stencil-vector-openmp     10 1000
+                #$PRK_TARGET_PATH/transpose-vector-openmp   10 1024 32
+                ;;
+            *)
+                echo "Figure out your OpenMP flags..."
+                ;;
+        esac
+
+        # C++11 with OpenCL
+        if [ "${TRAVIS_OS_NAME}" = "osx" ] ; then
+            echo "OPENCLFLAG=-framework OpenCL" >> common/make.defs
+            make -C $PRK_TARGET_PATH opencl
+            # must run programs in same directory as OpenCL source files...
+            cd $PRK_TARGET_PATH
+            ./stencil-opencl     10 1000
+            ./transpose-opencl   10 1024 32
+            cd ..
+        fi
         ;;
     allfortran*)
         # allfortranserial allfortranopenmp allfortrancoarray allfortranpretty
@@ -88,9 +175,9 @@ case "$PRK_TARGET" in
                 echo "FC=ifort" >> common/make.defs
                 ;;
             gcc)
-                for gccversion in "-6" "-5" "-5.3" "-5.2" "-5.1" "-4.9" "-4.8" "-4.7" "-4.6" "" ; do
-                    if [ -f "`which gfortran$gccversion`" ]; then
-                        export PRK_FC="gfortran$gccversion"
+                for major in "-9" "-8" "-7" "-6" "-5" "-4" "-3" "-2" "-1" "" ; do
+                    if [ -f "`which gfortran$major`" ]; then
+                        export PRK_FC="gfortran$major"
                         echo "Found GCC Fortran: $PRK_FC"
                         break
                     fi
@@ -318,7 +405,7 @@ case "$PRK_TARGET" in
                         export PRK_LAUNCHER="$UPC_ROOT/bin/upcrun -N 1 -n $PRK_UPC_PROCS -c $PRK_UPC_PROCS"
                         ;;
                 esac
-                make $PRK_TARGET default_opt_flags="-Wc,-O3"
+                make $PRK_TARGET PRK_FLAGS="-Wc,-O3"
                 ;;
             *)
                 echo "Invalid value of UPC_IMPL ($UPC_IMPL)"
@@ -344,7 +431,7 @@ case "$PRK_TARGET" in
                 ;;
         esac
         echo "CHARMTOP=$CHARM_ROOT" >> common/make.defs
-        make $PRK_TARGET
+        make $PRK_TARGET PRK_FLAGS=-O3
         export PRK_TARGET_PATH=CHARM++
         export PRK_CHARM_PROCS=4
         export PRK_LAUNCHER=$CHARM_ROOT/bin/charmrun
@@ -368,7 +455,7 @@ case "$PRK_TARGET" in
                 ;;
         esac
         echo "CHARMTOP=$CHARM_ROOT" >> common/make.defs
-        make $PRK_TARGET
+        make $PRK_TARGET PRK_FLAGS=-O3
         export PRK_TARGET_PATH=AMPI
         export PRK_CHARM_PROCS=4
         export PRK_LAUNCHER=$CHARM_ROOT/bin/charmrun

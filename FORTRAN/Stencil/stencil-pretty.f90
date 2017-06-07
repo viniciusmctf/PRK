@@ -189,12 +189,22 @@ program main
   enddo
 #endif
 
-  ! intialize the input and output arrays
+  ! initialize the input and output arrays
+#if defined(__PGI) || defined(__llvm__)
+  forall (i=1:n, j=1:n)
+#else
   do concurrent (i=1:n, j=1:n)
+#endif
     A(i,j) = cx*(i-1)+cy*(j-1)
+#if defined(__PGI) || defined(__llvm__)
+  endforall
+#else
   enddo
+#endif
   !B(r+1:n-r,r+1:n-r) = 0 ! minimal
   B = 0 ! sufficient
+
+  t0 = 0
 
   do k=0,iterations
 
@@ -258,7 +268,5 @@ program main
   avgtime = stencil_time/iterations
   write(*,'(a,f13.6,a,f13.6)') 'Rate (MFlops/s): ',1.0d-6*flops/avgtime, &
                                ' Avg time (s): ',avgtime
-
-  stop
 
 end program main

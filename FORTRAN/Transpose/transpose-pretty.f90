@@ -73,7 +73,8 @@ program main
   real(kind=REAL64), allocatable ::  C(:,:)         ! temporary matrix for transpose
   integer(kind=INT64) ::  bytes                     ! combined size of matrices
   ! runtime variables
-  integer(kind=INT32) ::  i, k
+  integer(kind=INT64) ::  i                         ! needs to be same width as order
+  integer(kind=INT32) ::  k
   real(kind=REAL64) ::  abserr                      ! squared error
   real(kind=REAL64) ::  t0, t1, trans_time, avgtime ! timing parameters
   real(kind=REAL64), parameter ::  epsilon=1.D-8    ! error tolerance
@@ -141,6 +142,8 @@ program main
   B = 0
   C = 0
 
+  t0 = 0
+
   do k=0,iterations
     ! start timer after a warmup iteration
     if (k.eq.1) t0 = prk_get_wtime()
@@ -167,7 +170,24 @@ program main
   A = ( transpose(reshape((/ (i, i = 0,order**2) /),(/order, order/))) &
         * real(iterations+1,REAL64) ) &
       + real((iterations*(iterations+1))/2,REAL64)
+#if 0
+  ! PGI generates a segfault here...
+  abserr = 0.0d0
+  forall (j=1:order,i=1:order)
+      abserr = abserr + (B(i,j) - A(i,j))**2
+  endforall
+  abserr = sqrt(abserr)
+#elif defined(__PGI)
+  abserr = 0.0d0
+  do j=1,order
+    do i=1,order
+      abserr = abserr + (B(i,j) - A(i,j))**2
+    enddo
+  enddo
+  abserr = sqrt(abserr)
+#else
   abserr = norm2(A-B)
+#endif
 
   deallocate( C )
   deallocate( B )
@@ -177,7 +197,7 @@ program main
     write(*,'(a)') 'Solution validates'
     avgtime = trans_time/iterations
     bytes = 2 * int(order,INT64) * int(order,INT64) * storage_size(A)/8
-    write(*,'(a,f13.6,a,f10.6)') 'Rate (MB/s): ',1.e-6*bytes/avgtime, &
+    write(*,'(a,f13.6,a,f10.6)') 'Rate (MB/s): ',(1.d-6*bytes)/avgtime, &
            ' Avg time (s): ', avgtime
   else
     write(*,'(a,f30.15,a,f30.15)') 'ERROR: Aggregate squared error ',abserr, &

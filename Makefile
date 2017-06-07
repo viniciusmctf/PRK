@@ -39,7 +39,7 @@ ifndef matrix_rank
 endif
 
 ifndef PRK_FLAGS
-  PRK_FLAGS=-O3 -std=c99
+  PRK_FLAGS=-O3
 endif
 
 default: allserial allopenmp allmpi
@@ -47,8 +47,11 @@ default: allserial allopenmp allmpi
 help:
 	@echo "Usage: \"make all\"          (re-)builds all targets"
 	@echo "       \"make allserial\"    (re-)builds all serial targets"
+	@echo "       \"make allcxx\"       (re-)builds all C++ targets"
+	@echo "       \"make allrust\"      (re-)builds all Rust targets"
 	@echo "       \"make allopenmp\"    (re-)builds all OpenMP targets"
 	@echo "       \"make allmpi1\"      (re-)builds all conventional MPI targets"
+	@echo "       \"make allfenix\"     (re-)builds all conventional MPI targets with Fenix fault tolerance"
 	@echo "       \"make allfgmpi\"     (re-)builds all Fine-Grain MPI targets"
 	@echo "       \"make allmpiopenmp\" (re-)builds all MPI + OpenMP targets"
 	@echo "       \"make allmpiomp\"    (re-)builds all MPI + OpenMP targets"
@@ -72,7 +75,7 @@ help:
 	@echo "       \"make veryclean\"    removes some generated source files as well"
 
 all: alldarwin allfreaks
-alldarwin: allserial allopenmp allmpi1 allfgmpi allmpiopenmp allmpirma allshmem allmpishm allupc allfortran
+alldarwin: allserial allopenmp allmpi1 allfgmpi allmpiopenmp allmpirma allshmem allmpishm allupc allfortran allfenix
 allfreaks: allcharm++ allampi allgrappa alllegion
 
 allmpi1:
@@ -91,6 +94,12 @@ allmpi1:
 	cd MPI1/PIC-static;          $(MAKE) pic       "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
 	cd MPI1/AMR;                 $(MAKE) amr       "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
 
+allfenix:
+	cd scripts/small;            $(MAKE) -f  Makefile_FENIX runfenix
+	cd FENIX/Stencil;            $(MAKE) stencil   "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
+	cd FENIX/AMR;                $(MAKE) amr       "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
+	cd FENIX/Synch_p2p;          $(MAKE) p2p       "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
+	cd FENIX/Transpose;          $(MAKE) transpose "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
 
 allampi:
 	cd AMPI/Synch_global;        $(MAKE) global    "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
@@ -205,27 +214,36 @@ allserial:
 	cd SERIAL/PIC;              $(MAKE) pic       "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
 	cd SERIAL/AMR;              $(MAKE) amr       "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
 
-allfortran: allfortranserial allfortranopenmp allfortrancoarray allfortranpretty
+allfortran: #allfortranserial allfortranopenmp allfortrancoarray allfortranpretty
+	$(MAKE) -C FORTRAN/Synch_p2p
+	$(MAKE) -C FORTRAN/Stencil
+	$(MAKE) -C FORTRAN/Transpose
 
 allfortranserial:
-	cd FORTRAN/Synch_p2p;       $(MAKE) p2p
-	cd FORTRAN/Stencil;         $(MAKE) stencil
-	cd FORTRAN/Transpose;       $(MAKE) transpose
+	$(MAKE) -C FORTRAN/Synch_p2p p2p
+	$(MAKE) -C FORTRAN/Stencil   stencil
+	$(MAKE) -C FORTRAN/Transpose transpose
 
 allfortranopenmp:
-	cd FORTRAN/Synch_p2p;       $(MAKE) p2p-omp
-	cd FORTRAN/Stencil;         $(MAKE) stencil-omp
-	cd FORTRAN/Transpose;       $(MAKE) transpose-omp
+	$(MAKE) -C FORTRAN/Synch_p2p p2p-omp
+	$(MAKE) -C FORTRAN/Stencil   stencil-omp
+	$(MAKE) -C FORTRAN/Transpose transpose-omp
 
 allfortrancoarray:
-	cd FORTRAN/Synch_p2p;       $(MAKE) p2p-coarray
-	cd FORTRAN/Stencil;         $(MAKE) stencil-coarray
-	cd FORTRAN/Transpose;       $(MAKE) transpose-coarray
+	$(MAKE) -C FORTRAN/Synch_p2p p2p-coarray
+	$(MAKE) -C FORTRAN/Stencil   stencil-coarray
+	$(MAKE) -C FORTRAN/Transpose transpose-coarray
 
 allfortranpretty:
-	cd FORTRAN/Stencil;         $(MAKE) stencil-pretty
-	#cd FORTRAN/Synch_p2p;       $(MAKE) p2p-pretty
-	cd FORTRAN/Transpose;       $(MAKE) transpose-pretty
+	#$(MAKE) -C FORTRAN/Synch_p2p  p2p-pretty
+	$(MAKE) -C FORTRAN/Stencil    stencil-pretty
+	$(MAKE) -C FORTRAN/Transpose  transpose-pretty
+
+allcxx:
+	$(MAKE) -C Cxx11
+
+allrust:
+	$(MAKE) -C RUST
 
 clean:
 	cd MPI1/DGEMM;              $(MAKE) clean
@@ -240,6 +258,7 @@ clean:
 	cd MPI1/Branch;             $(MAKE) clean
 	cd MPI1/PIC-static;         $(MAKE) clean
 	cd MPI1/AMR;                $(MAKE) clean
+	cd FENIX/Stencil;           $(MAKE) clean
 	cd FG_MPI/DGEMM;            $(MAKE) clean
 	cd FG_MPI/Nstream;          $(MAKE) clean
 	cd FG_MPI/Reduce;           $(MAKE) clean
@@ -313,6 +332,7 @@ clean:
 	cd FORTRAN/Transpose;       $(MAKE) clean
 	cd FORTRAN/Synch_p2p;       $(MAKE) clean
 	cd FORTRAN/Stencil;         $(MAKE) clean
+	cd Cxx11;                   $(MAKE) clean
 	rm -f stats.json
 
 veryclean: clean
@@ -321,6 +341,7 @@ veryclean: clean
 	cd SERIAL/Branch;           $(MAKE) veryclean
 	cd MPI1/Stencil;            $(MAKE) veryclean
 	cd MPI1/AMR;                $(MAKE) veryclean
+	cd FENIX/Stencil;           $(MAKE) veryclean
 	cd OPENMP/Stencil;          $(MAKE) veryclean
 	cd SERIAL/Stencil;          $(MAKE) veryclean
 	cd SERIAL/AMR;              $(MAKE) veryclean
@@ -337,5 +358,6 @@ veryclean: clean
 	cd AMPI/Branch;             $(MAKE) veryclean
 	cd AMPI/AMR;                $(MAKE) veryclean
 	cd scripts/small;           $(MAKE) -f  Makefile_FG_MPI veryclean
+	cd scripts/small;           $(MAKE) -f  Makefile_FENIX  veryclean
 	cd scripts/wide;            $(MAKE) -f  Makefile_FG_MPI veryclean
 	cd common; rm -f make.defs

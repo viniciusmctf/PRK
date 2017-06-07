@@ -58,7 +58,18 @@
 !            refreshing of neighbor data in parallel versions; August 2013
 !          - Converted to Fortran by Jeff Hammond, January-February 2016.
 !          - Converted to CAF by Alessandro Fanfarillo, February 2016.
+!          - Small fixes for OpenCoarrays `stop` issue work around by
+!            Izaak "Zaak" Beekman, March 2017
 ! *************************************************************************
+
+#if defined(__PGI) || defined(__llvm__)
+
+program main
+    print*,'PGI does not support Fortran 2008'
+    stop 1
+end program main
+
+#else
 
 function prk_get_wtime() result(t)
   use iso_fortran_env
@@ -117,7 +128,7 @@ program main
       write(*,'(a,a)')  'Usage: ./stencil <# iterations> ',           &
                         '<array dimension> [tile_size]'
     endif
-    stop 
+    error stop
   endif
 
   iterations = 1
@@ -127,7 +138,7 @@ program main
     if (me == 1) then
       write(*,'(a,i5)') 'ERROR: iterations must be >= 1 : ', iterations
     endif
-    stop
+    error stop
   endif
 
   n = 1
@@ -137,7 +148,7 @@ program main
     if (me == 1) then
       write(*,'(a,i5)') 'ERROR: array dimension must be >= 1 : ', n
     endif
-    stop
+    error stop
   endif
 
   tiling    = .false.
@@ -157,7 +168,7 @@ program main
     if (me == 1) then
       write(*,'(a,i5,a)') 'ERROR: Stencil radius ',r,' should be positive'
     endif
-    stop 
+    error stop
   endif
 
   if ((2*r+1) .gt. n) then
@@ -165,7 +176,7 @@ program main
       write(*,'(a,i5,a,i5)') 'ERROR: Stencil radius ',r,&
                              ' exceeds grid size ',n
     endif
-    stop 
+    error stop
   endif
 
 !  Collectives are part of Fortran 2015
@@ -204,13 +215,13 @@ program main
   allocate( A(1-r:nr_g+r,1-r:nc_g+r)[dims(1),*], stat=err)
   if (err .ne. 0) then
     write(*,'(a,i3)') 'allocation of A returned ',err
-    stop
+    error stop
   endif
 
   allocate( B(1:nr_g,1:nc_g), stat=err )
   if (err .ne. 0) then
     write(*,'(a,i3)') 'allocation of B returned ',err
-    stop
+    error stop
   endif
 
   norm = 0.d0
@@ -314,6 +325,8 @@ program main
 
   !right remote dimension
   if(coords(2)<dims(2)) nr_r = nr[coords(1),coords(2)+1]
+
+  t0 = 0
 
   sync all
 
@@ -474,3 +487,5 @@ program main
   endif
 
 end program main
+
+#endif
