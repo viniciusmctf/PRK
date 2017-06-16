@@ -55,10 +55,7 @@ FUNCTIONS CALLED:
          this program:
          wtime()
 
-HISTORY: - Written by Rob Van der Wijngaart, February 2009.
-         - RvdW: Removed unrolling pragmas for clarity;
-           added constant to array "in" at end of each iteration to force 
-           refreshing of neighbor data in parallel versions; August 2013
+HISTORY: - Written by Rob Van der Wijngaart, July 2016
   
 **********************************************************************************/
 
@@ -206,11 +203,11 @@ int main(int argc, char ** argv) {
   }
 
   n_r = atol(*++argv);
-  if (n_r < 1) {
+  if (n_r < 2) {
     printf("ERROR: refinements must have at least one cell: %ld\n", n_r);
     exit(EXIT_FAILURE);
   }
-  if (n_r>=n) {
+  if (n_r>n) {
     printf("ERROR: refinements must be contained in background grid: %ld\n", n_r);
     exit(EXIT_FAILURE);
   }
@@ -263,7 +260,7 @@ int main(int argc, char ** argv) {
     exit(EXIT_FAILURE);
   }
 
-  n_r_true = n_r*expand+1;
+  n_r_true = (n_r-1)*expand+1;
   if (2*RADIUS+1 > n_r_true) {
     printf("ERROR: Stencil radius %d exceeds refinement size %ld\n", RADIUS, n_r_true);
     exit(EXIT_FAILURE);
@@ -348,12 +345,12 @@ int main(int argc, char ** argv) {
   else        printf("Untiled\n");
   printf("Number of iterations = %d\n", iterations);
   printf("Refinements:\n");
-  printf("   Coarse grid cells = %ld\n", n_r);
-  printf("   Grid size         = %ld\n", n_r_true);
-  printf("   Period            = %d\n", period);
-  printf("   Duration          = %d\n", duration);
-  printf("   Level             = %d\n", refine_level);
-  printf("   Sub-iterations    = %d\n", sub_iterations);
+  printf("   Background grid points = %ld\n", n_r);
+  printf("   Grid size              = %ld\n", n_r_true);
+  printf("   Period                 = %d\n", period);
+  printf("   Duration               = %d\n", duration);
+  printf("   Level                  = %d\n", refine_level);
+  printf("   Sub-iterations         = %d\n", sub_iterations);
 
   /* intialize the input and output arrays                                     */
   for (j=0; j<n; j++) for (i=0; i<n; i++) 
@@ -363,9 +360,9 @@ int main(int argc, char ** argv) {
 
   /* compute layout of refinements (bottom left background grid coordinate     */
   istart_r[0] = istart_r[2] = 0;
-  istart_r[1] = istart_r[3] = n-n_r-1;
+  istart_r[1] = istart_r[3] = n-n_r;
   jstart_r[0] = jstart_r[3] = 0;
-  jstart_r[1] = jstart_r[2] = n-n_r-1;
+  jstart_r[1] = jstart_r[2] = n-n_r;
 
   /* intialize the refinement arrays                                           */
   for (g=0; g<4; g++) {
@@ -541,7 +538,7 @@ int main(int argc, char ** argv) {
 
 /* verify correctness of background grid solution and input field                */
   reference_norm = (DTYPE) (iterations+1) * (COEFX + COEFY);
-  reference_norm_in = (COEFX+COEFY)*(DTYPE)((n-1)/2.0+iterations+1);
+  reference_norm_in = (COEFX+COEFY)*(DTYPE)((n-1)/2.0)+iterations+1;
   if (ABS(norm-reference_norm) > EPSILON) {
     printf("ERROR: L1 norm = "FSTR", Reference L1 norm = "FSTR"\n",
            norm, reference_norm);
@@ -551,6 +548,16 @@ int main(int argc, char ** argv) {
 #if VERBOSE
     printf("Reference L1 norm = "FSTR", L1 norm = "FSTR"\n", 
            reference_norm, norm);
+#endif
+  }
+
+  if (ABS(norm_in-reference_norm_in) > EPSILON) {
+    printf("ERROR: L1 input norm = "FSTR", Reference L1 input norm = "FSTR"\n",
+           norm_in, reference_norm_in);
+    validate = 0;
+  }
+  else {
+#if VERBOSE
     printf("Reference L1 input norm = "FSTR", L1 input norm = "FSTR"\n", 
            reference_norm_in, norm_in);
 #endif
@@ -580,8 +587,7 @@ int main(int argc, char ** argv) {
         /* initial input field value at bottom left corner of refinement        */
         (COEFX*istart_r[g] + COEFY*jstart_r[g]) +
         /* variable part                                                        */
-	//        (COEFX+COEFY)*h_r*(DTYPE)((n_r_true-1)/2.0) +
-        (COEFX+COEFY)*n_r/2.0 +
+        (COEFX+COEFY)*(n_r-1)/2.0 +
         /* number of times unity was added to background grid input field 
            before interpolation onto this refinement                            */
         (DTYPE) bg_updates +

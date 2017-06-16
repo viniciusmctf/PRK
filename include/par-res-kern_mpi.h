@@ -30,7 +30,19 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef PRK_MPI_H
+#define PRK_MPI_H
+
 #include <mpi.h>
+
+#ifdef AMPI
+#ifndef MPI_INT64_T
+#define MPI_INT64_T MPI_LONG_LONG
+#endif /* MPI_INT64_T */
+#ifndef MPI_UINT64_T
+#define MPI_UINT64_T MPI_UNSIGNED_LONG_LONG
+#endif /* MPI_UINT64_T */
+#endif /* AMPI */
 
 /* This code appears in MADNESS, which is GPL, but it was
  * written by Jeff Hammond and contributed to multiple projects
@@ -54,9 +66,9 @@ int PRK_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info,
     MPI_Info alloc_info = MPI_INFO_NULL;
     MPI_Info win_info = MPI_INFO_NULL;
     rc = MPI_Alloc_mem(size, alloc_info, &baseptr);
-    if (rc!=MPI_SUCCESS) MPI_Abort(rc,MPI_COMM_WORLD);
+    if (rc!=MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD,rc);
     rc = MPI_Win_create(baseptr, size, disp_unit, win_info, comm, win);
-    if (rc!=MPI_SUCCESS) MPI_Abort(rc,MPI_COMM_WORLD);
+    if (rc!=MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD,rc);
     return MPI_SUCCESS;
 #else
     return MPI_Win_allocate(size, disp_unit, info, comm, baseptr, win);
@@ -71,21 +83,21 @@ int PRK_Win_free(MPI_Win * win)
     void * attr_ptr;
 #ifndef ADAPTIVE_MPI
     rc = MPI_Win_get_attr(*win, MPI_WIN_BASE, (void*)&attr_ptr, &flag);
-    if (rc!=MPI_SUCCESS) MPI_Abort(rc,MPI_COMM_WORLD);
+    if (rc!=MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD,rc);
 #endif
     /* We do not check for the case of size=0 here,
      * but it may be worth adding in the future. */
     if (flag) {
         void * baseptr = (void*)attr_ptr;
         rc = MPI_Free_mem(baseptr);
-        if (rc!=MPI_SUCCESS) MPI_Abort(rc,MPI_COMM_WORLD);
+        if (rc!=MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD,rc);
     } else {
         int rank;
         MPI_Comm_rank(MPI_COMM_WORLD,&rank);
         printf("%d: could not capture baseptr from win attribute: memory leak.\n",rank);
     }
     rc = MPI_Win_free(win);
-    if (rc!=MPI_SUCCESS) MPI_Abort(rc,MPI_COMM_WORLD);
+    if (rc!=MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD,rc);
     return MPI_SUCCESS;
 #else
     int free_mem = 0;
@@ -95,7 +107,7 @@ int PRK_Win_free(MPI_Win * win)
     void * attr_ptr;
 #ifndef ADAPTIVE_MPI
     rc = MPI_Win_get_attr(*win, MPI_WIN_CREATE_FLAVOR, (void*)&attr_ptr, &flag);
-    if (rc!=MPI_SUCCESS) MPI_Abort(rc,MPI_COMM_WORLD);
+    if (rc!=MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD,rc);
 #endif
     if (flag) {
         int * flavor = (int*)attr_ptr;
@@ -104,7 +116,7 @@ int PRK_Win_free(MPI_Win * win)
             flag = 0;
 #ifndef ADAPTIVE_MPI
             rc = MPI_Win_get_attr(*win, MPI_WIN_BASE, (void*)&attr_ptr, &flag);
-            if (rc!=MPI_SUCCESS) MPI_Abort(rc,MPI_COMM_WORLD);
+            if (rc!=MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD,rc);
 #endif
             /* ...and free the base address. */
             if (flag) {
@@ -118,13 +130,15 @@ int PRK_Win_free(MPI_Win * win)
         }
     }
     rc = MPI_Win_free(win);
-    if (rc!=MPI_SUCCESS) MPI_Abort(rc,MPI_COMM_WORLD);
+    if (rc!=MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD,rc);
     if (free_mem) {
         rc = MPI_Free_mem(baseptr);
-        if (rc!=MPI_SUCCESS) MPI_Abort(rc,MPI_COMM_WORLD);
+        if (rc!=MPI_SUCCESS) MPI_Abort(MPI_COMM_WORLD,rc);
     }
     return MPI_SUCCESS;
 #endif
 }
 
 extern void bail_out(int);
+
+#endif /* PRK_MPI_H */

@@ -47,14 +47,17 @@ History:   Written by Rob Van der Wijngaart, January 2006
 
 **********************************************************************/
 
-#include <mpi.h>
 #include <par-res-kern_general.h>
+#include <mpi.h>
 
 void bail_out(int error) {
 
   int error_tot;
   MPI_Allreduce(&error, &error_tot, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   if (error_tot != 0) {
+#if VERBOSE
+    printf("Exiting via bail_out\n");
+#endif
     MPI_Finalize();
     exit(EXIT_FAILURE);
   }
