@@ -2,29 +2,29 @@ sudo: false
 language: cpp
 env:
   matrix:
-  - PRK_TARGET=allserial
-  - PRK_TARGET=allcxx
-  - PRK_TARGET=allpython
-  - PRK_TARGET=alloctave
-  - PRK_TARGET=alljulia
-  - PRK_TARGET=allrust
-  - PRK_TARGET=allopenmp
-  - PRK_TARGET=allfortranserial
-  - PRK_TARGET=allfortranopenmp
-  - PRK_TARGET=allfortrantarget
-  - PRK_TARGET=allfortranpretty
-  - PRK_TARGET=allfortrancoarray
-  - PRK_TARGET=allmpi1
-  - PRK_TARGET=allmpirma
-  - PRK_TARGET=allmpishm
-  - PRK_TARGET=allmpiomp
-  - PRK_TARGET=allshmem
-  - PRK_TARGET=allampi
-  - PRK_TARGET=allfgmpi
-  - PRK_TARGET=allcharm++
-  - PRK_TARGET=allgrappa
-  - PRK_TARGET=allupc UPC_IMPL=gupc
-  - PRK_TARGET=allupc UPC_IMPL=bupc GASNET_CONDUIT=smp PRK_FLAGS="-Wc,-O3"
+#  - PRK_TARGET=allserial
+#  - PRK_TARGET=allcxx
+#  - PRK_TARGET=allpython
+#  - PRK_TARGET=alloctave
+#  - PRK_TARGET=alljulia
+#  - PRK_TARGET=allrust
+#  - PRK_TARGET=allopenmp
+#  - PRK_TARGET=allfortranserial
+#  - PRK_TARGET=allfortranopenmp
+#  - PRK_TARGET=allfortrantarget
+#  - PRK_TARGET=allfortranpretty
+#  - PRK_TARGET=allfortrancoarray
+#  - PRK_TARGET=allmpi1
+#  - PRK_TARGET=allmpirma
+#  - PRK_TARGET=allmpishm
+#  - PRK_TARGET=allmpiomp
+#  - PRK_TARGET=allshmem
+#  - PRK_TARGET=allampi
+#  - PRK_TARGET=allfgmpi
+#  - PRK_TARGET=allcharm++
+#  - PRK_TARGET=allgrappa
+#  - PRK_TARGET=allupc UPC_IMPL=gupc
+#  - PRK_TARGET=allupc UPC_IMPL=bupc GASNET_CONDUIT=smp PRK_FLAGS="-Wc,-O3"
   # This works but we don't need to test it.
   #- PRK_TARGET=allupc UPC_IMPL=bupc GASNET_CONDUIT=udp PRK_FLAGS="-Wc,-O3"
   # Optional: We do not need to test BUPC this thoroughly every time
