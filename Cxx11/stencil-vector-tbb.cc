@@ -148,11 +148,13 @@ int main(int argc, char * argv[])
   std::cout << "Parallel Research Kernels version " << PRKVERSION << std::endl;
   std::cout << "C++11/TBB Stencil execution on 2D grid" << std::endl;
 
-  tbb::task_scheduler_init init(tbb::task_scheduler_init::automatic);
+  char * tbb_num_threads = std::getenv("TBB_NUM_THREADS");
+  int set_threads = (tbb_num_threads==NULL) ? -1 : std::atoi(tbb_num_threads);
+  tbb::task_scheduler_init init( (set_threads>0) ? set_threads : tbb::task_scheduler_init::automatic);
   auto num_threads = init.default_num_threads();
 
   //////////////////////////////////////////////////////////////////////
-  // process and test input parameters
+  // Process and test input parameters
   //////////////////////////////////////////////////////////////////////
 
   int iterations;
@@ -206,6 +208,7 @@ int main(int argc, char * argv[])
     return 1;
   }
 
+  std::cout << "Number of threads (max)   = " << init.default_num_threads() << std::endl;
   std::cout << "Number of iterations = " << iterations << std::endl;
   std::cout << "Grid size            = " << n << std::endl;
   std::cout << "Tile size            = " << tile_size << std::endl;

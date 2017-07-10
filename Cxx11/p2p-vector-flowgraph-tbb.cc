@@ -81,7 +81,9 @@ int main(int argc, char* argv[])
   std::cout << "Parallel Research Kernels version " << PRKVERSION << std::endl;
   std::cout << "C++11/TBB pipeline execution on 2D grid" << std::endl;
 
-  tbb::task_scheduler_init init(tbb::task_scheduler_init::automatic);
+  char * tbb_num_threads = std::getenv("TBB_NUM_THREADS");
+  int set_threads = (tbb_num_threads==NULL) ? -1 : std::atoi(tbb_num_threads);
+  tbb::task_scheduler_init init( (set_threads>0) ? set_threads : tbb::task_scheduler_init::automatic);
   auto num_threads = init.default_num_threads();
 
   //////////////////////////////////////////////////////////////////////
@@ -125,6 +127,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  std::cout << "Number of threads (max)   = " << init.default_num_threads() << std::endl;
   std::cout << "Number of iterations = " << iterations << std::endl;
   std::cout << "Grid sizes           = " << m << ", " << n << std::endl;
   std::cout << "Grid chunk sizes     = " << mc << ", " << nc << std::endl;
@@ -159,13 +162,12 @@ int main(int argc, char* argv[])
       nodes[i*mb+j] =
         new tbb::flow::continue_node<tbb::flow::continue_msg>( graph,
                          [=,&grid]( const tbb::flow::continue_msg & ) {
-                             //std::cout << "i,j=" << i << "," << j << std::endl;
                              int start_i = i*mc;
                              int end_i   = std::min(m,(i+1)*mc);
                              int start_j = j*nc;
                              int end_j   = std::min(n,(j+1)*nc);
-                             //std::cout << "args=" << start_i << "," << end_i << "," << start_j << "," << end_j << std::endl;
-                             sweep_tile(start_i, end_i, start_j, end_j, n, grid);
+                             std::cout << i << "," << j << ": args=" << start_i << "," << end_i << "," << start_j << "," << end_j << std::endl;
+                             //sweep_tile(start_i, end_i, start_j, end_j, n, grid);
                          } );
       if ( i + 1 < mb ) tbb::flow::make_edge( *nodes[i*mb + j], *nodes[(i+1)*mb + j] );
       if ( j + 1 < nb ) tbb::flow::make_edge( *nodes[i*mb + j], *nodes[i*mb + (j+1)] );
