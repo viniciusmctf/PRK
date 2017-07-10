@@ -115,6 +115,9 @@ int main(int argc, char * argv[])
   std::cout << "Parallel Research Kernels version " << PRKVERSION << std::endl;
   std::cout << "C++11/TBB Matrix transpose: B = A^T" << std::endl;
 
+  tbb::task_scheduler_init init(tbb::task_scheduler_init::automatic);
+  auto num_threads = init.default_num_threads();
+
   //////////////////////////////////////////////////////////////////////
   /// Read and test input parameters
   //////////////////////////////////////////////////////////////////////
@@ -156,8 +159,6 @@ int main(int argc, char * argv[])
   } else {
       std::cout << "Untiled" << std::endl;
   }
-
-  tbb::task_scheduler_init init(tbb::task_scheduler_init::automatic);
 
   //////////////////////////////////////////////////////////////////////
   /// Allocate space for the input and transpose matrix
