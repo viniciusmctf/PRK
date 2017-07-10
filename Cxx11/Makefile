@@ -4,6 +4,7 @@ include ../common/PRKVERSION
 CPPFLAGS  = -DPRKVERSION=$(PRKVERSION)
 
 CXXFLAGS  = $(DEFAULT_OPT_FLAGS) $(CPPFLAGS)
+#CXXFLAGS = -g3 -O0 -Wl,-pie $(CPPFLAGS)
 
 # debugging
 #CXXFLAGS += -DVERBOSE
@@ -47,7 +48,7 @@ opencl: stencil-opencl transpose-opencl
 
 cilk: stencil-vector-cilk transpose-vector-cilk
 
-tbb: p2p-vector-tbb stencil-vector-tbb transpose-vector-tbb
+tbb: p2p-vector-flowgraph-tbb stencil-vector-tbb transpose-vector-tbb
 
 pstl: stencil-vector-pstl transpose-vector-pstl
 
