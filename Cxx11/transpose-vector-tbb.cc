@@ -116,7 +116,7 @@ int main(int argc, char * argv[])
   std::cout << "C++11/TBB Matrix transpose: B = A^T" << std::endl;
 
   char * tbb_num_threads = std::getenv("TBB_NUM_THREADS");
-  int set_threads = (tbb_num_threads==NULL) ? -1 : std::atoi(tbb_num_threads);
+  auto set_threads = (tbb_num_threads==NULL) ? -1 : std::atoi(tbb_num_threads);
   tbb::task_scheduler_init init( (set_threads>0) ? set_threads : tbb::task_scheduler_init::automatic);
   auto num_threads = init.default_num_threads();
 
@@ -139,13 +139,13 @@ int main(int argc, char * argv[])
       }
 
       // order of a the matrix
-      order = std::atol(argv[2]);
+      order = std::atoi(argv[2]);
       if (order <= 0) {
         throw "ERROR: Matrix Order must be greater than 0";
       }
 
       // default tile size for tiling of local transpose
-      tile_size = (argc>3) ? std::atol(argv[3]) : 32;
+      tile_size = (argc>3) ? std::atoi(argv[3]) : 32;
       // a negative tile size means no tiling of the local transpose
       if (tile_size <= 0) tile_size = order;
   }

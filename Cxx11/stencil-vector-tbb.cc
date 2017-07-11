@@ -149,7 +149,7 @@ int main(int argc, char * argv[])
   std::cout << "C++11/TBB Stencil execution on 2D grid" << std::endl;
 
   char * tbb_num_threads = std::getenv("TBB_NUM_THREADS");
-  int set_threads = (tbb_num_threads==NULL) ? -1 : std::atoi(tbb_num_threads);
+  auto set_threads = (tbb_num_threads==NULL) ? -1 : std::atoi(tbb_num_threads);
   tbb::task_scheduler_init init( (set_threads>0) ? set_threads : tbb::task_scheduler_init::automatic);
   auto num_threads = init.default_num_threads();
 
