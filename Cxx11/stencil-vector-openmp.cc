@@ -144,9 +144,8 @@ int main(int argc, char* argv[])
   in.resize(n*n);
   out.resize(n*n);
 
-  OMP_PARALLEL()
   {
-    OMP_FOR()
+    OMP(parallel for)
     for (auto i=0; i<n; i++) {
       OMP_SIMD
       for (auto j=0; j<n; j++) {
@@ -157,11 +156,7 @@ int main(int argc, char* argv[])
 
     for (auto iter = 0; iter<=iterations; iter++) {
 
-      if (iter==1) {
-          OMP_BARRIER
-          OMP_MASTER
-          stencil_time = prk::wtime();
-      }
+      if (iter==1) stencil_time = prk::wtime();
 
       // Apply the stencil operator
       if (star) {
@@ -193,7 +188,7 @@ int main(int argc, char* argv[])
       }
       // add constant to solution to force refresh of neighbor data, if any
 #ifdef _OPENMP
-      OMP_FOR()
+      OMP(parallel for)
       for (auto i=0; i<n; i++) {
         OMP_SIMD
         for (auto j=0; j<n; j++) {
@@ -204,8 +199,6 @@ int main(int argc, char* argv[])
       std::transform(in.begin(), in.end(), in.begin(), [](double c) { return c+=1.0; });
 #endif
     }
-    OMP_BARRIER
-    OMP_MASTER
     stencil_time = prk::wtime() - stencil_time;
   }
 

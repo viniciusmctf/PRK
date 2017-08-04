@@ -8,7 +8,7 @@ import os
 def codegen(src,pattern,stencil_size,radius,W,model):
     if (model=='openmp'):
         src.write('void '+pattern+str(radius)+'(const int n, std::vector<double> & in, std::vector<double> & out) {\n')
-        src.write('    OMP_FOR()\n')
+        src.write('    OMP(parallel for)\n')
         src.write('    for (auto i='+str(radius)+'; i<n-'+str(radius)+'; ++i) {\n')
         src.write('      OMP_SIMD\n')
         src.write('      for (auto j='+str(radius)+'; j<n-'+str(radius)+'; ++j) {\n')
