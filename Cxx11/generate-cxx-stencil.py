@@ -13,8 +13,8 @@ def codegen(src,pattern,stencil_size,radius,W,model):
         src.write('      OMP_SIMD\n')
         src.write('      for (auto j='+str(radius)+'; j<n-'+str(radius)+'; ++j) {\n')
     elif (model=='taskloop'):
-        src.write('void '+pattern+str(radius)+'(const int n, std::vector<double> & in, std::vector<double> & out) {\n')
-        src.write('    OMP_TASKLOOP( firstprivate(n) shared(in,out) )\n')
+        src.write('void '+pattern+str(radius)+'(const int n, const int gs, std::vector<double> & in, std::vector<double> & out) {\n')
+        src.write('    OMP_TASKLOOP( firstprivate(n) shared(in,out) grainsize(gs) )\n')
         src.write('    for (auto i='+str(radius)+'; i<n-'+str(radius)+'; ++i) {\n')
         src.write('      OMP_SIMD\n')
         src.write('      for (auto j='+str(radius)+'; j<n-'+str(radius)+'; ++j) {\n')
@@ -60,15 +60,12 @@ def codegen(src,pattern,stencil_size,radius,W,model):
         src.write('      PRAGMA_SIMD\n')
         src.write('      for (auto j='+str(radius)+'; j<n-'+str(radius)+'; ++j) {\n')
     elif (model=='tbb'):
-        src.write('template <>\n')
-        if pattern=='star':
-            name='Star'
-        elif pattern=='grid':
-            name='Grid'
-        src.write('struct '+name+'<'+str(radius)+'> {\n')
-        src.write('  void operator()( const tbb::blocked_range2d<int>& r ) const {\n')
-        src.write('    for (tbb::blocked_range<int>::const_iterator i=r.rows().begin(); i!=r.rows().end(); ++i ) {\n')
-        src.write('      for (tbb::blocked_range<int>::const_iterator j=r.cols().begin(); j!=r.cols().end(); ++j ) {\n')
+        src.write('void '+pattern+str(radius)+'(const int n, const int tile_size, std::vector<double> & in, std::vector<double> & out) {\n')
+        src.write('  tbb::blocked_range2d<int> range('+str(radius)+', n-'+str(radius)+', tile_size, '+str(radius)+', n-'+str(radius)+', tile_size);\n')
+        src.write('  tbb::parallel_for( range, [&](decltype(range)& r) {\n')
+        src.write('    for (auto i=r.rows().begin(); i!=r.rows().end(); ++i ) {\n')
+        src.write('      PRAGMA_SIMD\n')
+        src.write('      for (auto j=r.cols().begin(); j!=r.cols().end(); ++j ) {\n')
     elif (model=='kokkos'):
         src.write('void '+pattern+str(radius)+'(const int n, matrix & in, matrix & out) {\n')
         src.write('    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>('+str(radius)+',n-'+str(radius)+'), KOKKOS_LAMBDA(const int i) {\n')
@@ -104,19 +101,14 @@ def codegen(src,pattern,stencil_size,radius,W,model):
     elif (model=='kokkos'):
         src.write('       }\n')
         src.write('     });\n')
+    elif (model=='tbb'):
+        src.write('      }\n')
+        src.write('    }\n')
+        src.write('  });\n')
     else:
         src.write('       }\n')
         src.write('     }\n')
-    if (model=='tbb'):
-        src.write('  }\n\n')
-        src.write('    '+name+'(int n, std::vector<double> & in, std::vector<double> & out)\n')
-        src.write('        : n(n), in(in), out(out) { }\n\n')
-        src.write('    int n;\n')
-        src.write('    std::vector<double> & in;\n')
-        src.write('    std::vector<double> & out;\n')
-        src.write('};\n\n')
-    else:
-        src.write('}\n\n')
+    src.write('}\n\n')
 
 def instance(src,model,pattern,r):
 
