@@ -61,7 +61,7 @@
 
 #include "prk_util.h"
 
-void SequentialSweep(int m, int n, std::vector<double> & grid)
+void SequentialSweep(int m, int n, tbb::concurrent_vector<double> & grid)
 {
   for (auto i=1; i<m; i++) {
     for (auto j=1; j<n; j++) {
@@ -176,7 +176,7 @@ int main(int argc, char* argv[])
   auto pipeline_time = 0.0; // silence compiler warning
 
   // working set
-  std::vector<double> grid;
+  tbb::concurrent_vector<double> grid;
   grid.resize(m*n,0.0);
 
   // set boundary values (bottom and left side of grid)

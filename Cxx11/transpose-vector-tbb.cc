@@ -107,8 +107,8 @@ int main(int argc, char * argv[])
   /// Allocate space for the input and transpose matrix
   //////////////////////////////////////////////////////////////////////
 
-  std::vector<double> A;
-  std::vector<double> B;
+  tbb::concurrent_vector<double> A;
+  tbb::concurrent_vector<double> B;
   A.resize(order*order);
   B.resize(order*order);
 

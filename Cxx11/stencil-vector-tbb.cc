@@ -63,7 +63,7 @@
 #include "prk_util.h"
 #include "stencil_tbb.hpp"
 
-void nothing(const int n, const int tile_size, std::vector<double> & in, std::vector<double> & out)
+void nothing(const int n, const int tile_size, tbb::concurrent_vector<double> & in, tbb::concurrent_vector<double> & out)
 {
     std::cout << "You are trying to use a stencil that does not exist." << std::endl;
     std::cout << "Please generate the new stencil using the code generator." << std::endl;
@@ -177,8 +177,8 @@ int main(int argc, char* argv[])
 
   auto stencil_time = 0.0;
 
-  std::vector<double> in;
-  std::vector<double> out;
+  tbb::concurrent_vector<double> in;
+  tbb::concurrent_vector<double> out;
   in.resize(n*n);
   out.resize(n*n);
 
