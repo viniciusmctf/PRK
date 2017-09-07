@@ -127,7 +127,6 @@ case "$PRK_TARGET" in
                 ;;
         esac
         ${PRK_CC} -v
-        # Need to increment this for CPLEX (some day)
         echo "CC=${PRK_CC} -std=c11 -DPRK_USE_GETTIMEOFDAY" >> common/make.defs
         echo "EXTRA_CLIBS=-lm -lpthread" >> common/make.defs
 
@@ -145,8 +144,7 @@ case "$PRK_TARGET" in
             done
         done
 
-        # C11 with POSIX or C11 thread parallelism
-        # not testing C11 threads for now
+        # C11 with POSIX or C11 thread parallelism - test POSIX here, C11 at the end.
         make -C $PRK_TARGET_PATH transpose-thread
         $PRK_TARGET_PATH/transpose-thread   10 1024 512
 
@@ -239,6 +237,16 @@ case "$PRK_TARGET" in
                     $PRK_TARGET_PATH/stencil-cilk 10 200 $s $r
                 done
             done
+        fi
+        # Use MUSL for GCC+Linux only
+        if [ "${TRAVIS_OS_NAME}" = "linux" ] && [ "$CC" = "gcc" ] ; then
+            make -C $PRK_TARGET_PATH clean
+            ./travis/install-musl.sh ${TRAVIS_ROOT} ${PRK_CC}
+            echo "PRKVERSION=\"'2.16'\"" > common/make.defs
+            echo "CC=${TRAVIS_ROOT}/musl/bin/musl-gcc -static -std=c11 -DUSE_C11_THREADS" >> common/make.defs
+            echo "EXTRA_CLIBS=-lm -lpthread" >> common/make.defs
+            make -C $PRK_TARGET_PATH transpose-thread
+            $PRK_TARGET_PATH/transpose-thread   10 1024 512
         fi
 
         ;;
@@ -487,15 +495,17 @@ case "$PRK_TARGET" in
         case "$CC" in
             gcc)
                 # Kokkos and Raja are built with OpenMP support with GCC
-                export EXTRAFLAG="-fopenmp -ldl"
+                echo "RAJAFLAG=-DUSE_RAJA -I${TRAVIS_ROOT}/raja/include -L${TRAVIS_ROOT}/raja/lib -lRAJA ${TBBFLAG} -fopenmp" >> common/make.defs
+                echo "KOKKOSFLAG=-DUSE_KOKKOS -I${TRAVIS_ROOT}/kokkos/include -L${TRAVIS_ROOT}/kokkos/lib -lkokkos -DPRK_KOKKOS_BACKEND=OpenMP -fopenmp -ldl" >> common/make.defs
                 ;;
             clang)
+                # RAJA can use TBB with Clang
+                echo "RAJAFLAG=-DUSE_RAJA -I${TRAVIS_ROOT}/raja/include -L${TRAVIS_ROOT}/raja/lib -lRAJA ${TBBFLAG}" >> common/make.defs
                 # Kokkos is built with Pthread support with Clang
-                export EXTRAFLAG="-lpthread -ldl"
+                echo "KOKKOSFLAG=-DUSE_KOKKOS -I${TRAVIS_ROOT}/kokkos/include -L${TRAVIS_ROOT}/kokkos/lib -lkokkos -DPRK_KOKKOS_BACKEND=Threads -lpthread -ldl" >> common/make.defs
                 ;;
         esac
         # RAJA
-        echo "RAJAFLAG=-DUSE_RAJA -I${TRAVIS_ROOT}/raja/include -L${TRAVIS_ROOT}/raja/lib -lRAJA ${TBBFLAG} ${EXTRAFLAG}" >> common/make.defs
         make -C $PRK_TARGET_PATH stencil-vector-raja transpose-vector-raja
         $PRK_TARGET_PATH/stencil-vector-raja     10 1000
         # RAJA variant 11 should be the best
@@ -518,7 +528,6 @@ case "$PRK_TARGET" in
             done
         done
         # Kokkos
-        echo "KOKKOSFLAG=-DUSE_KOKKOS -I${TRAVIS_ROOT}/kokkos/include -L${TRAVIS_ROOT}/kokkos/lib -lkokkos ${EXTRAFLAG}" >> common/make.defs
         make -C $PRK_TARGET_PATH stencil-kokkos transpose-kokkos
         $PRK_TARGET_PATH/stencil-kokkos     10 1000
         $PRK_TARGET_PATH/transpose-kokkos   10 1024 32
