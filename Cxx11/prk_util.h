@@ -32,36 +32,45 @@
 #ifndef PRK_UTIL_H
 #define PRK_UTIL_H
 
-#if !(defined(__cplusplus) && (__cplusplus >= 201103L))
-# error You need a C++11 compiler.
-#endif
-
-#define PRAGMA(x) _Pragma(#x)
-
-#include <cstdio>  // atoi
-#include <cstdlib> // getenv
+#include <cstdio>
+#include <cstdlib> // atoi, getenv
 #include <cstdint>
 #include <climits>
-#include <cmath>   // fabs
+#include <cmath>   // abs, fabs
 #include <cassert>
+
+// Test standard library _after_ standard headers have been included...
+#if (defined(__GLIBCXX__) || defined(_GLIBCXX_RELEASE) ) && !defined(_GLIBCXX_USE_CXX11_ABI)
+# error You are using an ancient version GNU libstdc++.  Either upgrade your GCC or tell ICC to use a newer version via the -gxx-name= option.
+#endif
+
+#if !(defined(__cplusplus) && (__cplusplus >= 201103L))
+# error You need a C++11 compiler or a newer C++ standard library.
+#endif
 
 #include <string>
 #include <iostream>
 #include <iomanip> // std::setprecision
 #include <exception>
-#include <chrono>
-#include <random>
-#include <typeinfo>
-
 #include <list>
 #include <vector>
 #include <valarray>
+
+#include <chrono>
+#include <random>
+#include <typeinfo>
 #include <array>
-#include <thread>
-#include <future>
 #include <atomic>
 #include <numeric>
 #include <algorithm>
+
+// These headers are busted with NVCC and GCC 5.4.0
+#ifndef __NVCC__
+#include <thread>
+#include <future>
+#endif
+
+#define PRAGMA(x) _Pragma(#x)
 
 #ifdef _OPENMP
 # include <omp.h>
@@ -78,6 +87,11 @@
 #  define OMP_FOR_SIMD PRAGMA(omp for simd)
 #  define OMP_TASK(x) PRAGMA(omp task x)
 #  define OMP_TASKLOOP(x) PRAGMA(omp taskloop x )
+#  if defined(__INTEL_COMPILER)
+#   define OMP_TASKLOOP_COLLAPSE(n,x) PRAGMA(omp taskloop x )
+#  else
+#   define OMP_TASKLOOP_COLLAPSE(n,x) PRAGMA(omp taskloop collapse(n) x )
+#  endif
 #  define OMP_TASKWAIT PRAGMA(omp taskwait)
 #  define OMP_ORDERED(x) PRAGMA(omp ordered x)
 #  define OMP_TARGET(x) PRAGMA(omp target x)
@@ -88,6 +102,7 @@
 #  define OMP_FOR_SIMD PRAGMA(omp for)
 #  define OMP_TASK(x)
 #  define OMP_TASKLOOP(x)
+#  define OMP_TASKLOOP_COLLAPSE(n,x)
 #  define OMP_TASKWAIT
 #  define OMP_ORDERED(x)
 #  define OMP_TARGET(x)
@@ -106,6 +121,7 @@
 # define OMP_FOR_SIMD
 # define OMP_TASK(x)
 # define OMP_TASKLOOP(x)
+# define OMP_TASKLOOP_COLLAPSE(n,x)
 # define OMP_TASKWAIT
 # define OMP_ORDERED(x)
 # define OMP_TARGET(x)
