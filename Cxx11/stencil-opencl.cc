@@ -1,4 +1,3 @@
-
 ///
 /// Copyright (c) 2013, Intel Corporation
 ///
@@ -61,184 +60,242 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "prk_util.h"
-#include "prk_opencl.hpp"
+#include "prk_opencl.h"
 
-const int radius = RADIUS;
-
-template <int radius, bool star>
-void do_stencil(int n, double weight[2*radius+1][2*radius+1], std::vector<double> & in, std::vector<double> & out)
+template <typename T>
+void run(cl::Context context, int iterations, int n, int radius, bool star)
 {
-    for (auto i=radius; i<n-radius; i++) {
-      for (auto j=radius; j<n-radius; j++) {
-        if (star) {
-          for (auto jj=-radius; jj<=radius; jj++) {
-            out[i*n+j] += weight[radius][radius+jj]*in[i*n+j+jj];
-          }
-          for (auto ii=-radius; ii<0; ii++) {
-            out[i*n+j] += weight[radius+ii][radius]*in[(i+ii)*n+j];
-          }
-          for (auto ii=1; ii<=radius; ii++) {
-            out[i*n+j] += weight[radius+ii][radius]*in[(i+ii)*n+j];
-          }
-        } else {
-          for (auto ii=-radius; ii<=radius; ii++) {
-            for (auto jj=-radius; jj<=radius; jj++) {
-              out[i*n+j] += weight[radius+ii][radius+jj]*in[(i+ii)*n+j+jj];
-            }
-          }
-        }
-      }
-    }
-}
+  auto precision = (sizeof(T)==8) ? 64 : 32;
 
-int main(int argc, char * argv[])
-{
-  std::cout << "Parallel Research Kernels version " << PRKVERSION << std::endl;
-  std::cout << "C++11/OpenCL stencil execution on 2D grid" << std::endl;
+  std::string funcname1, filename1;
+  funcname1.reserve(255);
+  funcname1 += ( star ? "star" : "grid" );
+  funcname1 += std::to_string(radius);
+  filename1 = funcname1 + ( ".cl" );
+  funcname1 += "_" + std::to_string(precision);
+  auto funcname2 = (precision==64) ? "add64" : "add32";
+  auto filename2 = "add.cl";
 
-  //////////////////////////////////////////////////////////////////////
-  // process and test input parameters
-  //////////////////////////////////////////////////////////////////////
+  std::string source = prk::opencl::loadProgram(filename1);
+  if ( source==std::string("FAIL") ) {
+      std::cerr << "OpenCL kernel source file (" << filename1 << ") not found. "
+                << "Generating using Python script" << std::endl;
+      std::string command("./generate-opencl-stencil.py ");
+      command += ( star ? "star " : "grid " );
+      command += std::to_string(radius);
+      std::system( command.c_str() );
+  }
+  source = prk::opencl::loadProgram(filename1);
+  cl::Program program1(context, source, true);
+  cl::Program program2(context, prk::opencl::loadProgram(filename2), true);
 
-  if (argc != 3 && argc !=4){
-    std::cout << "Usage: " << argv[0] << " <# iterations> <array dimension>" << std::endl;
-    return(EXIT_FAILURE);
+  cl_int err;
+  auto kernel1 = cl::make_kernel<int, cl::Buffer, cl::Buffer>(program1, funcname1, &err);
+  if(err != CL_SUCCESS){
+    std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
+    std::cout << program1.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) << std::endl;
+  }
+  auto kernel2 = cl::make_kernel<int, cl::Buffer>(program2, funcname2, &err);
+  if(err != CL_SUCCESS){
+    std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
+    std::cout << program2.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) << std::endl;
   }
 
-  // number of times to run the algorithm
-  int iterations  = std::atoi(argv[1]);
-  if (iterations < 1){
-    std::cout << "ERROR: iterations must be >= 1" << iterations << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  // linear grid dimension
-  int n  = std::atoi(argv[2]);
-  if (n < 1){
-    std::cout << "ERROR: grid dimension must be positive: " << n << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  if (radius < 1) {
-    std::cout << "ERROR: Stencil radius " << radius << " should be positive " << std::endl;
-    exit(EXIT_FAILURE);
-  } else if (2*radius+1 > n) {
-    std::cout << "ERROR: Stencil radius " << radius << " exceeds grid size " << n << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  std::cout << "Grid size            = " << n << std::endl;
-  std::cout << "Radius of stencil    = " << radius << std::endl;
-#ifdef STAR
-  std::cout << "Type of stencil      = star" << std::endl;
-#else
-  std::cout << "Type of stencil      = compact" << std::endl;
-#endif
-  std::cout << "Data type            = double precision" << std::endl;
-  std::cout << "Compact representation of stencil loop body" << std::endl;
-  std::cout << "Number of iterations = " << iterations << std::endl;
+  cl::CommandQueue queue(context);
 
   //////////////////////////////////////////////////////////////////////
   // Allocate space and perform the computation
   //////////////////////////////////////////////////////////////////////
 
-  // weights of points in the stencil
-  //std::array< std::array<double,2*radius+1>, 2*radius+1> weight;
-  double weight[2*radius+1][2*radius+1];
-  for (auto jj=-radius; jj<=radius; jj++) {
-    for (auto ii=-radius; ii<=radius; ii++) {
-      weight[ii+radius][jj+radius] = 0.0;
-    }
-  }
-
-  // fill the stencil weights to reflect a discrete divergence operator
-#ifdef STAR
-  const int stencil_size = 4*radius+1;
-  for (auto ii=1; ii<=radius; ii++) {
-    weight[radius][radius+ii] = weight[radius+ii][radius] = +1./(2*ii*radius);
-    weight[radius][radius-ii] = weight[radius-ii][radius] = -1./(2*ii*radius);
-  }
-#else
-  const int stencil_size = (2*radius+1)*(2*radius+1);
-  for (auto jj=1; jj<=radius; jj++) {
-    for (auto ii=-jj+1; ii<jj; ii++) {
-      weight[radius+ii][radius+jj] = +1./(4*jj*(2*jj-1)*radius);
-      weight[radius+ii][radius-jj] = -1./(4*jj*(2*jj-1)*radius);
-      weight[radius+jj][radius+ii] = +1./(4*jj*(2*jj-1)*radius);
-      weight[radius-jj][radius+ii] = -1./(4*jj*(2*jj-1)*radius);
-    }
-    weight[radius+jj][radius+jj]   = +1./(4*jj*radius);
-    weight[radius-jj][radius-jj]   = -1./(4*jj*radius);
-  }
-#endif
-
-  // interior of grid with respect to stencil
-  size_t active_points = static_cast<size_t>(n-2*radius)*static_cast<size_t>(n-2*radius);
-
-  std::vector<double> in;
-  std::vector<double> out;
-  in.resize(n*n);
-  out.resize(n*n,0.0);
+  std::vector<T> h_in;
+  std::vector<T> h_out;
+  h_in.resize(n*n, (T)0);
+  h_out.resize(n*n, (T)0);
 
   auto stencil_time = 0.0;
 
   // initialize the input array
   for (auto i=0; i<n; i++) {
     for (auto j=0; j<n; j++) {
-      in[i*n+j] = static_cast<double>(i+j);
+      h_in[i*n+j] = static_cast<T>(i+j);
     }
   }
+
+  // copy input from host to device
+  cl::Buffer d_in = cl::Buffer(context, begin(h_in), end(h_in), true);
+  cl::Buffer d_out = cl::Buffer(context, begin(h_out), end(h_out), true);
 
   for (auto iter = 0; iter<=iterations; iter++) {
 
     if (iter==1) stencil_time = prk::wtime();
 
     // Apply the stencil operator
-#ifdef STAR
-    do_stencil<RADIUS,true>(n, weight, in, out);
-#else
-    do_stencil<RADIUS,false>(n, weight, in, out);
-#endif
-
-      // add constant to solution to force refresh of neighbor data, if any
-      for (auto i=0; i<n; i++) {
-        for (auto j=0; j<n; j++) {
-          in[i*n+j] += 1.0;
-        }
-      }
+    kernel1(cl::EnqueueArgs(queue, cl::NDRange(n,n)), n, d_in, d_out);
+    // Add constant to solution to force refresh of neighbor data, if any
+    kernel2(cl::EnqueueArgs(queue, cl::NDRange(n,n)), n, d_in);
+    queue.finish();
   }
   stencil_time = prk::wtime() - stencil_time;
+
+  // copy output back to host
+  cl::copy(queue, d_out, begin(h_out), end(h_out));
+
+#ifdef VERBOSE
+  // copy input back to host - debug only
+  cl::copy(queue, d_in, begin(h_in), end(h_in));
+#endif
 
   //////////////////////////////////////////////////////////////////////
   // Analyze and output results.
   //////////////////////////////////////////////////////////////////////
 
+  // interior of grid with respect to stencil
+  size_t active_points = static_cast<size_t>(n-2*radius)*static_cast<size_t>(n-2*radius);
+
   // compute L1 norm in parallel
   double norm = 0.0;
   for (auto i=radius; i<n-radius; i++) {
     for (auto j=radius; j<n-radius; j++) {
-      norm += std::fabs(out[i*n+j]);
+      norm += std::fabs(static_cast<double>(h_out[i*n+j]));
     }
   }
   norm /= active_points;
 
   // verify correctness
-  const double epsilon = 1.0e-8;
-  double reference_norm = 2.*(iterations+1.);
+  const double epsilon = (sizeof(T)==8) ? 1.0e-8 : 1.0e-4;
+  double reference_norm = 2*(iterations+1);
   if (std::fabs(norm-reference_norm) > epsilon) {
     std::cout << "ERROR: L1 norm = " << norm
               << " Reference L1 norm = " << reference_norm << std::endl;
-    return 1;
   } else {
     std::cout << "Solution validates" << std::endl;
 #ifdef VERBOSE
     std::cout << "L1 norm = " << norm
               << " Reference L1 norm = " << reference_norm << std::endl;
 #endif
+    const int stencil_size = star ? 4*radius+1 : (2*radius+1)*(2*radius+1);
     size_t flops = (2L*(size_t)stencil_size+1L) * active_points;
     auto avgtime = stencil_time/iterations;
     std::cout << "Rate (MFlops/s): " << 1.0e-6 * static_cast<double>(flops)/avgtime
               << " Avg time (s): " << avgtime << std::endl;
+  }
+}
+
+int main(int argc, char* argv[])
+{
+  std::cout << "Parallel Research Kernels version " << PRKVERSION << std::endl;
+  std::cout << "C++11/OpenCL stencil execution on 2D grid" << std::endl;
+
+  prk::opencl::listPlatforms();
+
+  //////////////////////////////////////////////////////////////////////
+  // Process and test input parameters
+  //////////////////////////////////////////////////////////////////////
+
+  int iterations, n, radius, tile_size;
+  bool star = true;
+  try {
+      if (argc < 3) {
+        throw "Usage: <# iterations> <array dimension> [<tile_size> <star/grid> <radius>]";
+      }
+
+      // number of times to run the algorithm
+      iterations  = std::atoi(argv[1]);
+      if (iterations < 1) {
+        throw "ERROR: iterations must be >= 1";
+      }
+
+      // linear grid dimension
+      n  = std::atoi(argv[2]);
+      if (n < 1) {
+        throw "ERROR: grid dimension must be positive";
+      } else if (n > std::floor(std::sqrt(INT_MAX))) {
+        throw "ERROR: grid dimension too large - overflow risk";
+      }
+
+      // default tile size for tiling of local transpose
+      tile_size = 32;
+      if (argc > 3) {
+          tile_size = std::atoi(argv[3]);
+          if (tile_size <= 0) tile_size = n;
+          if (tile_size > n) tile_size = n;
+      }
+
+      // stencil pattern
+      if (argc > 4) {
+          auto stencil = std::string(argv[4]);
+          auto grid = std::string("grid");
+          star = (stencil == grid) ? false : true;
+      }
+
+      // stencil radius
+      radius = 2;
+      if (argc > 5) {
+          radius = std::atoi(argv[5]);
+      }
+
+      if ( (radius < 1) || (2*radius+1 > n) ) {
+        throw "ERROR: Stencil radius negative or too large";
+      }
+  }
+  catch (const char * e) {
+    std::cout << e << std::endl;
+    return 1;
+  }
+
+  std::cout << "Number of iterations = " << iterations << std::endl;
+  std::cout << "Grid size            = " << n << std::endl;
+  std::cout << "Tile size            = " << tile_size << std::endl;
+  std::cout << "Type of stencil      = " << (star ? "star" : "grid") << std::endl;
+  std::cout << "Radius of stencil    = " << radius << std::endl;
+
+  //////////////////////////////////////////////////////////////////////
+  /// Setup OpenCL environment
+  //////////////////////////////////////////////////////////////////////
+
+  cl_int err = CL_SUCCESS;
+
+  cl::Context cpu(CL_DEVICE_TYPE_CPU, NULL, NULL, NULL, &err);
+  if ( err == CL_SUCCESS && prk::opencl::available(cpu) )
+  {
+    const int precision = prk::opencl::precision(cpu);
+
+    std::cout << "CPU Precision         = " << precision << "-bit" << std::endl;
+
+    if (precision==64) {
+        run<double>(cpu, iterations, n, radius, star);
+    } else {
+        run<float>(cpu, iterations, n, radius, star);
+    }
+  }
+
+  cl::Context gpu(CL_DEVICE_TYPE_GPU, NULL, NULL, NULL, &err);
+  if ( err == CL_SUCCESS && prk::opencl::available(gpu) )
+  {
+    const int precision = prk::opencl::precision(gpu);
+
+    std::cout << "GPU Precision         = " << precision << "-bit" << std::endl;
+
+    if (precision==64) {
+        run<double>(gpu, iterations, n, radius, star);
+    } else {
+        run<float>(gpu, iterations, n, radius, star);
+    }
+  }
+
+  cl::Context acc(CL_DEVICE_TYPE_ACCELERATOR, NULL, NULL, NULL, &err);
+  if ( err == CL_SUCCESS && prk::opencl::available(acc) )
+  {
+
+    const int precision = prk::opencl::precision(acc);
+
+    std::cout << "ACC Precision         = " << precision << "-bit" << std::endl;
+
+    if (precision==64) {
+        run<double>(acc, iterations, n, radius, star);
+    } else {
+        run<float>(acc, iterations, n, radius, star);
+    }
   }
 
   return 0;

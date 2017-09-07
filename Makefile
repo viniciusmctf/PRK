@@ -48,6 +48,7 @@ help:
 	@echo "Usage: \"make all\"          (re-)builds all targets"
 	@echo "       \"make allserial\"    (re-)builds all serial targets"
 	@echo "       \"make allcxx\"       (re-)builds all C++ targets"
+	@echo "       \"make allc1z\"       (re-)builds all C1z targets"
 	@echo "       \"make allrust\"      (re-)builds all Rust targets"
 	@echo "       \"make allopenmp\"    (re-)builds all OpenMP targets"
 	@echo "       \"make allmpi1\"      (re-)builds all conventional MPI targets"
@@ -71,12 +72,15 @@ help:
 	@echo "       \"make allfreaks\"    (re-)builds the above four targets"
 	@echo "       optionally, specify   \"matrix_rank=<n> number_of_functions=<m>\""
 	@echo "       optionally, specify   \"default_opt_flags=<list of optimization flags>\""
+	@echo "       \"make allshared\"    (re-)builds the shared-memory targets (C89, C1z, C++11, Fortran, RUST)"
 	@echo "       \"make clean\"        removes all objects and executables"
 	@echo "       \"make veryclean\"    removes some generated source files as well"
 
-all: alldarwin allfreaks
+all: alldarwin allfreaks allshared
 alldarwin: allserial allopenmp allmpi1 allfgmpi allmpiopenmp allmpirma allshmem allmpishm allupc allfortran allfenix
 allfreaks: allcharm++ allampi allgrappa alllegion
+allshared: allserial allopenmp allfortran allcxx allc1z allrust
+allnew: allfortran allcxx allc1z
 
 allmpi1:
 	cd MPI1/Synch_global;        $(MAKE) global    "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
@@ -214,33 +218,29 @@ allserial:
 	cd SERIAL/PIC;              $(MAKE) pic       "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
 	cd SERIAL/AMR;              $(MAKE) amr       "DEFAULT_OPT_FLAGS   = $(PRK_FLAGS)"
 
-allfortran: #allfortranserial allfortranopenmp allfortrancoarray allfortranpretty
-	$(MAKE) -C FORTRAN/Synch_p2p
-	$(MAKE) -C FORTRAN/Stencil
-	$(MAKE) -C FORTRAN/Transpose
+allfortran:
+	$(MAKE) -C FORTRAN
 
 allfortranserial:
-	$(MAKE) -C FORTRAN/Synch_p2p p2p
-	$(MAKE) -C FORTRAN/Stencil   stencil
-	$(MAKE) -C FORTRAN/Transpose transpose
-
-allfortranopenmp:
-	$(MAKE) -C FORTRAN/Synch_p2p p2p-omp
-	$(MAKE) -C FORTRAN/Stencil   stencil-omp
-	$(MAKE) -C FORTRAN/Transpose transpose-omp
-
-allfortrancoarray:
-	$(MAKE) -C FORTRAN/Synch_p2p p2p-coarray
-	$(MAKE) -C FORTRAN/Stencil   stencil-coarray
-	$(MAKE) -C FORTRAN/Transpose transpose-coarray
+	$(MAKE) -C FORTRAN serial
 
 allfortranpretty:
-	#$(MAKE) -C FORTRAN/Synch_p2p  p2p-pretty
-	$(MAKE) -C FORTRAN/Stencil    stencil-pretty
-	$(MAKE) -C FORTRAN/Transpose  transpose-pretty
+	$(MAKE) -C FORTRAN pretty
+
+allfortranopenmp:
+	$(MAKE) -C FORTRAN openmp
+
+allfortrantarget:
+	$(MAKE) -C FORTRAN target
+
+allfortrancoarray:
+	$(MAKE) -C FORTRAN coarray
 
 allcxx:
 	$(MAKE) -C Cxx11
+
+allc1z:
+	$(MAKE) -C C1z
 
 allrust:
 	$(MAKE) -C RUST
@@ -329,10 +329,10 @@ clean:
 	cd SERIAL/Branch;           $(MAKE) clean
 	cd SERIAL/PIC;              $(MAKE) clean
 	cd SERIAL/AMR;              $(MAKE) clean
-	cd FORTRAN/Transpose;       $(MAKE) clean
-	cd FORTRAN/Synch_p2p;       $(MAKE) clean
-	cd FORTRAN/Stencil;         $(MAKE) clean
-	cd Cxx11;                   $(MAKE) clean
+	make -C FORTRAN clean
+	make -C Cxx11 clean
+	make -C C1z clean
+	make -C RUST clean
 	rm -f stats.json
 
 veryclean: clean
