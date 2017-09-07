@@ -55,10 +55,15 @@
 
 #include "prk_util.h"
 
+int ispc_num_threads(void);
+void initialize(const int order, double A[], double B[]);
+void transpose(const int order, double A[], double B[]);
+void transpose_tiled(const int order, double A[], double B[], const int tile_size);
+
 int main(int argc, char * argv[])
 {
   printf("Parallel Research Kernels version %.2f\n", PRKVERSION );
-  printf("C11/OpenMP TARGET Matrix transpose: B = A^T\n");
+  printf("ISPC Matrix transpose: B = A^T\n");
 
   //////////////////////////////////////////////////////////////////////
   /// Read and test input parameters
@@ -84,13 +89,11 @@ int main(int argc, char * argv[])
   }
 
   // default tile size for tiling of local transpose
-  int tile_size = (argc>3) ? atoi(argv[3]) : 32;
+  int tile_size = (argc>4) ? atoi(argv[3]) : 32;
   // a negative tile size means no tiling of the local transpose
   if (tile_size <= 0) tile_size = order;
 
-#ifdef _OPENMP
-  printf("Number of threads (max)   = %d\n", omp_get_max_threads());
-#endif
+  printf("ISPC threads          = %d\n", ispc_num_threads());
   printf("Number of iterations  = %d\n", iterations);
   printf("Matrix order          = %d\n", order);
   printf("Tile size             = %d\n", tile_size);
@@ -105,51 +108,17 @@ int main(int argc, char * argv[])
   double * restrict A = prk_malloc(bytes);
   double * restrict B = prk_malloc(bytes);
 
-  // HOST
-  OMP_PARALLEL()
-  {
-    OMP_FOR()
-    for (int i=0;i<order; i++) {
-      PRAGMA_SIMD
-      for (int j=0;j<order;j++) {
-        A[i*order+j] = (double)(i*order+j);
-        B[i*order+j] = 0.0;
-      }
+  initialize(order,A,B);
+
+  for (int iter = 0; iter<=iterations; iter++) {
+    if (iter==1) trans_time = prk_wtime();
+    if (tile_size<order) {
+        transpose_tiled(order,A,B,tile_size);
+    } else {
+        transpose(order,A,B);
     }
   }
-
-  // DEVICE
-  OMP_TARGET( data map(tofrom: A[0:order*order], B[0:order*order]) )
-  {
-    for (int iter = 0; iter<=iterations; iter++) {
-
-      if (iter==1) trans_time = omp_get_wtime();
-
-      // transpose the  matrix
-      if (tile_size < order) {
-        OMP_TARGET( teams distribute parallel for simd collapse(2) )
-        for (int it=0; it<order; it+=tile_size) {
-          for (int jt=0; jt<order; jt+=tile_size) {
-            for (int i=it; i<MIN(order,it+tile_size); i++) {
-              for (int j=jt; j<MIN(order,jt+tile_size); j++) {
-                B[i*order+j] += A[j*order+i];
-                A[j*order+i] += 1.0;
-              }
-            }
-          }
-        }
-      } else {
-        OMP_TARGET( teams distribute parallel for simd collapse(2) schedule(static,1) )
-        for (int i=0;i<order; i++) {
-          for (int j=0;j<order;j++) {
-            B[i*order+j] += A[j*order+i];
-            A[j*order+i] += 1.0;
-          }
-        }
-      }
-    }
-    trans_time = omp_get_wtime() - trans_time;
-  }
+  trans_time = prk_wtime() - trans_time;
 
   //////////////////////////////////////////////////////////////////////
   // Analyze and output results
@@ -157,7 +126,6 @@ int main(int argc, char * argv[])
 
   const double addit = (iterations+1.) * (iterations/2.);
   double abserr = 0.0;
-  OMP_PARALLEL_FOR_REDUCE( +:abserr )
   for (int j=0; j<order; j++) {
     for (int i=0; i<order; i++) {
       const size_t ij = i*order+j;
