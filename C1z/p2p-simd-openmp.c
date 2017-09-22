@@ -61,31 +61,21 @@
 
 #include "prk_util.h"
 
-static inline void sweep_tile(int startm, int endm,
-                              int startn, int endn,
-                              int n, double grid[])
-{
-  for (int i=startm; i<endm; i++) {
-    OMP_SIMD
-    for (int j=startn; j<endn; j++) {
-      OMP(ordered simd)
-      grid[i*n+j] = grid[(i-1)*n+j] + grid[i*n+(j-1)] - grid[(i-1)*n+(j-1)];
-    }
-  }
-}
-
 int main(int argc, char * argv[])
 {
   printf("Parallel Research Kernels version %.2f\n", PRKVERSION);
-  printf("C11 pipeline execution on 2D grid\n");
+#ifdef _OPENMP
+  printf("C11/OpenMP TASKS pipeline execution on 2D grid\n");
+#else
+  printf("C11/Serial pipeline execution on 2D grid\n");
+#endif
 
   //////////////////////////////////////////////////////////////////////
   // Process and test input parameters
   //////////////////////////////////////////////////////////////////////
 
   if (argc < 4) {
-    printf("Usage: <# iterations> <first array dimension> <second array dimension>"
-           " [<first chunk dimension> <second chunk dimension>]\n");
+    printf("Usage: <# iterations> <first array dimension> <second array dimension>\n");
     return 1;
   }
 
@@ -104,18 +94,11 @@ int main(int argc, char * argv[])
     return 1;
   }
 
-  // grid chunk dimensions
-  int mc = (argc > 4) ? atol(argv[4]) : m;
-  int nc = (argc > 5) ? atol(argv[5]) : n;
-  if (mc < 1 || mc > m || nc < 1 || nc > n) {
-    printf("WARNING: grid chunk dimensions invalid: %d,%d (ignoring)\n", mc, nc);
-    mc = m;
-    nc = n;
-  }
-
+#ifdef _OPENMP
+  printf("Number of threads (max)   = %d\n", omp_get_max_threads());
+#endif
   printf("Number of iterations      = %d\n", iterations);
   printf("Grid sizes                = %d,%d\n", m, n);
-  printf("Grid chunk sizes          = %d,%d\n", mc, nc);
 
   //////////////////////////////////////////////////////////////////////
   // Allocate space and perform the computation
@@ -126,12 +109,15 @@ int main(int argc, char * argv[])
   size_t bytes = m*n*sizeof(double);
   double * restrict grid = prk_malloc(bytes);
 
+  OMP_MASTER
   {
     for (int i=0; i<m; i++) {
+      OMP_SIMD()
       for (int j=0; j<n; j++) {
         grid[i*n+j] = 0.0;
       }
     }
+
     for (int j=0; j<n; j++) {
       grid[0*n+j] = (double)j;
     }
@@ -143,19 +129,11 @@ int main(int argc, char * argv[])
 
       if (iter==1) pipeline_time = prk_wtime();
 
-      if (mc==m && nc==n) {
-        for (int i=1; i<m; i++) {
-          OMP_SIMD
-          for (int j=1; j<n; j++) {
-            OMP(ordered simd)
-            grid[i*n+j] = grid[(i-1)*n+j] + grid[i*n+(j-1)] - grid[(i-1)*n+(j-1)];
-          }
-        }
-      } else {
-        for (int i=1; i<m; i+=mc) {
-          for (int j=1; j<n; j+=nc) {
-            sweep_tile(i, MIN(m,i+mc), j, MIN(n,j+nc), n, grid);
-          }
+      for (int i=1; i<m; i++) {
+        OMP_SIMD()
+        for (int j=1; j<n; j++) {
+          OMP_ORDERED( simd )
+          grid[i*n+j] = grid[(i-1)*n+j] + grid[i*n+(j-1)] - grid[(i-1)*n+(j-1)];
         }
       }
       grid[0*n+0] = -grid[(m-1)*n+(n-1)];

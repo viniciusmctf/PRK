@@ -75,8 +75,7 @@ int main(int argc, char * argv[])
   //////////////////////////////////////////////////////////////////////
 
   if (argc < 4) {
-    printf("Usage: <# iterations> <first array dimension> <second array dimension>"
-           " [<first chunk dimension> <second chunk dimension>]\n");
+    printf("Usage: <# iterations> <first array dimension> <second array dimension>\n");
     return 1;
   }
 
@@ -114,7 +113,7 @@ int main(int argc, char * argv[])
   {
     OMP_FOR()
     for (int i=0; i<m; i++) {
-      OMP_SIMD
+      OMP_SIMD()
       for (int j=0; j<n; j++) {
         grid[i*n+j] = 0.0;
       }

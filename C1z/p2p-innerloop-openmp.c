@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
   {
     OMP_FOR()
     for (int i=0; i<n; i++) {
-      OMP_SIMD
+      OMP_SIMD()
       for (int j=0; j<n; j++) {
         grid[i*n+j] = 0.0;
       }
