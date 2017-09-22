@@ -10,7 +10,7 @@ def codegen(src,pattern,stencil_size,radius,W,model):
         src.write('void '+pattern+str(radius)+'(const int n, const double * restrict in, double * restrict out) {\n')
         src.write('    OMP_FOR()\n')
         src.write('    for (int i='+str(radius)+'; i<n-'+str(radius)+'; i++) {\n')
-        src.write('      OMP_SIMD\n')
+        src.write('      OMP_SIMD()\n')
         src.write('      for (int j='+str(radius)+'; j<n-'+str(radius)+'; j++) {\n')
     elif (model=='target'):
         src.write('void '+pattern+str(radius)+'(const int n, const double * restrict in, double * restrict out) {\n')
@@ -21,7 +21,7 @@ def codegen(src,pattern,stencil_size,radius,W,model):
         src.write('void '+pattern+str(radius)+'(const int n, const int gs, const double * restrict in, double * restrict out) {\n')
         src.write('    OMP_TASKLOOP( firstprivate(n) shared(in,out) grainsize(gs) )\n')
         src.write('    for (int i='+str(radius)+'; i<n-'+str(radius)+'; i++) {\n')
-        src.write('      OMP_SIMD\n')
+        src.write('      OMP_SIMD()\n')
         src.write('      for (int j='+str(radius)+'; j<n-'+str(radius)+'; j++) {\n')
     elif (model=='cilk'):
         src.write('void '+pattern+str(radius)+'(const int n, const double * restrict in, double * restrict out) {\n')

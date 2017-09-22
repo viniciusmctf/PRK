@@ -118,7 +118,7 @@ int main(int argc, char * argv[])
   {
     OMP_TASKLOOP( firstprivate(order) shared(A,B) grainsize(gs) )
     for (int i=0;i<order; i++) {
-      OMP_SIMD
+      OMP_SIMD()
       for (int j=0;j<order;j++) {
         A[i*order+j] = (double)(i*order+j);
         B[i*order+j] = 0.0;
@@ -136,7 +136,7 @@ int main(int argc, char * argv[])
         for (int it=0; it<order; it+=tile_size) {
           for (int jt=0; jt<order; jt+=tile_size) {
             for (int i=it; i<MIN(order,it+tile_size); i++) {
-              OMP_SIMD
+              OMP_SIMD()
               for (int j=jt; j<MIN(order,jt+tile_size); j++) {
                 B[i*order+j] += A[j*order+i];
                 A[j*order+i] += 1.0;
@@ -147,7 +147,7 @@ int main(int argc, char * argv[])
       } else {
         OMP_TASKLOOP( firstprivate(order) shared(A,B) grainsize(gs) )
         for (int i=0;i<order; i++) {
-          OMP_SIMD
+          OMP_SIMD()
           for (int j=0;j<order;j++) {
             B[i*order+j] += A[j*order+i];
             A[j*order+i] += 1.0;

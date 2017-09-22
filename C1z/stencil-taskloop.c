@@ -188,7 +188,7 @@ int main(int argc, char * argv[])
   {
     OMP_TASKLOOP( firstprivate(n) shared(in,out) grainsize(gs) )
     for (int i=0; i<n; i++) {
-      OMP_SIMD
+      OMP_SIMD()
       for (int j=0; j<n; j++) {
         in[i*n+j]  = (double)(i+j);
         out[i*n+j] = 0.0;
@@ -207,7 +207,7 @@ int main(int argc, char * argv[])
       // Add constant to solution to force refresh of neighbor data, if any
       OMP_TASKLOOP( firstprivate(n) shared(in,out) grainsize(gs) )
       for (int i=0; i<n; i++) {
-        OMP_SIMD
+        OMP_SIMD()
         for (int j=0; j<n; j++) {
           in[i*n+j] += 1.0;
         }

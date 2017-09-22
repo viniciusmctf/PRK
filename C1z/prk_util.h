@@ -73,7 +73,7 @@
 # define OMP_FOR(x) PRAGMA(omp for x)
 # define OMP_FOR_REDUCE(x) PRAGMA(omp for reduction (x) )
 # if (_OPENMP >= 201300)
-#  define OMP_SIMD PRAGMA(omp simd)
+#  define OMP_SIMD(x) PRAGMA(omp simd x)
 #  define OMP_FOR_SIMD() PRAGMA(omp for simd x)
 #  define OMP_TASK(x) PRAGMA(omp task x)
 #  define OMP_TASKLOOP(x) PRAGMA(omp taskloop x )
@@ -81,7 +81,7 @@
 #  define OMP_ORDERED(x) PRAGMA(omp ordered x)
 #  define OMP_TARGET(x) PRAGMA(omp target x)
 # else
-#  define OMP_SIMD
+#  define OMP_SIMD(x)
 #  define OMP_FOR_SIMD() PRAGMA(omp for x)
 #  define OMP_TASK(x)
 #  define OMP_TASKLOOP(x)
@@ -97,7 +97,7 @@
 # define OMP_BARRIER
 # define OMP_FOR(x)
 # define OMP_FOR_REDUCE(x)
-# define OMP_SIMD
+# define OMP_SIMD(x)
 # define OMP_FOR_SIMD()
 # define OMP_TASK(x)
 # define OMP_TASKLOOP(x)
