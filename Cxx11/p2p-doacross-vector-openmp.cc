@@ -115,13 +115,13 @@ int main(int argc, char* argv[])
   OMP_PARALLEL()
   {
     OMP_FOR()
-    for (auto i=0; i<n; i++) {
+    for (auto i=0; i<m; i++) {
+      OMP_SIMD
       for (auto j=0; j<n; j++) {
         grid[i*n+j] = 0.0;
       }
     }
 
-    // set boundary values (bottom and left side of grid)
     OMP_MASTER
     {
       for (auto j=0; j<n; j++) {
@@ -149,7 +149,6 @@ int main(int argc, char* argv[])
           OMP_ORDERED( depend (source) )
         }
       }
-
       OMP_MASTER
       grid[0*n+0] = -grid[(m-1)*n+(n-1)];
     }
