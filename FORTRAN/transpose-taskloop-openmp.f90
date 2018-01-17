@@ -51,20 +51,10 @@
 !          Converted to Fortran by Jeff Hammond, January 2015
 ! *******************************************************************
 
-function prk_get_wtime() result(t)
-  use iso_fortran_env
-  implicit none
-  real(kind=REAL64) ::  t
-  integer(kind=INT64) :: c, r
-  call system_clock(count = c, count_rate = r)
-  t = real(c,REAL64) / real(r,REAL64)
-end function prk_get_wtime
-
 program main
   use iso_fortran_env
   use omp_lib
   implicit none
-  real(kind=REAL64) :: prk_get_wtime
   ! for argument parsing
   integer :: err
   integer :: arglen
@@ -87,7 +77,7 @@ program main
   ! ********************************************************************
 
   write(*,'(a25)') 'Parallel Research Kernels'
-  write(*,'(a60)') 'Fortran OpenMP TASKLOOP Matrix transpose: B = A^T'
+  write(*,'(a50)') 'Fortran OpenMP TASKLOOP Matrix transpose: B = A^T'
 
   if (command_argument_count().lt.2) then
     write(*,'(a,i1)') 'argument count = ', command_argument_count()
@@ -152,10 +142,11 @@ program main
   !$omp&  private(i,j,it,jt,k)
   !$omp master
 
-  !$omp taskloop firstprivate(order,tile_size) shared(A,B)
+  !$omp taskloop firstprivate(order,tile_size) shared(A,B) private(i,j,it,jt)
   do jt=1,order,tile_size
     do it=1,order,tile_size
       do j=jt,min(order,jt+tile_size-1)
+        !$omp simd
         do i=it,min(order,it+tile_size-1)
             A(i,j) = real(order,REAL64) * real(j-1,REAL64) + real(i-1,REAL64)
             B(i,j) = 0.0
@@ -170,13 +161,14 @@ program main
   do k=0,iterations
 
     if (k.eq.1) then
-      t0 = prk_get_wtime()
+      t0 = omp_get_wtime()
     endif
 
-    !$omp taskloop firstprivate(order,tile_size) shared(A,B)
+    !$omp taskloop firstprivate(order,tile_size) shared(A,B) private(i,j,it,jt)
     do jt=1,order,tile_size
       do it=1,order,tile_size
         do j=jt,min(order,jt+tile_size-1)
+          !$omp simd
           do i=it,min(order,it+tile_size-1)
             B(j,i) = B(j,i) + A(i,j)
             A(i,j) = A(i,j) + 1.0
@@ -190,7 +182,7 @@ program main
 
   enddo ! iterations
 
-  t1 = prk_get_wtime()
+  t1 = omp_get_wtime()
 
   !$omp end master
   !$omp end parallel
