@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2017, Intel Corporation
 #
@@ -64,7 +64,8 @@
 # *******************************************************************
 
 import sys
-from timeit import default_timer as timer
+#from timeit import default_timer as timer
+from time import process_time as timer
 import numpy
 
 def main():
@@ -86,11 +87,11 @@ def main():
 
     length = int(sys.argv[2])
     if length < 1:
-        sys.exit("ERROR: length must be >= 1")
+        sys.exit("ERROR: length must be positive")
 
     #offset = int(sys.argv[3])
     #if offset < 0:
-    #    sys.exit("ERROR: offset must be >= 0")
+    #    sys.exit("ERROR: offset must be nonnegative")
 
     print('Number of iterations = ', iterations)
     print('Vector length        = ', length)
