@@ -51,20 +51,10 @@
 !          Converted to Fortran by Jeff Hammond, January 2015
 ! *******************************************************************
 
-function prk_get_wtime() result(t)
-  use iso_fortran_env
-  implicit none
-  real(kind=REAL64) ::  t
-  integer(kind=INT64) :: c, r
-  call system_clock(count = c, count_rate = r)
-  t = real(c,REAL64) / real(r,REAL64)
-end function prk_get_wtime
-
 program main
   use iso_fortran_env
   use omp_lib
   implicit none
-  real(kind=REAL64) :: prk_get_wtime
   ! for argument parsing
   integer :: err
   integer :: arglen
@@ -72,7 +62,6 @@ program main
   ! problem definition
   integer(kind=INT32) ::  iterations                ! number of times to do the transpose
   integer(kind=INT32) ::  order                     ! order of a the matrix
-  !dec$ attributes align:64 :: A, B
   real(kind=REAL64), allocatable ::  A(:,:)         ! buffer to hold original matrix
   real(kind=REAL64), allocatable ::  B(:,:)         ! buffer to hold transposed matrix
   integer(kind=INT64) ::  bytes                     ! combined size of matrices
@@ -87,8 +76,8 @@ program main
   ! read and test input parameters
   ! ********************************************************************
 
-  write(*,'(a40)') 'Parallel Research Kernels'
-  write(*,'(a60)') 'Fortran OpenMP TASKS Matrix transpose: B = A^T'
+  write(*,'(a25)') 'Parallel Research Kernels'
+  write(*,'(a50)') 'Fortran OpenMP TASKLOOP Matrix transpose: B = A^T'
 
   if (command_argument_count().lt.2) then
     write(*,'(a,i1)') 'argument count = ', command_argument_count()
@@ -141,9 +130,9 @@ program main
   endif
 
   write(*,'(a,i8)') 'Number of threads    = ',omp_get_max_threads()
+  write(*,'(a,i8)') 'Number of iterations = ', iterations
   write(*,'(a,i8)') 'Matrix order         = ', order
   write(*,'(a,i8)') 'Tile size            = ', tile_size
-  write(*,'(a,i8)') 'Number of iterations = ', iterations
 
   t0 = 0
 
@@ -153,45 +142,47 @@ program main
   !$omp&  private(i,j,it,jt,k)
   !$omp master
 
+  !$omp taskloop firstprivate(order,tile_size) shared(A,B) private(i,j,it,jt)
   do jt=1,order,tile_size
     do it=1,order,tile_size
-      !$omp task
       do j=jt,min(order,jt+tile_size-1)
+        !$omp simd
         do i=it,min(order,it+tile_size-1)
             A(i,j) = real(order,REAL64) * real(j-1,REAL64) + real(i-1,REAL64)
             B(i,j) = 0.0
         enddo
       enddo
-      !$omp end task
     enddo
   enddo
+  !$omp end taskloop
 
   !$omp taskwait
 
   do k=0,iterations
 
     if (k.eq.1) then
-      t0 = prk_get_wtime()
+      t0 = omp_get_wtime()
     endif
 
+    !$omp taskloop firstprivate(order,tile_size) shared(A,B) private(i,j,it,jt)
     do jt=1,order,tile_size
       do it=1,order,tile_size
-        !$omp task
         do j=jt,min(order,jt+tile_size-1)
+          !$omp simd
           do i=it,min(order,it+tile_size-1)
             B(j,i) = B(j,i) + A(i,j)
             A(i,j) = A(i,j) + 1.0
           enddo
         enddo
-        !$omp end task
       enddo
     enddo
+    !$omp end taskloop
 
     !$omp taskwait
 
   enddo ! iterations
 
-  t1 = prk_get_wtime()
+  t1 = omp_get_wtime()
 
   !$omp end master
   !$omp end parallel

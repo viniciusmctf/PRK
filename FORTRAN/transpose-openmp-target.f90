@@ -62,7 +62,6 @@ program main
   ! problem definition
   integer(kind=INT32) ::  iterations                ! number of times to do the transpose
   integer(kind=INT32) ::  order                     ! order of a the matrix
-  !dec$ attributes align:64 :: A, B
   real(kind=REAL64), allocatable ::  A(:,:)         ! buffer to hold original matrix
   real(kind=REAL64), allocatable ::  B(:,:)         ! buffer to hold transposed matrix
   integer(kind=INT64) ::  bytes                     ! combined size of matrices
@@ -77,12 +76,12 @@ program main
   ! read and test input parameters
   ! ********************************************************************
 
-  write(*,'(a40)') 'Parallel Research Kernels'
-  write(*,'(a40)') 'Fortran OpenMP Matrix transpose: B = A^T'
+  write(*,'(a25)') 'Parallel Research Kernels'
+  write(*,'(a46)') 'Fortran OpenMP TARGET Matrix transpose: B = A^T'
 
   if (command_argument_count().lt.2) then
-    write(*,'(a,i1)') 'argument count = ', command_argument_count()
-    write(*,'(a)')    'Usage: ./transpose <# iterations> <matrix order> [<tile_size>]'
+    write(*,'(a17,i1)') 'argument count = ', command_argument_count()
+    write(*,'(a62)')    'Usage: ./transpose <# iterations> <matrix order> [<tile_size>]'
     stop 1
   endif
 
@@ -131,94 +130,42 @@ program main
   endif
 
   write(*,'(a,i8)') 'Number of threads    = ',omp_get_max_threads()
-  write(*,'(a,i8)') 'Matrix order         = ', order
-  write(*,'(a,i8)') 'Tile size            = ', tile_size
   write(*,'(a,i8)') 'Number of iterations = ', iterations
+  write(*,'(a,i8)') 'Matrix order         = ', order
+  !write(*,'(a,i8)') 'Tile size            = ', tile_size
+
+  !$omp parallel do simd collapse(2)
+  do j=1,order
+    do i=1,order
+      A(i,j) = real(order,REAL64) * real(j-1,REAL64) + real(i-1,REAL64)
+      B(i,j) = 0
+    enddo
+  enddo
+  !$omp end parallel do simd
+
+  !$omp target data map(to: A) map(tofrom: B) map(from:trans_time)
 
   t0 = 0
 
-  !$omp parallel default(none)          &
-  !$omp&  shared(A,B)                   &
-  !$omp&  firstprivate(order,tile_size) &
-  !$omp&  private(i,j,it,jt)
-
-  ! Fill the original matrix, set transpose to known garbage value.
-  if (tile_size.lt.order) then
-    !$omp do collapse(2)
-    do jt=1,order,tile_size
-      do it=1,order,tile_size
-        do j=jt,min(order,jt+tile_size-1)
-          do i=it,min(order,it+tile_size-1)
-              A(i,j) = real(order,REAL64) * real(j-1,REAL64) + real(i-1,REAL64)
-              B(i,j) = 0.0
-          enddo
-        enddo
-      enddo
-    enddo
-    !$omp end do
-  else
-    !$omp do collapse(2)
-    do j=1,order
-      do i=1,order
-        A(i,j) = real(order,REAL64) * real(j-1,REAL64) + real(i-1,REAL64)
-        B(i,j) = 0.0
-      enddo
-    enddo
-    !$omp end do
-  endif
-  !$omp end parallel
-
-
-  !$omp target map(to: A) map(tofrom: B) map(from:trans_time)
-  !$omp parallel default(none)                         &
-  !$omp&  shared(A,B,t0,t1,trans_time)                 &
-  !$omp&  firstprivate(order,iterations,tile_size)     &
-  !$omp&  private(i,j,it,jt,k)
   do k=0,iterations
 
-    ! start timer after a warmup iteration
-    if (k.eq.1) then
-      !$omp barrier
-      !$omp master
-      t0 = omp_get_wtime()
-      !$omp end master
-    endif
+    if (k.eq.1) t0 = omp_get_wtime()
 
-    ! Transpose the matrix; only use tiling if the tile size is smaller than the matrix
-    if (tile_size.lt.order) then
-      !$omp do collapse(2)
-      do jt=1,order,tile_size
-        do it=1,order,tile_size
-          do j=jt,min(order,jt+tile_size-1)
-            do i=it,min(order,it+tile_size-1)
-              B(j,i) = B(j,i) + A(i,j)
-              A(i,j) = A(i,j) + 1.0
-            enddo
-          enddo
-        enddo
+    !$omp target teams distribute parallel do simd collapse(2) schedule(static,1)
+    do j=1,order
+      do i=1,order
+        B(j,i) = B(j,i) + A(i,j)
+        A(i,j) = A(i,j) + 1
       enddo
-      !$omp end do
-    else
-      !$omp do collapse(2)
-      do j=1,order
-        do i=1,order
-          B(j,i) = B(j,i) + A(i,j)
-          A(i,j) = A(i,j) + 1.0
-        enddo
-      enddo
-      !$omp end do
-    endif
+    enddo
+    !$omp end target teams distribute parallel do simd
 
   enddo ! iterations
 
-  !$omp barrier
-  !$omp master
   t1 = omp_get_wtime()
   trans_time = t1 - t0
-  !$omp end master
 
-  !$omp end parallel
-  !$omp end target
+  !$omp end target data
 
   ! ********************************************************************
   ! ** Analyze and output results.

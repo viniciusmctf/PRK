@@ -13,53 +13,68 @@ STARFLAG   = -DSTAR
 FCFLAGS  = $(DEFAULT_OPT_FLAGS)
 FCFLAGS += -DRADIUS=$(RADIUS) $(STARFLAG)
 
+ifeq ($(findstring ifort,$(FC)),ifort)
+  BLASFLAGS = $(CBLASFLAG) -heap-arrays
+else
+  BLASFLAGS = $(CBLASFLAG)
+endif
+
 .PHONY: all clean serial pretty openmp coarray target ornlacc
 
-ifeq ($(shell uname -s),Darwin)
-ifneq ($(findstring ifort,$(FC)),ifort)
-COARRAY = coarray
-TARGET = target
+# Intel
+ifeq ($(findstring ifort,$(FC)),ifort)
+  ifeq ($(shell uname -s),Darwin)
+    EXTRA = taskloop
+  else
+    EXTRA = target coarray taskloop
+  endif
 endif
-else
-COARRAY = coarray
-TARGET = target
+# GCC (also matches pgfortran so PGI must come after)
+ifeq ($(findstring gfortran,$(FC)),gfortran)
+  EXTRA = target coarray taskloop ornlacc
+endif
+# PGI and LLVM Flang
+ifeq ($(findstring pgf,$(FC)),pgf)
+  EXTRA = target ornlacc
+  FCFLAGS += -DPGI
+endif
+ifeq ($(findstring flang,$(FC)),flang)
+  EXTRA = target ornlacc
+  FCFLAGS += -DPGI
 endif
 
-all: serial pretty openmp $(COARRAY) $(TARGET)
+all: serial pretty openmp tasks $(EXTRA)
 
-serial: p2p stencil transpose
+serial: p2p stencil transpose nstream dgemm p2p-innerloop
 
-pretty: stencil-pretty transpose-pretty
+pretty: stencil-pretty transpose-pretty nstream-pretty dgemm-pretty
 
-openmp: p2p-openmp-tasks p2p-openmp-doacross p2p-openmp-datapar stencil-openmp transpose-openmp
+openmp: p2p-tasks-openmp p2p-innerloop-openmp stencil-openmp transpose-openmp nstream-openmp dgemm-openmp
 
-tasks: p2p-openmp-tasks stencil-taskloop transpose-tasks transpose-taskloop
+tasks: p2p-tasks-openmp transpose-tasks-openmp
+
+taskloop: stencil-taskloop-openmp transpose-taskloop-openmp nstream-taskloop-openmp dgemm-taskloop-openmp
 
 coarray: p2p-coarray stencil-coarray transpose-coarray
 
-target: p2p-openmp-target stencil-openmp-target transpose-openmp-target
+target: stencil-openmp-target transpose-openmp-target nstream-openmp-target dgemm-openmp-target
 
-ornlacc: p2p-ornlacc stencil-ornlacc transpose-ornlacc
+ornlacc: p2p-ornlacc stencil-ornlacc transpose-ornlacc nstream-ornlacc
 
 %: %.f90
 	$(FC) $(FCFLAGS) $< -o $@
 
-%-pretty: %-pretty.f90
+stencil: stencil.f90 stencil_serial.f90
+	$(FC) $(FCFLAGS) -c stencil_serial.f90 -o stencil_serial.o
 	$(FC) $(FCFLAGS) $< -o $@
 
-p2p-openmp-doacross: p2p-openmp-doacross.f90
-	$(FC) $(FCFLAGS) $(OPENMPFLAG) $< -o $@
-
-p2p-openmp-datapar: p2p-openmp-datapar.f90
-	$(FC) $(FCFLAGS) $(OPENMPFLAG) $< -o $@
+%-pretty: %-pretty.f90
+	$(FC) $(FCFLAGS) $(BLASFLAGS) $< -o $@
 
 %-openmp: %.f90
 	$(FC) $(FCFLAGS) $(OPENMPFLAG) $< -o $@
 
-%-tasks: %-tasks.f90
-	$(FC) $(FCFLAGS) $(OPENMPFLAG) $< -o $@
-
-%-taskloop: %-taskloop.f90
+%-openmp: %-openmp.f90
 	$(FC) $(FCFLAGS) $(OPENMPFLAG) $< -o $@
 
 %-coarray: %-coarray.f90
@@ -79,12 +94,10 @@ clean:
 	-rm -f *.optrpt
 	-rm -f *.dwarf
 	-rm -rf *.dSYM # Mac
-	-rm -f p2p                   stencil                 transpose
-	-rm -f p2p-pretty            stencil-pretty          transpose-pretty
-	-rm -f p2p-coarray           stencil-coarray         transpose-coarray
-	-rm -f p2p-openmp-tasks      stencil-openmp          transpose-openmp
-	-rm -f p2p-openmp-doacross   p2p-openmp-datapar
-	-rm -f p2p-openmp-target     stencil-openmp-target   transpose-openmp-target
-	-rm -f p2p-ornlacc           stencil-ornlacc         transpose-ornlacc
-	-rm -f stencil-tasks         transpose-tasks
-	-rm -f stencil-taskloop      transpose-taskloop
+	-rm -f p2p stencil transpose nstream
+	-rm -f p2p-innerloop
+	-rm -f *-pretty
+	-rm -f *-coarray
+	-rm -f *-openmp
+	-rm -f *-target
+	-rm -f *-ornlacc

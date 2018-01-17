@@ -71,7 +71,6 @@ program main
   ! problem definition
   integer(kind=INT32) ::  iterations                ! number of times to do the transpose
   integer(kind=INT32) ::  order                     ! order of a the matrix
-  !dec$ attributes align:64 :: A, B
   real(kind=REAL64), allocatable ::  A(:,:)         ! buffer to hold original matrix
   real(kind=REAL64), allocatable ::  B(:,:)         ! buffer to hold transposed matrix
   integer(kind=INT64) ::  bytes                     ! combined size of matrices
@@ -86,12 +85,12 @@ program main
   ! read and test input parameters
   ! ********************************************************************
 
-  write(*,'(a40)') 'Parallel Research Kernels'
-  write(*,'(a40)') 'Fortran ORNL-ACC Matrix transpose: B = A^T'
+  write(*,'(a25)') 'Parallel Research Kernels'
+  write(*,'(a41)') 'Fortran OpenACC Matrix transpose: B = A^T'
 
   if (command_argument_count().lt.2) then
-    write(*,'(a,i1)') 'argument count = ', command_argument_count()
-    write(*,'(a)')    'Usage: ./transpose <# iterations> <matrix order> [<tile_size>]'
+    write(*,'(a17,i1)') 'argument count = ', command_argument_count()
+    write(*,'(a62)')    'Usage: ./transpose <# iterations> <matrix order> [<tile_size>]'
     stop 1
   endif
 
@@ -139,13 +138,12 @@ program main
     stop 1
   endif
 
+  write(*,'(a,i8)') 'Number of iterations = ', iterations
   write(*,'(a,i8)') 'Matrix order         = ', order
   write(*,'(a,i8)') 'Tile size            = ', tile_size
-  write(*,'(a,i8)') 'Number of iterations = ', iterations
 
   t0 = 0
 
-  ! Fill the original matrix, set transpose to known garbage value.
   if (tile_size.lt.order) then
     !$acc parallel loop gang ! collapse(2) leads to incorrect results
     do jt=1,order,tile_size
@@ -174,9 +172,7 @@ program main
   !$acc data pcopyin(A) pcopy(B)
   do k=0,iterations
 
-    if (k.eq.1) then
-      t0 = prk_get_wtime()
-    endif
+    if (k.eq.1) t0 = prk_get_wtime()
 
     ! Transpose the matrix; only use tiling if the tile size is smaller than the matrix
     if (tile_size.lt.order) then
@@ -207,9 +203,10 @@ program main
   enddo ! iterations
 
   t1 = prk_get_wtime()
-  trans_time = t1 - t0
 
   !$acc end data
+
+  trans_time = t1 - t0
 
   ! ********************************************************************
   ! ** Analyze and output results.

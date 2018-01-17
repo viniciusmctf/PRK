@@ -84,18 +84,16 @@ int main(int argc, char * argv[])
   }
 
   // default tile size for tiling of local transpose
-  int tile_size = (argc>4) ? atoi(argv[3]) : 32;
+  int tile_size = (argc>3) ? atoi(argv[3]) : 32;
   // a negative tile size means no tiling of the local transpose
   if (tile_size <= 0) tile_size = order;
 
+#ifdef _OPENMP
   printf("Number of threads (max)   = %d\n", omp_get_max_threads());
+#endif
   printf("Number of iterations  = %d\n", iterations);
   printf("Matrix order          = %d\n", order);
-  if (tile_size < order) {
-      printf("Tile size             = %d\n", tile_size);
-  } else {
-      printf("Untiled" );
-  }
+  printf("Tile size             = %d\n", tile_size);
 
   //////////////////////////////////////////////////////////////////////
   /// Allocate space for the input and transpose matrix
@@ -108,11 +106,11 @@ int main(int argc, char * argv[])
   double * restrict B = prk_malloc(bytes);
 
   // HOST
-  // initialize the input and output arrays
-  _Pragma("omp parallel")
+  OMP_PARALLEL()
   {
-    _Pragma("omp for")
+    OMP_FOR()
     for (int i=0;i<order; i++) {
+      OMP_SIMD
       for (int j=0;j<order;j++) {
         A[i*order+j] = (double)(i*order+j);
         B[i*order+j] = 0.0;
@@ -121,20 +119,15 @@ int main(int argc, char * argv[])
   }
 
   // DEVICE
-  _Pragma("omp target map(tofrom: A[0:order*order], B[0:order*order]) map(from:trans_time)")
-  _Pragma("omp parallel")
+  OMP_TARGET( data map(tofrom: A[0:order*order], B[0:order*order]) )
   {
     for (int iter = 0; iter<=iterations; iter++) {
 
-      if (iter==1) {
-          _Pragma("omp barrier")
-          _Pragma("omp master")
-          trans_time = prk_wtime();
-      }
+      if (iter==1) trans_time = omp_get_wtime();
 
       // transpose the  matrix
       if (tile_size < order) {
-        _Pragma("omp for")
+        OMP_TARGET( teams distribute parallel for simd collapse(2) )
         for (int it=0; it<order; it+=tile_size) {
           for (int jt=0; jt<order; jt+=tile_size) {
             for (int i=it; i<MIN(order,it+tile_size); i++) {
@@ -146,7 +139,7 @@ int main(int argc, char * argv[])
           }
         }
       } else {
-        _Pragma("omp for")
+        OMP_TARGET( teams distribute parallel for simd collapse(2) schedule(static,1) )
         for (int i=0;i<order; i++) {
           for (int j=0;j<order;j++) {
             B[i*order+j] += A[j*order+i];
@@ -155,9 +148,7 @@ int main(int argc, char * argv[])
         }
       }
     }
-    _Pragma("omp barrier")
-    _Pragma("omp master")
-    trans_time = prk_wtime() - trans_time;
+    trans_time = omp_get_wtime() - trans_time;
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -166,7 +157,7 @@ int main(int argc, char * argv[])
 
   const double addit = (iterations+1.) * (iterations/2.);
   double abserr = 0.0;
-  _Pragma("omp parallel for reduction(+:abserr)")
+  OMP_PARALLEL_FOR_REDUCE( +:abserr )
   for (int j=0; j<order; j++) {
     for (int i=0; i<order; i++) {
       const size_t ij = i*order+j;
