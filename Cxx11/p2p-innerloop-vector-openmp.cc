@@ -59,8 +59,6 @@
 ///
 //////////////////////////////////////////////////////////////////////
 
-#include <omp.h>
-
 #include "prk_util.h"
 
 int main(int argc, char* argv[])
@@ -79,7 +77,7 @@ int main(int argc, char* argv[])
   int iterations;
   int n;
   try {
-      if (argc < 3){
+      if (argc < 3) {
         throw " <# iterations> <array dimension>";
       }
 
@@ -181,7 +179,7 @@ int main(int argc, char* argv[])
 #endif
   auto avgtime = pipeline_time/iterations;
   std::cout << "Rate (MFlops/s): "
-            << 2.0e-6 * ( (n-1)*(n-1) )/avgtime
+            << 2.0e-6 * ( (n-1.)*(n-1.) )/avgtime
             << " Avg time (s): " << avgtime << std::endl;
 
   return 0;
