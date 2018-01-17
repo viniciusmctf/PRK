@@ -1,5 +1,3 @@
-#define RESTRICT __restrict__
-
 void star1(const int n, const int tile_size, tbb::concurrent_vector<double> & in, tbb::concurrent_vector<double> & out) {
   tbb::blocked_range2d<int> range(1, n-1, tile_size, 1, n-1, tile_size);
   tbb::parallel_for( range, [&](decltype(range)& r ) {
