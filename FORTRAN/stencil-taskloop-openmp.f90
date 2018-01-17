@@ -60,15 +60,6 @@
 !
 ! *******************************************************************
 
-function prk_get_wtime() result(t)
-  use iso_fortran_env
-  implicit none
-  real(kind=REAL64) ::  t
-  integer(kind=INT64) :: c, r
-  call system_clock(count = c, count_rate = r)
-  t = real(c,REAL64) / real(r,REAL64)
-end function prk_get_wtime
-
 subroutine initialize_w(is_star,r,W)
   use iso_fortran_env
   implicit none
@@ -111,7 +102,7 @@ subroutine apply_stencil(is_star,tiling,tile_size,r,n,W,A,B)
   integer(kind=INT32) :: i, j, ii, jj, it, jt
   if (is_star) then
     if (.not.tiling) then
-      !$omp taskloop shared(W,A,B)
+      !$omp taskloop shared(W,A,B) firstprivate(r,n) private(i,j,ii,jj)
       do j=r,n-r-1
         do i=r,n-r-1
             ! do not use Intel Fortran unroll directive here (slows down)
@@ -128,7 +119,8 @@ subroutine apply_stencil(is_star,tiling,tile_size,r,n,W,A,B)
       enddo
       !$omp end taskloop
     else ! tiling
-      !$omp taskloop shared(W,A,B)
+      !$omp taskloop shared(W,A,B) firstprivate(r,n,tile_size) &
+      !$omp&                       private(it,jt,i,j,ii,jj)
       do jt=r,n-r-1,tile_size
         do it=r,n-r-1,tile_size
           do j=jt,min(n-r-1,jt+tile_size-1)
@@ -150,7 +142,7 @@ subroutine apply_stencil(is_star,tiling,tile_size,r,n,W,A,B)
     endif ! tiling
   else ! grid
     if (.not.tiling) then
-      !$omp taskloop shared(W,A,B)
+      !$omp taskloop shared(W,A,B) firstprivate(r,n) private(i,j,ii,jj)
       do j=r,n-r-1
         do i=r,n-r-1
           do jj=-r,r
@@ -162,7 +154,8 @@ subroutine apply_stencil(is_star,tiling,tile_size,r,n,W,A,B)
       enddo
       !$omp end taskloop
     else ! tiling
-      !$omp taskloop shared(W,A,B)
+      !$omp taskloop shared(W,A,B) firstprivate(r,n,tile_size) &
+      !$omp&                       private(it,jt,i,j,ii,jj)
       do jt=r,n-r-1,tile_size
         do it=r,n-r-1,tile_size
           do j=jt,min(n-r-1,jt+tile_size-1)
@@ -185,7 +178,6 @@ program main
   use iso_fortran_env
   use omp_lib
   implicit none
-  real(kind=REAL64) :: prk_get_wtime
   ! for argument parsing
   integer :: err
   integer :: arglen
@@ -311,7 +303,7 @@ program main
   !$omp&  private(i,j,k)
 
   !$omp master
-  !$omp taskloop shared(A,B)
+  !$omp taskloop firstprivate(n) shared(A,B)
   do j=1,n
     do i=1,n
       A(i,j) = cx*i+cy*j
@@ -327,7 +319,7 @@ program main
   do k=0,iterations
 
     if (k.eq.1) then
-       t0 = prk_get_wtime()
+       t0 = omp_get_wtime()
     endif
 
     ! Apply the stencil operator
@@ -335,7 +327,7 @@ program main
     !$omp taskwait
 
     ! add constant to solution to force refresh of neighbor data, if any
-    !$omp taskloop shared(A)
+    !$omp taskloop firstprivate(n) private(i,j) shared(A)
     do j=1,n
       do i=1,n
         A(i,j) = A(i,j) + 1.d0
@@ -347,7 +339,7 @@ program main
 
   enddo ! iterations
 
-  t1 = prk_get_wtime()
+  t1 = omp_get_wtime()
 
   !$omp end master
   !$omp end parallel

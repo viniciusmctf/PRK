@@ -56,19 +56,19 @@
 
 int main(int argc, char * argv[])
 {
-  //////////////////////////////////////////////////////////////////////
-  /// Read and test input parameters
-  //////////////////////////////////////////////////////////////////////
-
   std::cout << "Parallel Research Kernels version " << PRKVERSION << std::endl;
   std::cout << "C++11/OpenMP TASKLOOP Matrix transpose: B = A^T" << std::endl;
 
-  int iterations;
-  size_t order;
-  size_t tile_size;
+  //////////////////////////////////////////////////////////////////////
+  // Read and test input parameters
+  //////////////////////////////////////////////////////////////////////
+
+  int iterations, gs;
+  int order;
+  int tile_size;
   try {
       if (argc < 3) {
-        throw "Usage: <# iterations> <matrix order> [tile size]";
+        throw "Usage: <# iterations> <matrix order> [taskloop grainsize] [tile size]";
       }
 
       // number of times to do the transpose
@@ -78,33 +78,39 @@ int main(int argc, char * argv[])
       }
 
       // order of a the matrix
-      order = std::atol(argv[2]);
+      order = std::atoi(argv[2]);
       if (order <= 0) {
         throw "ERROR: Matrix Order must be greater than 0";
+      } else if (order > std::floor(std::sqrt(INT_MAX))) {
+        throw "ERROR: matrix dimension too large - overflow risk";
       }
 
       // default tile size for tiling of local transpose
-      tile_size = (argc>3) ? std::atol(argv[3]) : 32;
+      tile_size = (argc>3) ? std::atoi(argv[3]) : 32;
       // a negative tile size means no tiling of the local transpose
       if (tile_size <= 0) tile_size = order;
 
+      // taskloop grainsize
+      gs = (argc > 4) ? std::atoi(argv[4]) : 32;
+      if (gs < 1 || gs > order) {
+        throw "ERROR: grainsize";
+      }
   }
   catch (const char * e) {
     std::cout << e << std::endl;
     return 1;
   }
 
-  std::cout << "Number of threads (max)   = " << omp_get_max_threads() << std::endl;
-  std::cout << "Number of iterations  = " << iterations << std::endl;
-  std::cout << "Matrix order          = " << order << std::endl;
-  if (tile_size < order) {
-      std::cout << "Tile size             = " << tile_size << std::endl;
-  } else {
-      std::cout << "Untiled" << std::endl;
-  }
+#ifdef _OPENMP
+  std::cout << "Number of threads    = " << omp_get_max_threads() << std::endl;
+  std::cout << "Taskloop grainsize   = " << gs << std::endl;
+#endif
+  std::cout << "Number of iterations = " << iterations << std::endl;
+  std::cout << "Matrix order         = " << order << std::endl;
+  std::cout << "Tile size            = " << tile_size << std::endl;
 
   //////////////////////////////////////////////////////////////////////
-  /// Allocate space for the input and transpose matrix
+  // Allocate space and perform the computation
   //////////////////////////////////////////////////////////////////////
 
   std::vector<double> A;
@@ -117,25 +123,22 @@ int main(int argc, char * argv[])
   OMP_PARALLEL()
   OMP_MASTER
   {
-    OMP_TASKLOOP( firstprivate(order) shared(A,B) )
+    OMP_TASKLOOP( firstprivate(order) shared(A,B) grainsize(gs) )
     for (auto i=0;i<order; i++) {
       for (auto j=0;j<order;j++) {
         A[i*order+j] = static_cast<double>(i*order+j);
         B[i*order+j] = 0.0;
       }
     }
-
     OMP_TASKWAIT
 
     for (auto iter = 0; iter<=iterations; iter++) {
 
-      if (iter==1) {
-          trans_time = prk::wtime();
-      }
+      if (iter==1) trans_time = prk::wtime();
 
       // transpose the  matrix
       if (tile_size < order) {
-        OMP_TASKLOOP( firstprivate(order) shared(A,B) )
+        OMP_TASKLOOP_COLLAPSE(2, firstprivate(order) shared(A,B) grainsize(gs) )
         for (auto it=0; it<order; it+=tile_size) {
           for (auto jt=0; jt<order; jt+=tile_size) {
             for (auto i=it; i<std::min(order,it+tile_size); i++) {
@@ -147,7 +150,7 @@ int main(int argc, char * argv[])
           }
         }
       } else {
-        OMP_TASKLOOP( firstprivate(order) shared(A,B) )
+        OMP_TASKLOOP( firstprivate(order) shared(A,B) grainsize(gs) )
         for (auto i=0;i<order; i++) {
           for (auto j=0;j<order;j++) {
             B[i*order+j] += A[j*order+i];
