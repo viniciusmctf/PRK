@@ -35,13 +35,13 @@
 ///
 /// PURPOSE: This program tests the efficiency with which point-to-point
 ///          synchronization can be carried out. It does so by executing
-///          a pipelined algorithm on an n*n grid. The first array dimension
+///          a pipelined algorithm on an n^2 grid. The first array dimension
 ///          is distributed among the threads (stripwise decomposition).
 ///
 /// USAGE:   The program takes as input the
 ///          dimensions of the grid, and the number of iterations on the grid
 ///
-///                <progname> <iterations> <n> <n>
+///                <progname> <iterations> <n>
 ///
 ///          The output consists of diagnostics to make sure the
 ///          algorithm worked, and of timing statistics.
@@ -61,13 +61,13 @@
 
 #include "prk_util.h"
 
-int main(int argc, char * argv[])
+int main(int argc, char* argv[])
 {
   printf("Parallel Research Kernels version %.2f\n", PRKVERSION);
 #ifdef _OPENMP
-  printf("C11 OpenMP INNERLOOP pipeline execution on 2D grid\n");
+  printf("C11/OpenMP INNERLOOP pipeline execution on 2D grid\n");
 #else
-  printf("C11 serial INNERLOOP pipeline execution on 2D grid\n");
+  printf("C11/Serial INNERLOOP pipeline execution on 2D grid\n");
 #endif
 
   //////////////////////////////////////////////////////////////////////
@@ -110,8 +110,9 @@ int main(int argc, char * argv[])
 
   OMP_PARALLEL()
   {
-    OMP_FOR_SIMD
+    OMP_FOR()
     for (int i=0; i<n; i++) {
+      OMP_SIMD
       for (int j=0; j<n; j++) {
         grid[i*n+j] = 0.0;
       }
@@ -138,7 +139,7 @@ int main(int argc, char * argv[])
       }
 
       for (int i=2; i<=2*n-2; i++) {
-        OMP_FOR_SIMD
+        OMP_FOR(simd)
         for (int j=MAX(2,i-n+2); j<=MIN(i,n); j++) {
           const int x = i-j+2-1;
           const int y = j-1;
