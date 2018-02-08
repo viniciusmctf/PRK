@@ -49,7 +49,9 @@ OPENMPFLAG+=-L${LLVM_ROOT}/lib
 OPENCLFLAG=-framework OpenCL
 # POCL
 # http://portablecl.org/docs/html/using.html#linking-your-program-directly-with-pocl is not correct...
-#OPENCLFLAG=-I/opt/pocl/latest/include -L/opt/pocl/latest/lib -lpoclu -I/opt/pocl/latest/share/pocl/include -lOpenCL
+#POCLDIR=/opt/pocl/latest
+#POCLDIR=/opt/llvm/pocl/usr/local
+#OPENCLFLAG=-I${POCLDIR}/include -I${POCLDIR}/share/pocl/include -L${POCLDIR}/lib -Wl,-rpath=${POCLDIR}/lib -lpoclu -lOpenCL
 # Linux
 #OPENCLDIR=/etc/alternatives/opencl-intel-tools
 #OPENCLFLAG=-I${OPENCLDIR} -L${OPENCLDIR}/lib64 -lOpenCL
@@ -59,7 +61,7 @@ OPENCLFLAG=-framework OpenCL
 # CodePlay ComputeCpp
 SYCLDIR=/opt/sycl/latest
 SYCLCXX=${SYCLDIR}/bin/compute++
-SYCLFLAG=-DUSE_SYCL -sycl-driver -I$(SYCLDIR)/include -L$(SYCLDIR)/lib -Wl,-rpath=$(SYCLDIR)/lib -lComputeCpp
+SYCLFLAG=-DUSE_SYCL -sycl-driver -I${SYCLDIR}/include -L${SYCLDIR}/lib -Wl,-rpath=${SYCLDIR}/lib -lComputeCpp
 # This makes a huge difference in e.g. nstream...
 SYCLFLAG+=-no-serial-memop
 #
@@ -67,9 +69,17 @@ SYCLFLAG+=-no-serial-memop
 # https://github.com/triSYCL/triSYCL is header-only so just clone in Cxx11 directory...
 #SYCLDIR=./triSYCL
 #SYCLCXX=${CXX}
-#SYCLFLAG=-DUSE_SYCL -I$(SYCLDIR)/include
+#SYCLFLAG=-DUSE_SYCL -I${SYCLDIR}/include
+#
+# PACXX
+# see https://github.com/pacxx/pacxx-llvm for details
+#
+PACXXDIR=/opt/llvm/pacxx
+PACXX=${PACXXDIR}/bin/pacxx++ -std=c++14
+PACXXFLAG=-DUSE_PACXX
 #
 # OCCA
+#
 OCCADIR=${HOME}/prk-repo/Cxx11/occa
 #
 # TBB

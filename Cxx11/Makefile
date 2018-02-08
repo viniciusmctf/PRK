@@ -36,6 +36,7 @@ OPENCLFLAGS = $(OPENCLFLAG)
 # We do not yet handle all possible exceptions...
 #OPENCLFLAGS += -D__CL_ENABLE_EXCEPTIONS
 SYCLFLAGS = $(SYCLFLAG) $(BOOSTFLAG)
+PACXXFLAGS = $(PACXXFLAG) $(BOOSTFLAG)
 ORNLACCFLAGS = $(ORNLACCFLAG)
 TBBFLAGS = $(TBBFLAG) -DPRK_TBB_PARTITIONER=$(PRK_TBB_PARTITIONER)
 CBLASFLAGS = $(CBLASFLAG) $(OPENMPFLAG)
@@ -95,6 +96,8 @@ opencl: p2p-innerloop-opencl stencil-opencl transpose-opencl nstream-opencl
 
 sycl: stencil-sycl transpose-sycl nstream-sycl
 
+pacxx: nstream-pacxx
+
 tbb: p2p-innerloop-vector-tbb p2p-vector-tbb stencil-vector-tbb transpose-vector-tbb nstream-vector-tbb
 
 stl: stencil-vector-stl transpose-vector-stl nstream-vector-stl
@@ -127,6 +130,9 @@ nstream-opencl: nstream-opencl.cc nstream.cl prk_util.h prk_opencl.h
 
 %-sycl: %-sycl.cc prk_util.h
 	$(SYCLCXX) $(CPPFLAGS) $(SYCLFLAGS) $< -o $@
+
+%-pacxx: %-pacxx.cc prk_util.h
+	$(PACXX) $(CPPFLAGS) $< $(PACXXFLAGS) -o $@
 
 %-target: %-target.cc prk_util.h
 	$(CXX) $(CXXFLAGS) $< $(OMPFLAGS) $(TARGETFLAGS) -o $@
@@ -193,6 +199,7 @@ clean:
 	-rm -f *-taskloop
 	-rm -f *-opencl
 	-rm -f *-sycl
+	-rm -f *-pacxx
 	-rm -f *-tbb
 	-rm -f *-stl
 	-rm -f *-pstl
