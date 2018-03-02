@@ -21,13 +21,13 @@ __kernel void p2p32(const int n, __global float * grid)
                       + grid[  x  *n+(y-1)]
                       - grid[(x-1)*n+(y-1)];
       }
-      barrier(CLK_GLOBAL_MEM_FENCE);
+      barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
     }
 #if 1
     if (j==0) {
       grid[0] = -grid[n*n-1];
     }
-    barrier(CLK_GLOBAL_MEM_FENCE);
+    barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
 #endif
 }
 
@@ -44,12 +44,12 @@ __kernel void p2p64(const int n, __global double * grid)
                       + grid[  x  *n+(y-1)]
                       - grid[(x-1)*n+(y-1)];
       }
-      barrier(CLK_GLOBAL_MEM_FENCE);
+      barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
     }
 #if 1
     if (j==0) {
       grid[0] = -grid[n*n-1];
     }
-    barrier(CLK_GLOBAL_MEM_FENCE);
+    barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
 #endif
 }
