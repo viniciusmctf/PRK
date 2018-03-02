@@ -110,7 +110,7 @@ void run(cl::Context context, int iterations, int n)
     queue.finish();
     h_grid[0] = -h_grid[n*n-1];
 #else
-    kernel(cl::EnqueueArgs(queue, cl::NDRange(n,n)), n, d_grid);
+    kernel(cl::EnqueueArgs(queue, cl::NDRange(2*n)), n, d_grid);
 #endif
   }
   // from device to host
@@ -132,6 +132,7 @@ void run(cl::Context context, int iterations, int n)
   if ( (std::fabs(h_grid[(n-1)*n+(n-1)] - corner_val)/corner_val) > epsilon) {
     std::cout << "ERROR: checksum " << h_grid[(n-1)*n+(n-1)]
               << " does not match verification value " << corner_val << std::endl;
+    //return;
   }
 
 #ifdef VERBOSE

@@ -41,8 +41,8 @@ OPENCLFLAG=-framework OpenCL
 # triSYCL
 # https://github.com/triSYCL/triSYCL is header-only so just clone in Cxx11 directory...
 SYCLDIR=./triSYCL
-SYCLCXX=${CXX}
-SYCLFLAG=-DUSE_SYCL -I$(SYCLDIR)/include
+SYCLCXX=${CXX} -fopenmp
+SYCLFLAG=-DUSE_SYCL -I${SYCLDIR}/include
 #
 # OCCA
 #

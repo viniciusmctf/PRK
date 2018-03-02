@@ -10,9 +10,7 @@
 
 __kernel void p2p32(const int n, __global float * grid)
 {
-    const int a = get_global_id(0);
-    const int b = get_global_id(1);
-    const int j = a*b;
+    const int j = get_global_id(0);
     for (int i=2; i<=2*n-2; i++) {
       // for (int j=std::max(2,i-n+2); j<=std::min(i,n); j++) {
       if ( ( j >= MAX(2,i-n+2) ) && ( j <= MIN(i,n) ) )
@@ -35,9 +33,7 @@ __kernel void p2p32(const int n, __global float * grid)
 
 __kernel void p2p64(const int n, __global double * grid)
 {
-    const int a = get_global_id(0);
-    const int b = get_global_id(1);
-    const int j = a*b;
+    const int j = get_global_id(0);
     for (int i=2; i<=2*n-2; i++) {
       // for (int j=std::max(2,i-n+2); j<=std::min(i,n); j++) {
       if ( ( j >= MAX(2,i-n+2) ) && ( j <= MIN(i,n) ) )
