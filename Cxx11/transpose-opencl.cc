@@ -55,52 +55,21 @@
 #include "prk_util.h"
 #include "prk_opencl.h"
 
-int main(int argc, char * argv[])
+template <typename T>
+void run(cl::Context context, int iterations, int order)
 {
-  //////////////////////////////////////////////////////////////////////
-  /// Read and test input parameters
-  //////////////////////////////////////////////////////////////////////
+  auto precision = (sizeof(T)==8) ? 64 : 32;
 
-  std::cout << "Parallel Research Kernels version " << PRKVERSION << std::endl;
-  std::cout << "C++11/OpenCL Matrix transpose: B = A^T" << std::endl;
+  cl::Program program(context, prk::opencl::loadProgram("transpose.cl"), true);
 
-  int iterations;
-  int order;
-  try {
-      if (argc < 3) {
-        throw "Usage: <# iterations> <matrix order>";
-      }
+  auto function = (precision==64) ? "transpose64" : "transpose32";
 
-      // number of times to do the transpose
-      iterations  = std::atoi(argv[1]);
-      if (iterations < 1) {
-        throw "ERROR: iterations must be >= 1";
-      }
-
-      // order of a the matrix
-      order = std::atol(argv[2]);
-      if (order <= 0) {
-        throw "ERROR: Matrix Order must be greater than 0";
-      }
+  cl_int err;
+  auto kernel = cl::make_kernel<int, cl::Buffer, cl::Buffer>(program, function, &err);
+  if(err != CL_SUCCESS){
+    std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
+    std::cout << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) << std::endl;
   }
-  catch (const char * e) {
-    std::cout << e << std::endl;
-    return 1;
-  }
-
-  std::cout << "Matrix order          = " << order << std::endl;
-  std::cout << "Number of iterations  = " << iterations << std::endl;
-
-  //////////////////////////////////////////////////////////////////////
-  /// Setup OpenCL environment
-  //////////////////////////////////////////////////////////////////////
-
-  // FIXME: allow other options here
-  cl::Context context(CL_DEVICE_TYPE_DEFAULT);
-
-  cl::Program program(context, prk::loadProgram("transpose.cl"), true);
-
-  auto kernel = cl::make_kernel<int, cl::Buffer, cl::Buffer>(program, "transpose");
 
   cl::CommandQueue queue(context);
 
@@ -108,13 +77,12 @@ int main(int argc, char * argv[])
   /// Allocate space for the input and transpose matrix
   //////////////////////////////////////////////////////////////////////
 
-  std::vector<float> h_a;
-  std::vector<float> h_b;
-  size_t nelems = (size_t)order * (size_t)order;
-  h_a.resize(nelems);
-  h_b.resize(nelems,0.0);
-  // fill A with the sequence 0 to order^2-1 as floats
-  std::iota(h_a.begin(), h_a.end(), 0.0);
+  const size_t nelems = (size_t)order * (size_t)order;
+  std::vector<T> h_a(nelems);
+  std::vector<T> h_b(nelems, T(0));
+
+  // fill A with the sequence 0 to order^2-1 as doubles
+  std::iota(h_a.begin(), h_a.end(), (T)0);
 
   // copy input from host to device
   cl::Buffer d_a = cl::Buffer(context, begin(h_a), end(h_a), true);
@@ -136,52 +104,127 @@ int main(int argc, char * argv[])
   // copy output back to host
   cl::copy(queue, d_b, begin(h_b), end(h_b));
 
-#ifdef VERBOSE
-  // copy input back to host - debug only
-  cl::copy(queue, d_a, begin(h_a), end(h_a));
-#endif
-
+  // TODO: replace with std::generate, std::accumulate, or similar
+  const double addit = (iterations+1.0) * (0.5*iterations);
+  double abserr = 0.0;
+  for (auto j=0; j<order; j++) {
+    for (auto i=0; i<order; i++) {
+      const int ij = i*order+j;
+      const int ji = j*order+i;
+      const double reference = static_cast<double>(ij)*(iterations+1)+addit;
+      abserr += std::fabs(static_cast<double>(h_b[ji]) - reference);
+    }
+  }
+  //
   //////////////////////////////////////////////////////////////////////
   /// Analyze and output results
   //////////////////////////////////////////////////////////////////////
-
-  // TODO: replace with std::generate, std::accumulate, or similar
-  const auto addit = (iterations+1.) * (iterations/2.);
-  auto abserr = 0.0;
-  for (auto j=0; j<order; j++) {
-    for (auto i=0; i<order; i++) {
-      const size_t ij = (size_t)i*(size_t)order+(size_t)j;
-      const size_t ji = (size_t)j*(size_t)order+(size_t)i;
-      const float reference = static_cast<float>(ij)*(1.+iterations)+addit;
-      abserr += std::fabs(h_b[ji] - reference);
-    }
-  }
 
 #ifdef VERBOSE
   std::cout << "Sum of absolute differences: " << abserr << std::endl;
 #endif
 
-  const auto epsilon = 1.0e-8;
+  const double epsilon = (precision==64) ? 1.0e-8 : 1.0e-4;
   if (abserr < epsilon) {
     std::cout << "Solution validates" << std::endl;
     auto avgtime = trans_time/iterations;
-    auto bytes = (size_t)order * (size_t)order * sizeof(float);
+    auto bytes = (size_t)order * (size_t)order * sizeof(double);
     std::cout << "Rate (MB/s): " << 1.0e-6 * (2L*bytes)/avgtime
               << " Avg time (s): " << avgtime << std::endl;
   } else {
-#ifdef VERBOSE
-    for (auto i=0; i<order; i++) {
-      for (auto j=0; j<order; j++) {
-        std::cout << "(" << i << "," << j << ") = " << h_a[i*order+j] << ", " << h_b[i*order+j] << "\n";
-      }
-    }
-#endif
     std::cout << "ERROR: Aggregate squared error " << abserr
               << " exceeds threshold " << epsilon << std::endl;
+  }
+}
+
+int main(int argc, char* argv[])
+{
+  std::cout << "Parallel Research Kernels version " << PRKVERSION << std::endl;
+  std::cout << "C++11/OpenCL Matrix transpose: B = A^T" << std::endl;
+
+  prk::opencl::listPlatforms();
+
+  //////////////////////////////////////////////////////////////////////
+  /// Read and test input parameters
+  //////////////////////////////////////////////////////////////////////
+
+  int iterations;
+  int order;
+  try {
+      if (argc < 3) {
+        throw "Usage: <# iterations> <matrix order>";
+      }
+
+      // number of times to do the transpose
+      iterations  = std::atoi(argv[1]);
+      if (iterations < 1) {
+        throw "ERROR: iterations must be >= 1";
+      }
+
+      // order of a the matrix
+      order = std::atol(argv[2]);
+      if (order <= 0) {
+        throw "ERROR: Matrix Order must be greater than 0";
+      } else if (order > std::floor(std::sqrt(INT_MAX))) {
+        throw "ERROR: matrix dimension too large - overflow risk";
+      }
+  }
+  catch (const char * e) {
+    std::cout << e << std::endl;
     return 1;
+  }
+
+  std::cout << "Number of iterations  = " << iterations << std::endl;
+  std::cout << "Matrix order          = " << order << std::endl;
+
+  //////////////////////////////////////////////////////////////////////
+  /// Setup OpenCL environment
+  //////////////////////////////////////////////////////////////////////
+
+  cl_int err = CL_SUCCESS;
+
+  cl::Context cpu(CL_DEVICE_TYPE_CPU, NULL, NULL, NULL, &err);
+  if ( err == CL_SUCCESS && prk::opencl::available(cpu) )
+  {
+    const int precision = prk::opencl::precision(cpu);
+
+    std::cout << "CPU Precision         = " << precision << "-bit" << std::endl;
+
+    if (precision==64) {
+        run<double>(cpu, iterations, order);
+    } else {
+        run<float>(cpu, iterations, order);
+    }
+  }
+
+  cl::Context gpu(CL_DEVICE_TYPE_GPU, NULL, NULL, NULL, &err);
+  if ( err == CL_SUCCESS && prk::opencl::available(gpu) )
+  {
+    const int precision = prk::opencl::precision(gpu);
+
+    std::cout << "GPU Precision         = " << precision << "-bit" << std::endl;
+
+    if (precision==64) {
+        run<double>(gpu, iterations, order);
+    } else {
+        run<float>(gpu, iterations, order);
+    }
+  }
+
+  cl::Context acc(CL_DEVICE_TYPE_ACCELERATOR, NULL, NULL, NULL, &err);
+  if ( err == CL_SUCCESS && prk::opencl::available(acc) )
+  {
+
+    const int precision = prk::opencl::precision(acc);
+
+    std::cout << "ACC Precision         = " << precision << "-bit" << std::endl;
+
+    if (precision==64) {
+        run<double>(acc, iterations, order);
+    } else {
+        run<float>(acc, iterations, order);
+    }
   }
 
   return 0;
 }
-
-

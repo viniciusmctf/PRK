@@ -46,6 +46,7 @@
 !
 ! HISTORY: Written by  Rob Van der Wijngaart, February 2009.
 !          Converted to Fortran by Jeff Hammond, February 2015
+!
 ! *******************************************************************
 
 function prk_get_wtime() result(t)
@@ -68,12 +69,14 @@ program main
   ! problem definition
   integer(kind=INT32) ::  iterations                ! number of times to do the transpose
   integer(kind=INT32) ::  order                     ! order of a the matrix
-  !dec$ attributes align:64 :: A, B
   real(kind=REAL64), allocatable ::  A(:,:)         ! buffer to hold original matrix
   real(kind=REAL64), allocatable ::  B(:,:)         ! buffer to hold transposed matrix
   integer(kind=INT64) ::  bytes                     ! combined size of matrices
   ! runtime variables
-  integer(kind=INT32) :: i, k
+#if defined(PGI)
+  integer(kind=INT32) :: i
+#endif
+  integer(kind=INT32) :: k
   integer(kind=INT64) :: j, o2                      ! for loop over order**2
   real(kind=REAL64) ::  abserr                      ! squared error
   real(kind=REAL64) ::  t0, t1, trans_time, avgtime ! timing parameters
@@ -83,12 +86,12 @@ program main
   ! read and test input parameters
   ! ********************************************************************
 
-  write(*,'(a40)') 'Parallel Research Kernels'
+  write(*,'(a25)') 'Parallel Research Kernels'
   write(*,'(a40)') 'Fortran Pretty Matrix transpose: B = A^T'
 
   if (command_argument_count().lt.2) then
-    write(*,'(a,i1)') 'argument count = ', command_argument_count()
-    write(*,'(a)')    'Usage: ./transpose <# iterations> <matrix order>'
+    write(*,'(a17,i1)') 'argument count = ', command_argument_count()
+    write(*,'(a62)')    'Usage: ./transpose <# iterations> <matrix order> [<tile_size>]'
     stop 1
   endif
 
@@ -108,8 +111,8 @@ program main
     stop 1
   endif
 
-  write(*,'(a,i8)') 'Matrix order         = ', order
   write(*,'(a,i8)') 'Number of iterations = ', iterations
+  write(*,'(a,i8)') 'Matrix order         = ', order
 
   ! ********************************************************************
   ! ** Allocate space for the input and transpose matrix
@@ -152,14 +155,14 @@ program main
   A = ( transpose(reshape((/ (j, j = 0,o2) /),(/order, order/))) &
         * real(iterations+1,REAL64) ) &
       + real((iterations*(iterations+1))/2,REAL64)
-#if 0
+#if 0 && defined(PGI)
   ! PGI generates a segfault here...
   abserr = 0.0d0
   forall (j=1:order,i=1:order)
       abserr = abserr + (B(i,j) - A(i,j))**2
   endforall
   abserr = sqrt(abserr)
-#elif defined(__PGI)
+#elif defined(PGI)
   abserr = 0.0d0
   do j=1,order
     do i=1,order
