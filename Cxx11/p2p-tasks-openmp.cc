@@ -81,6 +81,12 @@ int main(int argc, char* argv[])
   std::cout << "C++11/Serial pipeline execution on 2D grid" << std::endl;
 #endif
 
+#ifdef _OPENMP
+  int nt = omp_get_max_threads();
+#else
+  int nt = 1;
+#endif
+
   //////////////////////////////////////////////////////////////////////
   // Process and test input parameters
   //////////////////////////////////////////////////////////////////////
@@ -109,12 +115,13 @@ int main(int argc, char* argv[])
       }
 
       // grid chunk dimensions
-      mc = (argc > 4) ? std::atoi(argv[4]) : m;
-      nc = (argc > 5) ? std::atoi(argv[5]) : n;
+      mc = (argc > 4) ? std::atoi(argv[4]) : m/std::sqrt(1.*nt);
+      nc = (argc > 5) ? std::atoi(argv[5]) : n/std::sqrt(1.*nt);
       if (mc < 1 || mc > m || nc < 1 || nc > n) {
-        std::cout << "WARNING: grid chunk dimensions invalid: " << mc <<  nc << " (ignoring)" << std::endl;
+        std::cout << "WARNING: grid chunk dimensions invalid: " << mc << "," <<  nc << " (ignoring)" << std::endl;
         mc = m;
         nc = n;
+        return -1;
       }
   }
   catch (const char * e) {

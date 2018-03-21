@@ -76,6 +76,9 @@ int main(int argc, char* argv[])
 
   int iterations;
   int n;
+#ifdef CUTOFF
+  int cut;
+#endif
   try {
       if (argc < 3) {
         throw " <# iterations> <array dimension>";
@@ -94,6 +97,15 @@ int main(int argc, char* argv[])
       } else if ( static_cast<size_t>(n)*static_cast<size_t>(n) > INT_MAX) {
         throw "ERROR: grid dimension too large - overflow risk";
       }
+
+#ifdef CUTOFF
+      // cutoff for running the loop in parallel
+      // (it is pointless to use parallel for if trip count is small)
+      cut = (argc>3) ? std::atoi(argv[3]) : 0;
+      if (cut < 0) {
+        throw "ERROR: cutoff for parallelism must be non-negative";
+      }
+#endif
   }
   catch (const char * e) {
     std::cout << e << std::endl;
@@ -101,10 +113,15 @@ int main(int argc, char* argv[])
   }
 
 #ifdef _OPENMP
-  std::cout << "Number of threads (max)   = " << omp_get_max_threads() << std::endl;
+  std::cout << "Number of threads (max)  = " << omp_get_max_threads() << std::endl;
 #endif
-  std::cout << "Number of iterations = " << iterations << std::endl;
-  std::cout << "Grid sizes           = " << n << ", " << n << std::endl;
+  std::cout << "Number of iterations     = " << iterations << std::endl;
+  std::cout << "Grid sizes               = " << n << ", " << n << std::endl;
+#ifdef _OPENMP
+#ifdef CUTOFF
+  std::cout << "Threading cutoff         = " << cut << std::endl;
+#endif
+#endif
 
   //////////////////////////////////////////////////////////////////////
   // Allocate space and perform the computation
@@ -145,12 +162,35 @@ int main(int argc, char* argv[])
       }
 
       for (auto i=2; i<=2*n-2; i++) {
+#ifdef CUTOFF
+        auto start = std::max(2,i-n+2);
+        auto end   = std::min(i,n);
+        if ((cut!=0) && (end-start>cut)) {
+          OMP_FOR_SIMD
+          for (auto j=start; j<=end; j++) {
+            const auto x = i-j+2-1;
+            const auto y = j-1;
+            grid[x*n+y] = grid[(x-1)*n+y] + grid[x*n+(y-1)] - grid[(x-1)*n+(y-1)];
+          }
+        } else {
+          OMP_MASTER
+          for (auto j=start; j<=end; j++) {
+            const auto x = i-j+2-1;
+            const auto y = j-1;
+            grid[x*n+y] = grid[(x-1)*n+y] + grid[x*n+(y-1)] - grid[(x-1)*n+(y-1)];
+          }
+          OMP_BARRIER
+        }
+#else
+        auto start = std::max(2,i-n+2);
+        auto end   = std::min(i,n);
         OMP_FOR_SIMD
-        for (auto j=std::max(2,i-n+2); j<=std::min(i,n); j++) {
+        for (auto j=start; j<=end; j++) {
           const auto x = i-j+2-1;
           const auto y = j-1;
           grid[x*n+y] = grid[(x-1)*n+y] + grid[x*n+(y-1)] - grid[(x-1)*n+(y-1)];
         }
+#endif
       }
       OMP_MASTER
       grid[0*n+0] = -grid[(n-1)*n+(n-1)];
