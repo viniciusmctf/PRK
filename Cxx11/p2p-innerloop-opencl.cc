@@ -72,7 +72,7 @@ void run(cl::Context context, int iterations, int n, bool consolidated)
   std::string function = (precision==64) ? "p2p64" : "p2p32";
 
   cl_int err;
-  auto kernel = cl::make_kernel<int, cl::Buffer>(program, function, &err);
+  auto kernel = cl::make_kernel<int, cl::Buffer, cl::Buffer>(program, function, &err);
   if(err != CL_SUCCESS){
     std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
     std::cout << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) << std::endl;
@@ -113,6 +113,10 @@ void run(cl::Context context, int iterations, int n, bool consolidated)
   // copy input from host to device
   cl::Buffer d_grid = cl::Buffer(context, begin(h_grid), end(h_grid), true);
 
+  // using STL vector for a scalar int is stupid but I am lazy right now
+  std::vector<T> h_counter(1, 0);
+  cl::Buffer d_counter = cl::Buffer(context, begin(h_counter), end(h_counter), true);
+
   double pipeline_time(0);
 
   size_t range = 2*n;
@@ -124,7 +128,7 @@ void run(cl::Context context, int iterations, int n, bool consolidated)
     if (iter==1) pipeline_time = prk::wtime();
 
     if (consolidated) {
-        kernel(cl::EnqueueArgs(queue, cl::NDRange(range)), n, d_grid);
+        kernel(cl::EnqueueArgs(queue, cl::NDRange(range)), n, d_grid, d_counter);
     } else {
         for (int i=2; i<=2*n-2; i++) {
           kerneli(cl::EnqueueArgs(queue, cl::NDRange(range)), i, n, d_grid);

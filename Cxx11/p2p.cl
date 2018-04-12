@@ -4,11 +4,7 @@
 
 __kernel void info(const int n, __global void * grid)
 {
-    const int gi0 = get_global_id(0);
-    const int gi1 = get_global_id(1);
-    const int li0 = get_local_id(0);
-    const int li1 = get_local_id(1);
-    if (gi0==0 && li0==0) {
+    if (0 == get_global_id(0)) {
         unsigned wd  = get_work_dim();
         printf("get_work_dim()     = %u\n", wd);
         for (unsigned d=0; d<wd; d++) {
@@ -24,10 +20,18 @@ __kernel void info(const int n, __global void * grid)
 
 // CONSOLIDATED (the whole sweep at once)
 
-__kernel void p2p32(const int n, __global float * grid)
+__kernel void p2p32(const int n, __global float * grid, __global int * counter)
 {
     const int j = get_global_id(0);
     for (int i=2; i<=2*n-2; i++) {
+      barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+      if (j==0) {
+          //atomic_store(counter, i);
+          atomic_xchg(counter, i);
+      } else {
+          //while (atomic_load(counter) < i);
+          while (atomic_add(counter,0) < i);
+      }
       // for (int j=std::max(2,i-n+2); j<=std::min(i,n); j++) {
       if ( ( j >= max(2,i-n+2) ) && ( j <= min(i,n) ) )
       {
@@ -45,10 +49,20 @@ __kernel void p2p32(const int n, __global float * grid)
     barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
 }
 
-__kernel void p2p64(const int n, __global double * grid)
+// INTERMEDIATE/ITERATION (a single anti-diagonal)
+
+__kernel void p2p64(const int n, __global double * grid, __global int * counter)
 {
     const int j = get_global_id(0);
     for (int i=2; i<=2*n-2; i++) {
+      barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+      if (j==0) {
+          //atomic_store(counter, i);
+          atomic_xchg(counter, i);
+      } else {
+          //while (atomic_load(counter) < i);
+          while (atomic_add(counter,0) < i);
+      }
       // for (int j=std::max(2,i-n+2); j<=std::min(i,n); j++) {
       if ( ( j >= max(2,i-n+2) ) && ( j <= min(i,n) ) )
       {
@@ -60,12 +74,10 @@ __kernel void p2p64(const int n, __global double * grid)
       }
       barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
     }
-#if 1
     if (j==0) {
       grid[0] = -grid[n*n-1];
     }
     barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
-#endif
 }
 
 // INTERMEDIATE/ITERATION (a single anti-diagonal)
