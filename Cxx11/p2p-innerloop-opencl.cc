@@ -63,16 +63,34 @@
 #include "prk_opencl.h"
 
 template <typename T>
-void run(cl::Context context, int iterations, int n)
+void run(cl::Context context, int iterations, int n, bool consolidated)
 {
-  auto precision = (sizeof(T)==8) ? 64 : 32;
+  const int precision = (sizeof(T)==8) ? 64 : 32;
 
   cl::Program program(context, prk::opencl::loadProgram("p2p.cl"), true);
 
-  auto function = (precision==64) ? "p2p64" : "p2p32";
+  std::string function = (precision==64) ? "p2p64" : "p2p32";
 
   cl_int err;
   auto kernel = cl::make_kernel<int, cl::Buffer>(program, function, &err);
+  if(err != CL_SUCCESS){
+    std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
+    std::cout << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) << std::endl;
+  }
+
+  auto kerneli = cl::make_kernel<int, int, cl::Buffer>(program, function+"i", &err);
+  if(err != CL_SUCCESS){
+    std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
+    std::cout << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) << std::endl;
+  }
+
+  auto kernelf = cl::make_kernel<int, cl::Buffer>(program, function+"f", &err);
+  if(err != CL_SUCCESS){
+    std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
+    std::cout << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) << std::endl;
+  }
+
+  auto info = cl::make_kernel<int, cl::Buffer>(program, "info", &err);
   if(err != CL_SUCCESS){
     std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
     std::cout << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) << std::endl;
@@ -85,40 +103,46 @@ void run(cl::Context context, int iterations, int n)
   //////////////////////////////////////////////////////////////////////
 
   std::vector<T> h_grid(n*n, T(0));
-  for (auto j=0; j<n; j++) {
+  for (int j=0; j<n; j++) {
     h_grid[0*n+j] = static_cast<double>(j);
   }
-  for (auto i=0; i<n; i++) {
+  for (int i=0; i<n; i++) {
     h_grid[i*n+0] = static_cast<double>(i);
   }
 
   // copy input from host to device
   cl::Buffer d_grid = cl::Buffer(context, begin(h_grid), end(h_grid), true);
 
-  auto pipeline_time = 0.0;
+  double pipeline_time(0);
 
-  for (auto iter = 0; iter<=iterations; iter++) {
+  size_t range = 2*n;
+  info(cl::EnqueueArgs(queue, cl::NDRange(range)), n, d_grid);
+  queue.finish();
+
+  for (int iter = 0; iter<=iterations; iter++) {
 
     if (iter==1) pipeline_time = prk::wtime();
 
-#if 0
-    // from host to device
-    cl::copy(queue,begin(h_grid), end(h_grid), d_grid);
-    kernel(cl::EnqueueArgs(queue, cl::NDRange(n,n)), n, d_grid);
-    // from device to host
-    cl::copy(queue,d_grid, begin(h_grid), end(h_grid));
-    queue.finish();
-    h_grid[0] = -h_grid[n*n-1];
-#else
-    kernel(cl::EnqueueArgs(queue, cl::NDRange(2*n)), n, d_grid);
-#endif
+    if (consolidated) {
+        kernel(cl::EnqueueArgs(queue, cl::NDRange(range)), n, d_grid);
+        queue.finish();
+    } else {
+        for (int i=2; i<=2*n-2; i++) {
+          kerneli(cl::EnqueueArgs(queue, cl::NDRange(range)), i, n, d_grid);
+          queue.finish();
+        }
+        kernelf(cl::EnqueueArgs(queue, cl::NDRange(range)), n, d_grid);
+        queue.finish();
+    }
   }
+
   // from device to host
   cl::copy(queue,d_grid, begin(h_grid), end(h_grid));
   queue.finish();
+
   pipeline_time = prk::wtime() - pipeline_time;
 
-  cl::copy(d_grid, begin(h_grid), end(h_grid));
+  //cl::copy(d_grid, begin(h_grid), end(h_grid));
 
   //////////////////////////////////////////////////////////////////////
   // Analyze and output results.
@@ -159,9 +183,10 @@ int main(int argc, char* argv[])
 
   int iterations;
   int n;
+  bool consolidated;
   try {
       if (argc < 3) {
-        throw " <# iterations> <array dimension>";
+        throw " <# iterations> <array dimension> [<consolidated>]";
       }
 
       // number of times to run the pipeline algorithm
@@ -177,6 +202,13 @@ int main(int argc, char* argv[])
       } else if ( static_cast<size_t>(n)*static_cast<size_t>(n) > INT_MAX) {
         throw "ERROR: grid dimension too large - overflow risk";
       }
+
+      // consolidate antidiagonal sweeps into one kernel
+      if (argc > 3) {
+          consolidated = std::atoi(argv[3]);
+      } else {
+          consolidated = true;
+      }
   }
   catch (const char * e) {
     std::cout << e << std::endl;
@@ -185,6 +217,7 @@ int main(int argc, char* argv[])
 
   std::cout << "Number of iterations = " << iterations << std::endl;
   std::cout << "Grid sizes           = " << n << ", " << n << std::endl;
+  std::cout << "Consolidated kernel  = " << consolidated << std::endl;
 
   //////////////////////////////////////////////////////////////////////
   /// Setup OpenCL environment
@@ -197,12 +230,12 @@ int main(int argc, char* argv[])
   {
     const int precision = prk::opencl::precision(cpu);
 
-    std::cout << "CPU Precision         = " << precision << "-bit" << std::endl;
+    std::cout << "CPU Precision        = " << precision << "-bit" << std::endl;
 
-    if (precision==64) {
-        run<double>(cpu, iterations, n);
+    if (0 && precision==64) {
+        run<double>(cpu, iterations, n, consolidated);
     } else {
-        run<float>(cpu, iterations, n);
+        run<float>(cpu, iterations, n, consolidated);
     }
   }
 
@@ -211,12 +244,12 @@ int main(int argc, char* argv[])
   {
     const int precision = prk::opencl::precision(gpu);
 
-    std::cout << "GPU Precision         = " << precision << "-bit" << std::endl;
+    std::cout << "GPU Precision        = " << precision << "-bit" << std::endl;
 
-    if (precision==64) {
-        run<double>(gpu, iterations, n);
+    if (0 && precision==64) {
+        run<double>(gpu, iterations, n, consolidated);
     } else {
-        run<float>(gpu, iterations, n);
+        run<float>(gpu, iterations, n, consolidated);
     }
   }
 
@@ -226,12 +259,12 @@ int main(int argc, char* argv[])
 
     const int precision = prk::opencl::precision(acc);
 
-    std::cout << "ACC Precision         = " << precision << "-bit" << std::endl;
+    std::cout << "ACC Precision        = " << precision << "-bit" << std::endl;
 
     if (precision==64) {
-        run<double>(acc, iterations, n);
+        run<double>(acc, iterations, n, consolidated);
     } else {
-        run<float>(acc, iterations, n);
+        run<float>(acc, iterations, n, consolidated);
     }
   }
 
