@@ -114,7 +114,7 @@ void run(cl::Context context, int iterations, int n, bool consolidated)
   cl::Buffer d_grid = cl::Buffer(context, begin(h_grid), end(h_grid), true);
 
   // using STL vector for a scalar int is stupid but I am lazy right now
-  std::vector<T> h_counter(1, 0);
+  std::vector<T> h_counter(2, 0);
   cl::Buffer d_counter = cl::Buffer(context, begin(h_counter), end(h_counter), true);
 
   double pipeline_time(0);

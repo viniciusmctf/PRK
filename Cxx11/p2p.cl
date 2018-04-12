@@ -26,11 +26,12 @@ __kernel void p2p32(const int n, __global float * grid, __global int * counter)
     for (int i=2; i<=2*n-2; i++) {
       barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
       if (j==0) {
-          //atomic_store(counter, i);
-          atomic_xchg(counter, i);
+          //atomic_store(&counter[0], i);
+          atomic_xchg(&counter[0], i); // start fork
+          atomic_xchg(&counter[1], 0); // setup for join
       } else {
-          //while (atomic_load(counter) < i);
-          while (atomic_add(counter,0) < i);
+          //while (atomic_load(&counter[0]) < i);
+          while (atomic_add(&counter[0],0) < i); // finish fork
       }
       // for (int j=std::max(2,i-n+2); j<=std::min(i,n); j++) {
       if ( ( j >= max(2,i-n+2) ) && ( j <= min(i,n) ) )
@@ -42,6 +43,15 @@ __kernel void p2p32(const int n, __global float * grid, __global int * counter)
                       - grid[(x-1)*n+(y-1)];
       }
       barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+      // this deadlocks
+      if (j==0) {
+          int others = get_global_size(0) - 1;
+          while (atomic_add(&counter[1],0) < others) {
+              printf("waiting %d of %d\n", atomic_add(&counter[1],0), others);
+          }
+      } else {
+          atomic_add(&counter[1], 1);
+      }
     }
     if (j==0) {
       grid[0] = -grid[n*n-1];
