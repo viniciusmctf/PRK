@@ -125,14 +125,11 @@ void run(cl::Context context, int iterations, int n, bool consolidated)
 
     if (consolidated) {
         kernel(cl::EnqueueArgs(queue, cl::NDRange(range)), n, d_grid);
-        queue.finish();
     } else {
         for (int i=2; i<=2*n-2; i++) {
           kerneli(cl::EnqueueArgs(queue, cl::NDRange(range)), i, n, d_grid);
-          queue.finish();
         }
-        kernelf(cl::EnqueueArgs(queue, cl::NDRange(range)), n, d_grid);
-        queue.finish();
+        kernelf(cl::EnqueueArgs(queue, cl::NDRange(1)), n, d_grid);
     }
   }
 

@@ -102,16 +102,18 @@ __kernel void p2p64i(const int i, const int n, __global double * grid)
 
 __kernel void p2p32f(const int n, __global float * grid)
 {
-    const int j = get_global_id(0);
-    if (j==0) {
+    // unnecessary logic if called with NDRange(1) or EnqueueTask
+    //const int j = get_global_id(0);
+    //if (j==0) {
       grid[0] = -grid[n*n-1];
-    }
+    //}
 }
 
 __kernel void p2p64f(const int n, __global double * grid)
 {
-    const int j = get_global_id(0);
-    if (j==0) {
+    // unnecessary logic if called with NDRange(1) or EnqueueTask
+    //const int j = get_global_id(0);
+    //if (j==0) {
       grid[0] = -grid[n*n-1];
-    }
+    //}
 }
