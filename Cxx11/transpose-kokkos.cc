@@ -54,12 +54,13 @@
 int main(int argc, char * argv[])
 {
   std::cout << "Parallel Research Kernels version " << PRKVERSION << std::endl;
-  std::cout << "C++11 Matrix transpose: B = A^T" << std::endl;
+  std::cout << "C++11/Kokkos Matrix transpose: B = A^T" << std::endl;
 
   Kokkos::initialize(argc, argv);
 
-  typedef Kokkos::TeamPolicy<>               team_policy ;
-  typedef Kokkos::TeamPolicy<>::member_type  member_type ;
+  typedef Kokkos::TeamPolicy<>               team_policy;
+  typedef Kokkos::TeamPolicy<>::member_type  member_type;
+  typedef Kokkos::Schedule<Kokkos::Static>   Schedule;
 
   // row-major 2D array
   typedef Kokkos::View<double**, Kokkos::LayoutRight> matrix;
@@ -110,16 +111,16 @@ int main(int argc, char * argv[])
   matrix B("B", order, order);
 
 #if 0
-  Kokkos::parallel_for ( order, KOKKOS_LAMBDA(const int i) {
-    for (auto j=0; j<order; ++j){
+  Kokkos::parallel_for ( order, [=](int const i) {
+    for (int j=0; j<order; ++j){
         A(i,j) = static_cast<double>(i*order+j);
         B(i,j) = 0.0;
     }
   });
 #else
   Kokkos::parallel_for( team_policy(order, Kokkos::AUTO), [=](const member_type& teamMember) {
-    const int i = teamMember.league_rank();
-    Kokkos::parallel_for( Kokkos::TeamThreadRange(teamMember, order), [=](const int j) {
+    auto const i = teamMember.league_rank();
+    Kokkos::parallel_for( Kokkos::TeamThreadRange(teamMember, order), [=](int const j) {
       A(i,j) = static_cast<double>(i*order+j);
       B(i,j) = 0.0;
     });
@@ -133,16 +134,16 @@ int main(int argc, char * argv[])
     if (iter==1) trans_time = prk::wtime();
 
 #if 0
-    Kokkos::parallel_for ( order, KOKKOS_LAMBDA(const int i) {
-      for (auto j=0; j<order; ++j){
+    Kokkos::parallel_for ( order, [=](int const i) {
+      for (int j=0; j<order; ++j){
         B(i,j) += A(j,i);
         A(j,i) += 1.0;
       }
     });
 #else
     Kokkos::parallel_for( team_policy(order, Kokkos::AUTO), [=](const member_type& teamMember) {
-      const int i = teamMember.league_rank();
-      Kokkos::parallel_for( Kokkos::TeamThreadRange(teamMember, order), [=](const int j) {
+      int const i = teamMember.league_rank();
+      Kokkos::parallel_for( Kokkos::TeamThreadRange(teamMember, order), [=](int const j) {
         B(i,j) += A(j,i);
         A(j,i) += 1.0;
       });
@@ -158,12 +159,12 @@ int main(int argc, char * argv[])
 
   const double addit = (iterations+1.) * (0.5*iterations);
   double abserr(0);
-  Kokkos::parallel_reduce( team_policy(order, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type & teamMember, double & update) {
-    const int i = teamMember.league_rank();
+  Kokkos::parallel_reduce( team_policy(order, Kokkos::AUTO), KOKKOS_LAMBDA(member_type const & teamMember, double & update) {
+    int const i = teamMember.league_rank();
     double temp(0);
-    Kokkos::parallel_reduce( Kokkos::TeamThreadRange(teamMember, order), [=](const int j, double & inner) {
-      const size_t ij = i*order+j;
-      const double reference = static_cast<double>(ij)*(1.+iterations)+addit;
+    Kokkos::parallel_reduce( Kokkos::TeamThreadRange(teamMember, order), [=](int const j, double & inner) {
+      size_t const ij = i*order+j;
+      double const reference = static_cast<double>(ij)*(1.+iterations)+addit;
       inner += std::fabs(B(j,i) - reference);
     }, temp);
     Kokkos::single( Kokkos::PerTeam( teamMember ), [&] () {
@@ -180,7 +181,7 @@ int main(int argc, char * argv[])
     std::cout << "Solution validates" << std::endl;
     auto avgtime = trans_time/iterations;
     auto bytes = (size_t)order * (size_t)order * sizeof(double);
-    std::cout << "Rate (MB/s): " << 1.0e-6 * (2L*bytes)/avgtime
+    std::cout << "Rate (MB/s): " << 1.0e-6 * (2.*bytes)/avgtime
               << " Avg time (s): " << avgtime << std::endl;
   } else {
     std::cout << "ERROR: Aggregate squared error " << abserr
