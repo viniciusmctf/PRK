@@ -36,27 +36,27 @@ def codegen(src,pattern,stencil_size,radius,W,model):
     elif (model=='stl'):
         src.write('void '+pattern+str(radius)+'(const int n, const int t, std::vector<double> & in, std::vector<double> & out) {\n')
         src.write('    auto inside = boost::irange('+str(radius)+',n-'+str(radius)+');\n')
-        src.write('    std::for_each( std::begin(inside), std::end(inside), [=] (int i) {\n')
+        src.write('    std::for_each( std::begin(inside), std::end(inside), [&] (int i) {\n')
         #src.write('      PRAGMA_SIMD\n')
-        src.write('      std::for_each( std::begin(inside), std::end(inside), [=] (int j) {\n')
+        src.write('      std::for_each( std::begin(inside), std::end(inside), [&] (int j) {\n')
     elif (model=='pgnu'):
         src.write('void '+pattern+str(radius)+'(const int n, const int t, std::vector<double> & in, std::vector<double> & out) {\n')
         src.write('    auto inside = boost::irange('+str(radius)+',n-'+str(radius)+');\n')
-        src.write('    __gnu_parallel::for_each( std::begin(inside), std::end(inside), [=] (int i) {\n')
-        src.write('      std::for_each( std::begin(inside), std::end(inside), [=] (int j) {\n')
+        src.write('    __gnu_parallel::for_each( std::begin(inside), std::end(inside), [&] (int i) {\n')
+        src.write('      std::for_each( std::begin(inside), std::end(inside), [&] (int j) {\n')
     elif (model=='pstl'):
         src.write('void '+pattern+str(radius)+'(const int n, const int t, std::vector<double> & in, std::vector<double> & out) {\n')
         src.write('    auto inside = boost::irange('+str(radius)+',n-'+str(radius)+');\n')
-        src.write('    std::for_each( std::execution::par, std::begin(inside), std::end(inside), [=] (int i) {\n')
-        src.write('      std::for_each( std::execution::unseq, std::begin(inside), std::end(inside), [=] (int j) {\n')
+        src.write('    std::for_each( std::execution::par, std::begin(inside), std::end(inside), [&] (int i) {\n')
+        src.write('      std::for_each( std::execution::unseq, std::begin(inside), std::end(inside), [&] (int j) {\n')
     elif (model=='raja'):
         src.write('void '+pattern+str(radius)+'(const int n, const int t, std::vector<double> & in, std::vector<double> & out) {\n')
         #src.write('    RAJA::forallN<RAJA::NestedPolicy<RAJA::ExecList<thread_exec, RAJA::simd_exec>>>\n')
         #src.write('            ( RAJA::RangeSegment('+str(radius)+',n-'+str(radius)+'),'
         #                        'RAJA::RangeSegment('+str(radius)+',n-'+str(radius)+'),\n')
-        #src.write('              [=](RAJA::Index_type i, RAJA::Index_type j) {\n')
-        src.write('    RAJA::forall<thread_exec>(RAJA::Index_type('+str(radius)+'), RAJA::Index_type(n-'+str(radius)+'), [=](RAJA::Index_type i) {\n')
-        src.write('      RAJA::forall<RAJA::simd_exec>(RAJA::Index_type('+str(radius)+'), RAJA::Index_type(n-'+str(radius)+'), [=](RAJA::Index_type j) {\n')
+        #src.write('              [&](RAJA::Index_type i, RAJA::Index_type j) {\n')
+        src.write('    RAJA::forall<thread_exec>(RAJA::Index_type('+str(radius)+'), RAJA::Index_type(n-'+str(radius)+'), [&](RAJA::Index_type i) {\n')
+        src.write('      RAJA::forall<RAJA::simd_exec>(RAJA::Index_type('+str(radius)+'), RAJA::Index_type(n-'+str(radius)+'), [&](RAJA::Index_type j) {\n')
     elif (model=='tbb'):
         src.write('void '+pattern+str(radius)+'(const int n, const int t, std::vector<double> & in, std::vector<double> & out) {\n')
         src.write('  tbb::blocked_range2d<int> range('+str(radius)+', n-'+str(radius)+', t, '+str(radius)+', n-'+str(radius)+', t);\n')

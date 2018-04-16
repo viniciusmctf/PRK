@@ -117,9 +117,9 @@ int main(int argc, char * argv[])
     }
   });
 #else
-  Kokkos::parallel_for( team_policy(order, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type& teamMember) {
+  Kokkos::parallel_for( team_policy(order, Kokkos::AUTO), [=](const member_type& teamMember) {
     const int i = teamMember.league_rank();
-    Kokkos::parallel_for( Kokkos::TeamThreadRange(teamMember, order), [&](const int j) {
+    Kokkos::parallel_for( Kokkos::TeamThreadRange(teamMember, order), [=](const int j) {
       A(i,j) = static_cast<double>(i*order+j);
       B(i,j) = 0.0;
     });
@@ -140,9 +140,9 @@ int main(int argc, char * argv[])
       }
     });
 #else
-    Kokkos::parallel_for( team_policy(order, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type& teamMember) {
+    Kokkos::parallel_for( team_policy(order, Kokkos::AUTO), [=](const member_type& teamMember) {
       const int i = teamMember.league_rank();
-      Kokkos::parallel_for( Kokkos::TeamThreadRange(teamMember, order), [&](const int j) {
+      Kokkos::parallel_for( Kokkos::TeamThreadRange(teamMember, order), [=](const int j) {
         B(i,j) += A(j,i);
         A(j,i) += 1.0;
       });
@@ -161,7 +161,7 @@ int main(int argc, char * argv[])
   Kokkos::parallel_reduce( team_policy(order, Kokkos::AUTO), KOKKOS_LAMBDA(const member_type & teamMember, double & update) {
     const int i = teamMember.league_rank();
     double temp(0);
-    Kokkos::parallel_reduce( Kokkos::TeamThreadRange(teamMember, order), [&](const int j, double & inner) {
+    Kokkos::parallel_reduce( Kokkos::TeamThreadRange(teamMember, order), [=](const int j, double & inner) {
       const size_t ij = i*order+j;
       const double reference = static_cast<double>(ij)*(1.+iterations)+addit;
       inner += std::fabs(B(j,i) - reference);

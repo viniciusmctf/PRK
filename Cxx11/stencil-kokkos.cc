@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
   matrix out("out", n, n);
 
   try {
-    Kokkos::parallel_for ( n,[&] (int i) {
+    Kokkos::parallel_for ( n,[=] (int i) {
       for (auto j=0; j<n; ++j){
           in(i,j) = static_cast<double>(i+j);
           out(i,j) = 0.0;
@@ -199,7 +199,7 @@ int main(int argc, char* argv[])
     // Apply the stencil operator
     stencil(n, tile_size, in, out);
     // Add constant to solution to force refresh of neighbor data, if any
-    Kokkos::parallel_for ( n,[&] (int i) {
+    Kokkos::parallel_for ( n,[=] (int i) {
       for (auto j=0; j<n; ++j){
         in(i,j) += 1.0;
       }
