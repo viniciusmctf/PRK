@@ -1,5 +1,5 @@
 void star1(const int n, const int t, matrix & in, matrix & out) {
-    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(1,n-1), KOKKOS_LAMBDA(const int i) {
+    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(1,n-1), [=](const int i) {
       PRAGMA_SIMD
       for (auto j=1; j<n-1; ++j) {
             out(i,j) += +in(i+-1,j+0) * -0.5
@@ -11,7 +11,7 @@ void star1(const int n, const int t, matrix & in, matrix & out) {
 }
 
 void star2(const int n, const int t, matrix & in, matrix & out) {
-    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(2,n-2), KOKKOS_LAMBDA(const int i) {
+    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(2,n-2), [=](const int i) {
       PRAGMA_SIMD
       for (auto j=2; j<n-2; ++j) {
             out(i,j) += +in(i+-2,j+0) * -0.125
@@ -27,7 +27,7 @@ void star2(const int n, const int t, matrix & in, matrix & out) {
 }
 
 void star3(const int n, const int t, matrix & in, matrix & out) {
-    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(3,n-3), KOKKOS_LAMBDA(const int i) {
+    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(3,n-3), [=](const int i) {
       PRAGMA_SIMD
       for (auto j=3; j<n-3; ++j) {
             out(i,j) += +in(i+-3,j+0) * -0.05555555555555555
@@ -47,7 +47,7 @@ void star3(const int n, const int t, matrix & in, matrix & out) {
 }
 
 void star4(const int n, const int t, matrix & in, matrix & out) {
-    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(4,n-4), KOKKOS_LAMBDA(const int i) {
+    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(4,n-4), [=](const int i) {
       PRAGMA_SIMD
       for (auto j=4; j<n-4; ++j) {
             out(i,j) += +in(i+-4,j+0) * -0.03125
@@ -71,7 +71,7 @@ void star4(const int n, const int t, matrix & in, matrix & out) {
 }
 
 void star5(const int n, const int t, matrix & in, matrix & out) {
-    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(5,n-5), KOKKOS_LAMBDA(const int i) {
+    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(5,n-5), [=](const int i) {
       PRAGMA_SIMD
       for (auto j=5; j<n-5; ++j) {
             out(i,j) += +in(i+-5,j+0) * -0.02
@@ -99,7 +99,7 @@ void star5(const int n, const int t, matrix & in, matrix & out) {
 }
 
 void grid1(const int n, const int t, matrix & in, matrix & out) {
-    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(1,n-1), KOKKOS_LAMBDA(const int i) {
+    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(1,n-1), [=](const int i) {
       PRAGMA_SIMD
       for (auto j=1; j<n-1; ++j) {
             out(i,j) += +in(i+-1,j+-1) * -0.25
@@ -114,7 +114,7 @@ void grid1(const int n, const int t, matrix & in, matrix & out) {
 }
 
 void grid2(const int n, const int t, matrix & in, matrix & out) {
-    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(2,n-2), KOKKOS_LAMBDA(const int i) {
+    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(2,n-2), [=](const int i) {
       PRAGMA_SIMD
       for (auto j=2; j<n-2; ++j) {
             out(i,j) += +in(i+-2,j+-2) * -0.0625
@@ -143,7 +143,7 @@ void grid2(const int n, const int t, matrix & in, matrix & out) {
 }
 
 void grid3(const int n, const int t, matrix & in, matrix & out) {
-    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(3,n-3), KOKKOS_LAMBDA(const int i) {
+    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(3,n-3), [=](const int i) {
       PRAGMA_SIMD
       for (auto j=3; j<n-3; ++j) {
             out(i,j) += +in(i+-3,j+-3) * -0.027777777777777776
@@ -194,7 +194,7 @@ void grid3(const int n, const int t, matrix & in, matrix & out) {
 }
 
 void grid4(const int n, const int t, matrix & in, matrix & out) {
-    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(4,n-4), KOKKOS_LAMBDA(const int i) {
+    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(4,n-4), [=](const int i) {
       PRAGMA_SIMD
       for (auto j=4; j<n-4; ++j) {
             out(i,j) += +in(i+-4,j+-4) * -0.015625
@@ -275,7 +275,7 @@ void grid4(const int n, const int t, matrix & in, matrix & out) {
 }
 
 void grid5(const int n, const int t, matrix & in, matrix & out) {
-    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(5,n-5), KOKKOS_LAMBDA(const int i) {
+    Kokkos::parallel_for ( Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(5,n-5), [=](const int i) {
       PRAGMA_SIMD
       for (auto j=5; j<n-5; ++j) {
             out(i,j) += +in(i+-5,j+-5) * -0.01

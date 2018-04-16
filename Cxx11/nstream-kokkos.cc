@@ -79,6 +79,7 @@ int main(int argc, char * argv[])
   typedef Kokkos::PRK_KOKKOS_BACKEND Space;
   //typedef Kokkos::TeamPolicy<Space>               team_policy;
   //typedef Kokkos::TeamPolicy<Space>::member_type  member_type;
+  typedef Kokkos::Schedule<Kokkos::Static> Schedule;
 
   typedef Kokkos::View<double*, Space> vector;
 
@@ -131,7 +132,7 @@ int main(int argc, char * argv[])
   double scalar(3);
 
   {
-    Kokkos::parallel_for ( length, KOKKOS_LAMBDA(const int i) {
+    Kokkos::parallel_for(Kokkos::RangePolicy<Space,Schedule>(0,length), [=](const size_t i) {
         A[i] = 0.0;
         B[i] = 2.0;
         C[i] = 2.0;
@@ -141,7 +142,7 @@ int main(int argc, char * argv[])
 
       if (iter==1) nstream_time = prk::wtime();
 
-      Kokkos::parallel_for ( length, KOKKOS_LAMBDA(const int i) {
+      Kokkos::parallel_for(Kokkos::RangePolicy<Space,Schedule>(0,length), [=](const size_t i) {
           A[i] += B[i] + scalar * C[i];
       });
     }
