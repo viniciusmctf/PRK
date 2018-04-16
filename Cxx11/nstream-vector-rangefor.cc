@@ -125,7 +125,7 @@ int main(int argc, char * argv[])
 
       if (iter==1) nstream_time = prk::wtime();
 
-      for (auto i : range) {
+      for (auto const i : range) {
           A[i] += B[i] + scalar * C[i];
       }
     }

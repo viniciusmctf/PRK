@@ -169,8 +169,8 @@ int main(int argc, char* argv[])
 
   // initialize the input and output arrays
   auto range = boost::irange(0,n);
-  for (auto i : range) {
-    for (auto j : range) {
+  for (auto const i : range) {
+    for (auto const j : range) {
       in[i*n+j] = static_cast<double>(i+j);
       out[i*n+j] = 0.0;
     }
@@ -182,8 +182,8 @@ int main(int argc, char* argv[])
     // Apply the stencil operator
     stencil(n, tile_size, in, out);
     // Add constant to solution to force refresh of neighbor data, if any
-    for (auto i : range) {
-      for (auto j : range) {
+    for (auto const i : range) {
+      for (auto const j : range) {
         in[i*n+j] += 1.0;
       }
     }
@@ -201,8 +201,8 @@ int main(int argc, char* argv[])
   // compute L1 norm in parallel
   double norm = 0.0;
   auto inside = boost::irange(radius,n-radius);
-  for (auto i : inside) {
-    for (auto j : inside) {
+  for (auto const i : inside) {
+    for (auto const j : inside) {
       norm += std::fabs(out[i*n+j]);
     }
   }

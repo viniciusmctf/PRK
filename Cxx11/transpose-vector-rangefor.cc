@@ -108,8 +108,8 @@ int main(int argc, char * argv[])
     if (iter==1) trans_time = prk::wtime();
 
     // transpose
-    for (auto i : irange) {
-      for (auto j : jrange) {
+    for (auto const i : irange) {
+      for (auto const j : jrange) {
         B[i*order+j] += A[j*order+i];
         A[j*order+i] += 1.0;
       }
@@ -124,10 +124,10 @@ int main(int argc, char * argv[])
   // TODO: replace with std::generate, std::accumulate, or similar
   const auto addit = (iterations+1.) * (iterations/2.);
   auto abserr = 0.0;
-  for (auto i : irange) {
-    for (auto j : jrange) {
-      const int ij = i*order+j;
-      const int ji = j*order+i;
+  for (auto const i : irange) {
+    for (auto const j : jrange) {
+      const auto ij = i*order+j;
+      const auto ji = j*order+i;
       const double reference = static_cast<double>(ij)*(1.+iterations)+addit;
       abserr += std::fabs(B[ji] - reference);
     }
@@ -142,7 +142,7 @@ int main(int argc, char * argv[])
     std::cout << "Solution validates" << std::endl;
     auto avgtime = trans_time/iterations;
     auto bytes = (size_t)order * (size_t)order * sizeof(double);
-    std::cout << "Rate (MB/s): " << 1.0e-6 * (2L*bytes)/avgtime
+    std::cout << "Rate (MB/s): " << 1.0e-6 * (2.*bytes)/avgtime
               << " Avg time (s): " << avgtime << std::endl;
   } else {
     std::cout << "ERROR: Aggregate squared error " << abserr
