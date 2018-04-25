@@ -255,7 +255,7 @@ int main(int argc, char* argv[])
               << " Avg time (s): " << avgtime << std::endl;
   }
 
-  Kokkos::finalize ();
+  Kokkos::finalize();
 
   return 0;
 }
