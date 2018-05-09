@@ -125,6 +125,10 @@ int main(int argc, char * argv[])
   double scalar(3);
 
   {
+    std::fill(A.begin(), A.end(), 0.0);
+    std::fill(B.begin(), B.end(), 2.0);
+    std::fill(C.begin(), C.end(), 2.0);
+#if 0
 #if defined(USE_PSTL) && defined(USE_INTEL_PSTL)
     std::for_each( pstl::execution::par_unseq, std::begin(range), std::end(range), [&] (int i) {
 #elif defined(USE_PSTL) && defined(__GNUC__) && defined(__GNUC_MINOR__) \
@@ -137,11 +141,28 @@ int main(int argc, char * argv[])
         B[i] = 2;
         C[i] = 2;
     });
+#endif
+
+    //auto nstream = [&] (size_t i) {
+    //    A[i] += B[i] + scalar * C[i];
+    //};
+    auto nstream = [=] (boost::tuple<double&,double&,double&> t) {
+        boost::get<0>(t) +=  boost::get<1>(t) + scalar * boost::get<2>(t);
+    };
 
     for (auto iter = 0; iter<=iterations; iter++) {
 
       if (iter==1) nstream_time = prk::wtime();
 
+      std::transform( boost::make_zip_iterator(boost::make_tuple(A.begin(), B.begin(), C.begin())),
+                      boost::make_zip_iterator(boost::make_tuple(A.end(),   B.end(),   C.end())),
+                      boost::make_zip_iterator(boost::make_tuple(A.begin())),
+                      nstream );
+#if 0
+      std::transform( std::make_tuple(A.begin(), B.begin(), C.begin()),
+                      std::make_tuple(A.end(),   B.end(),   C.end()),
+                      std::make_tuple(A.begin()),
+                      axpy<double>() );
 #if defined(USE_PSTL) && defined(USE_INTEL_PSTL)
       std::for_each( pstl::execution::par_unseq, std::begin(range), std::end(range), [&] (int i) {
 #elif defined(USE_PSTL) && defined(__GNUC__) && defined(__GNUC_MINOR__) \
@@ -152,6 +173,7 @@ int main(int argc, char * argv[])
 #endif
           A[i] += B[i] + scalar * C[i];
       });
+#endif
     }
     nstream_time = prk::wtime() - nstream_time;
   }
@@ -169,10 +191,12 @@ int main(int argc, char * argv[])
 
   ar *= length;
 
-  double asum(0);
-  for (size_t i=0; i<length; i++) {
-      asum += std::fabs(A[i]);
-  }
+  double asum = std::reduce(A.begin(), A.end(), 0.0, std::plus<double>());
+  //double asum = std::transform_reduce(A.begin(),
+  //                                       A.end(),
+  //                                       [=] (double x) -> double { return std::fabs(x); },
+  //                                       0.0,
+  //                                       std::plus<double>());
 
   double epsilon(1.e-8);
   if (std::fabs(ar-asum)/asum > epsilon) {
