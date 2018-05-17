@@ -51,16 +51,39 @@
 
 #include "prk_util.h"
 
-// See ParallelSTL.md for important information.
+struct x : public thrust::unary_function<void,int>
+{
+    int i;
+    int order;
+    thrust::device_vector<double> & A;
+    thrust::device_vector<double> & B;
+
+    x(int i, int order, thrust::device_vector<double> & A, thrust::device_vector<double> & B) :
+        i(i), order(order), A(A), B(B) {}
+
+    __host__ __device__
+    void operator()(int j)
+    {
+        B[i*order+j] += A[j*order+i];
+        A[j*order+i] += 1.0;
+        return;
+    }
+};
+
+//__device__
+void transpose(const int order, thrust::device_vector<double> & A, thrust::device_vector<double> & B)
+{
+    thrust::counting_iterator<int> start(0);
+    thrust::counting_iterator<int> end = start + order;
+    thrust::for_each( thrust::device, start, end, [=,&A,&B] (int i) {
+      thrust::for_each( thrust::device, start, end, x(i,order,A,B) );
+    });
+}
 
 int main(int argc, char * argv[])
 {
   std::cout << "Parallel Research Kernels version " << PRKVERSION << std::endl;
-#if defined(USE_PSTL)
-  std::cout << "C++17 Parallel STL Matrix transpose: B = A^T" << std::endl;
-#else
-  std::cout << "C++11 STL Matrix transpose: B = A^T" << std::endl;
-#endif
+  std::cout << "C++11/Thrust Matrix transpose: B = A^T" << std::endl;
 
   //////////////////////////////////////////////////////////////////////
   /// Read and test input parameters
@@ -99,13 +122,13 @@ int main(int argc, char * argv[])
   /// Allocate space for the input and transpose matrix
   //////////////////////////////////////////////////////////////////////
 
-  std::vector<double> A(order*order);
-  std::vector<double> B(order*order,0.0);
-
+  thrust::device_vector<double> A(order*order);
+  thrust::device_vector<double> B(order*order);
   // fill A with the sequence 0 to order^2-1 as doubles
-  std::iota(A.begin(), A.end(), 0.0);
+  thrust::sequence(thrust::device, A.begin(), A.end() );
+  thrust::fill(thrust::device, B.begin(), B.end(), 0.0);
 
-  auto range = prk::range(0,order);
+  auto range = boost::irange(0,order);
 
   auto trans_time = 0.0;
 
@@ -113,22 +136,16 @@ int main(int argc, char * argv[])
 
     if (iter==1) trans_time = prk::wtime();
 
-    // transpose
-#if defined(USE_PSTL) && defined(USE_INTEL_PSTL)
-  std::for_each( pstl::execution::par, std::begin(range), std::end(range), [&] (int i) {
-    std::for_each( pstl::execution::unseq, std::begin(range), std::end(range), [&] (int j) {
-#elif defined(USE_PSTL) && defined(__GNUC__) && defined(__GNUC_MINOR__) \
-                        && ( (__GNUC__ == 8) || (__GNUC__ == 7) && (__GNUC_MINOR__ >= 2) )
-  __gnu_parallel::for_each( std::begin(range), std::end(range), [&] (int i) {
-    __gnu_parallel::for_each( std::begin(range), std::end(range), [&] (int j) {
+#if 1
+    transpose(order, A, B);
 #else
-  std::for_each( std::begin(range), std::end(range), [&] (int i) {
-    std::for_each( std::begin(range), std::end(range), [&] (int j) {
-#endif
+    thrust::for_each( std::begin(range), std::end(range), [=,&A,&B] (int i) {
+      thrust::for_each( std::begin(range), std::end(range), [=,&A,&B] (int j) {
         B[i*order+j] += A[j*order+i];
         A[j*order+i] += 1.0;
       });
     });
+#endif
   }
   trans_time = prk::wtime() - trans_time;
 

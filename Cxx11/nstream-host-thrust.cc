@@ -64,12 +64,10 @@
 
 #include "prk_util.h"
 
-// See ParallelSTL.md for important information.
-
 int main(int argc, char * argv[])
 {
   std::cout << "Parallel Research Kernels version " << PRKVERSION << std::endl;
-  std::cout << "C++11/range-for STREAM triad: A = B + scalar * C" << std::endl;
+  std::cout << "C++11/Thrust STREAM triad: A = B + scalar * C" << std::endl;
 
   //////////////////////////////////////////////////////////////////////
   /// Read and test input parameters
@@ -112,22 +110,30 @@ int main(int argc, char * argv[])
 
   auto nstream_time = 0.0;
 
-  std::vector<double> A(length,0.0);
-  std::vector<double> B(length,2.0);
-  std::vector<double> C(length,2.0);
+  thrust::host_vector<double> A(length);
+  thrust::host_vector<double> B(length);
+  thrust::host_vector<double> C(length);
 
-  auto range = prk::range(0,length);
+  auto range = prk::range(static_cast<size_t>(0), length);
 
   double scalar(3);
-
   {
+    thrust::fill(thrust::host, A.begin(), A.end(), 0.0);
+    thrust::fill(thrust::host, B.begin(), B.end(), 2.0);
+    thrust::fill(thrust::host, C.begin(), C.end(), 2.0);
+
+    auto nstream = [=] __host__ __device__ (thrust::tuple<double&,double,double> t) {
+        thrust::get<0>(t) +=  thrust::get<1>(t) + scalar * thrust::get<2>(t);
+    };
+
     for (auto iter = 0; iter<=iterations; iter++) {
 
       if (iter==1) nstream_time = prk::wtime();
 
-      for (auto i : range) {
-          A[i] += B[i] + scalar * C[i];
-      }
+      thrust::for_each( thrust::host,
+                        thrust::make_zip_iterator(thrust::make_tuple(A.begin(), B.begin(), C.begin())),
+                        thrust::make_zip_iterator(thrust::make_tuple(A.end()  , B.end()  , C.end())),
+                        nstream);
     }
     nstream_time = prk::wtime() - nstream_time;
   }
@@ -145,10 +151,12 @@ int main(int argc, char * argv[])
 
   ar *= length;
 
-  double asum(0);
-  for (auto i : range) {
-      asum += std::fabs(A[i]);
-  }
+  //double asum = thrust::reduce(A.begin(), A.end(), 0.0, thrust::plus<double>());
+  double asum = thrust::transform_reduce(A.begin(),
+                                         A.end(),
+                                         [=] __host__ __device__ (double x) -> double { return std::fabs(x); },
+                                         0.0,
+                                         thrust::plus<double>());
 
   double epsilon(1.e-8);
   if (std::fabs(ar-asum)/asum > epsilon) {

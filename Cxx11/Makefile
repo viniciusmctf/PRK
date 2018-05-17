@@ -28,22 +28,25 @@ ifdef USE_PRK_KOKKOS_BACKEND
     KOKKOS_BACKEND_FLAG = -DPRK_KOKKOS_BACKEND=$(USE_PRK_KOKKOS_BACKEND)
 endif
 
-ASMFLAGS = -fsource-asm -fverbose-asm -fasm-blocks -fcode-asm
+#ASMFLAGS = -fsource-asm -fverbose-asm -fasm-blocks -fcode-asm
+ASMFLAGS = -fverbose-asm
 
 OMPFLAGS = $(OPENMPFLAG)
 TARGETFLAGS = $(OFFLOADFLAG)
 OPENCLFLAGS = $(OPENCLFLAG)
 # We do not yet handle all possible exceptions...
 #OPENCLFLAGS += -D__CL_ENABLE_EXCEPTIONS
-SYCLFLAGS = $(SYCLFLAG) $(BOOSTFLAG)
+SYCLFLAGS = $(SYCLFLAG) -DUSE_2D_INDEXING=0
 ORNLACCFLAGS = $(ORNLACCFLAG)
 TBBFLAGS = $(TBBFLAG) -DPRK_TBB_PARTITIONER=$(PRK_TBB_PARTITIONER)
 CBLASFLAGS = $(CBLASFLAG) $(OPENMPFLAG)
 BOOSTFLAGS = $(BOOSTFLAG)
-STLFLAGS = $(STLFLAG) $(BOOSTFLAGS)
-PSTLFLAGS = $(PSTLFLAG) $(BOOSTFLAGS)
+RANGEFLAGS = -DUSE_RANGES $(RANGEFLAG)
+STLFLAGS = $(STLFLAG) $(RANGEFLAGS)
+PSTLFLAGS = $(PSTLFLAG) $(RANGEFLAGS)
 RAJAFLAGS = $(RAJAFLAG)
-KOKKOSFLAGS = $(KOKKOSFLAG) $(KOKKOS_BACKEND_FLAG) $(BOOSTFLAGS)
+THRUSTFLAGS = $(THRUSTFLAG) $(RANGEFLAGS) -DUSE_THRUST
+KOKKOSFLAGS = $(KOKKOSFLAG) $(KOKKOS_BACKEND_FLAG) $(RANGEFLAGS)
 ORNLACCFLAGS = $(ORNLACCFLAG)
 
 ifdef OCCADIR
@@ -52,7 +55,7 @@ endif
 OCCAFLAGS = -DUSE_OCCA -I${OCCADIR}/include -Wl,-rpath -Wl,${OCCADIR}/lib -L${OCCADIR}/lib -locca
 
 .PHONY: all clean vector valarray openmp target opencl taskloop tbb stl pstl \
-	rangefor kokkos raja cuda cublas sycl boost-compute
+	rangefor kokkos raja cuda cublas sycl boost-compute thrust
 
 EXTRA=
 ifeq ($(shell uname -s),Darwin)
@@ -63,11 +66,11 @@ else
   EXTRA += target
 endif
 
-all: vector valarray openmp taskloop tbb stl pstl rangefor raja kokkos opencl sycl occa boost-compute $(EXTRA)
+all: vector valarray openmp taskloop tbb stl pstl rangefor raja kokkos opencl sycl boost-compute $(EXTRA)
 
 p2p: p2p-vector p2p-doacross-vector-openmp p2p-hyperplane-vector-openmp p2p-tasks-openmp p2p-openmp-target \
      p2p-innerloop-vector-tbb p2p-vector-raja p2p-vector-tbb p2p-innerloop-opencl p2p-hyperplane-vector-tbb \
-     p2p-hyperplane-sycl p2p-hyperplane-vector-ornlacc
+     p2p-hyperplane-sycl p2p-hyperplane-vector-ornlacc p2p-tasks-tbb
 
 stencil: stencil-valarray stencil-vector stencil-vector-async stencil-vector-openmp stencil-openmp-target \
 	 stencil-vector-taskloop stencil-vector-stl stencil-vector-pstl stencil-vector-raja \
@@ -100,7 +103,7 @@ opencl: p2p-innerloop-opencl stencil-opencl transpose-opencl nstream-opencl
 sycl: p2p-hyperplane-sycl stencil-sycl transpose-sycl nstream-sycl
 
 tbb: p2p-innerloop-vector-tbb p2p-vector-tbb stencil-vector-tbb transpose-vector-tbb nstream-vector-tbb \
-     p2p-hyperplane-vector-tbb
+     p2p-hyperplane-vector-tbb p2p-tasks-tbb
 
 stl: stencil-vector-stl transpose-vector-stl nstream-vector-stl
 
@@ -113,6 +116,11 @@ kokkos: stencil-kokkos transpose-kokkos nstream-kokkos
 raja: p2p-vector-raja stencil-vector-raja transpose-vector-raja nstream-vector-raja
 
 cuda: stencil-cuda transpose-cuda nstream-cuda
+
+thrust: nstream-host-thrust nstream-device-thrust \
+        transpose-host-thrust transpose-device-thrust
+
+cuda: transpose-cuda
 
 cublas: transpose-cublas nstream-cublas dgemm-cublas
 
@@ -159,10 +167,10 @@ nstream-opencl: nstream-opencl.cc nstream.cl prk_util.h prk_opencl.h
 	$(CXX) $(CXXFLAGS) $< $(PSTLFLAGS) -o $@
 
 %-rangefor: %-rangefor.cc prk_util.h
-	$(CXX) $(CXXFLAGS) $< $(BOOSTFLAGS) -o $@
+	$(CXX) $(CXXFLAGS) $< $(RANGEFLAGS) -o $@
 
 %-boost-compute: %-boost-compute.cc prk_util.h
-	$(CXX) $(CXXFLAGS) $< $(BOOSTFLAGS) $(OPENCLFLAGS) -o $@
+	$(CXX) $(CXXFLAGS) $< $(BOOSTFLAGS) -DUSE_BOOST_COMPUTE $(OPENCLFLAGS) -o $@
 
 %-raja: %-raja.cc prk_util.h
 	$(CXX) $(CXXFLAGS) $< $(RAJAFLAGS) -o $@
@@ -170,6 +178,14 @@ nstream-opencl: nstream-opencl.cc nstream.cl prk_util.h prk_opencl.h
 %-kokkos: %-kokkos.cc prk_util.h
 	$(info PRK help: Set USE_PRK_KOKKOS_BACKEND={Threads,Serial,Cuda} when invoking make to not use OpenMP)
 	$(CXX) $(CXXFLAGS) $< $(KOKKOSFLAGS) -o $@
+
+# for host execution
+%-thrust: %-thrust.cc prk_util.h
+	$(CXX) $(CXXFLAGS) $< $(THRUSTFLAGS) -o $@
+
+# for device execution (must compiler as .cu)
+%-thrust: %-thrust.cu prk_util.h
+	$(NVCC) $(CUDAFLAGS) $(CPPFLAGS) $< $(THRUSTFLAGS) -o $@
 
 %-cuda: %-cuda.cu prk_util.h prk_cuda.h
 	$(NVCC) $(CUDAFLAGS) $(CPPFLAGS) $< -o $@
@@ -216,6 +232,7 @@ clean:
 	-rm -f *-rangefor
 	-rm -f *-raja
 	-rm -f *-kokkos
+	-rm -f *-thrust
 	-rm -f *-cuda
 	-rm -f *-cublas
 	-rm -f *-cblas
