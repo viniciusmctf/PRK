@@ -1,5 +1,5 @@
 ///
-/// Copyright (c) 2013, Intel Corporation
+/// Copyright (c) 2018, Intel Corporation
 ///
 /// Redistribution and use in source and binary forms, with or without
 /// modification, are permitted provided that the following conditions
@@ -40,7 +40,7 @@
 #include <cassert>
 
 // Test standard library _after_ standard headers have been included...
-#if !defined(__NVCC__) && (defined(__GLIBCXX__) || defined(_GLIBCXX_RELEASE) ) && !defined(_GLIBCXX_USE_CXX11_ABI)
+#if !defined(__NVCC__) && !defined(__PGI) && (defined(__GLIBCXX__) || defined(_GLIBCXX_RELEASE) ) && !defined(_GLIBCXX_USE_CXX11_ABI)
 # error You are using an ancient version GNU libstdc++.  Either upgrade your GCC or tell ICC to use a newer version via the -gxx-name= option.
 #endif
 
@@ -180,8 +180,21 @@ const T prk_reduce(I first, I last, T init) {
 # endif
 #endif
 
-#ifdef USE_BOOST
-# include <boost/range/irange.hpp>
+#if defined(USE_RANGES)
+# if defined(USE_BOOST_IRANGE)
+#  include "boost/range/irange.hpp"
+# elif defined(USE_RANGES_TS)
+#  include "range/v3/view/iota.hpp"
+#  include "range/v3/view/slice.hpp"
+#  include "range/v3/view/stride.hpp"
+# else
+#  error You have not provided a version of ranges to use.
+# endif
+#endif
+
+#if defined(USE_BOOST_COMPUTE)
+# include "boost/compute.hpp"
+# include "boost/compute/container/valarray.hpp"
 #endif
 
 #if defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 1800)
@@ -210,6 +223,21 @@ const T prk_reduce(I first, I last, T init) {
 #ifdef USE_RAJA
 # define RAJA_ENABLE_NESTED 1
 # include "RAJA/RAJA.hpp"
+#endif
+
+#ifdef USE_THRUST
+# ifdef __NVCC__
+#  include <thrust/device_vector.h>
+# endif
+# include <thrust/host_vector.h>
+# include <thrust/fill.h>
+# include <thrust/sequence.h>
+# include <thrust/for_each.h>
+# include <thrust/transform.h>
+# include <thrust/transform_reduce.h>
+# include <thrust/iterator/counting_iterator.h>
+# include <thrust/execution_policy.h>
+# include <thrust/functional.h>
 #endif
 
 #ifdef USE_SYCL
@@ -241,6 +269,29 @@ namespace prk {
     template <class T1, class T2>
     static inline auto divceil(T1 numerator, T2 denominator) -> decltype(numerator / denominator) {
         return ( numerator / denominator + (numerator % denominator > 0) );
+    }
+
+    template <class S, class E>
+    auto range(S start, E end) {
+#if defined(USE_BOOST_IRANGE)
+        return boost::irange(static_cast<decltype(end)>(start), end);
+#elif defined(USE_RANGES_TS)
+        return ranges::view::iota(static_cast<decltype(end)>(start), end);
+#endif
+    }
+
+    template <class S, class E, class B>
+    auto range(S start, E end, B blocking) {
+#if defined(USE_BOOST_IRANGE)
+        return boost::irange(static_cast<decltype(end)>(start), end, static_cast<decltype(end)>(blocking) );
+#elif defined(USE_RANGES_TS)
+        // NOTE:
+        // iota(s) | slice(s,e) | stride(b)  is faster than
+        // iota(s,e) | stride(b) for some reason.
+        return ranges::view::iota(static_cast<decltype(end)>(start)) |
+               ranges::view::slice(static_cast<decltype(end)>(start), end) |
+               ranges::view::stride(static_cast<decltype(end)>(blocking));
+#endif
     }
 
 } // namespace prk
