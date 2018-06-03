@@ -61,6 +61,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "prk_util.h"
+#include "prk_tbb.h"
 #include "stencil_tbb.hpp"
 
 void nothing(const int n, const int tile_size, tbb::concurrent_vector<double> & in, tbb::concurrent_vector<double> & out)

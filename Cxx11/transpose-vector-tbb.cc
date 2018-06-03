@@ -53,6 +53,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "prk_util.h"
+#include "prk_tbb.h"
 
 int main(int argc, char * argv[])
 {
@@ -109,11 +110,10 @@ int main(int argc, char * argv[])
   // Allocate space and perform the computation
   //////////////////////////////////////////////////////////////////////
 
-  tbb::concurrent_vector<double> A;
-  tbb::concurrent_vector<double> B;
-
   auto trans_time = 0.0;
 
+  tbb::concurrent_vector<double> A;
+  tbb::concurrent_vector<double> B;
   A.resize(order*order);
   B.resize(order*order);
 

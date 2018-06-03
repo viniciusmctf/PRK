@@ -60,6 +60,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "prk_util.h"
+#include "prk_tbb.h"
 
 void SequentialSweep(int m, int n, tbb::concurrent_vector<double> & grid)
 {
@@ -175,7 +176,6 @@ int main(int argc, char* argv[])
 
   auto pipeline_time = 0.0; // silence compiler warning
 
-  // working set
   tbb::concurrent_vector<double> grid;
   grid.resize(m*n,0.0);
 
