@@ -92,13 +92,13 @@ f = see footnotes
 | SYCL                 |     |    y    |     y     |    y    |        |       |
 | Boost.Compute        |     |         |           |    y    |        |       |
 | Parallel STL         |  y  |    y    |     y     |    y    |        |       |
-| Thrust               |  y  |         |           |         |        |       |
+| Thrust               |     |         |           |    y    |        |       |
 | TBB                  |  y  |    y    |     y     |    y    |        |       |
 | Kokkos               |  y  |    y    |     y     |    y    |        |       |
 | RAJA                 |  y  |    y    |     y     |    y    |        |       |
 | CUDA                 |  i  |    y    |     y     |    y    |        |       |
 | CUBLAS               |     |         |     y     |    y    |        |   y   |
-| CBLAS                |     |         |           |         |        |   y   |
+| CBLAS                |     |         |     y     |         |        |   y   |
 | OpenACC              |  y  |         |           |         |        |       |
 
 * [SYCL](http://sycl.tech/)
