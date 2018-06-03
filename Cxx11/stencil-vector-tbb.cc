@@ -61,6 +61,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "prk_util.h"
+#include "prk_tbb.h"
 #include "stencil_tbb.hpp"
 
 void nothing(const int n, const int t, std::vector<double> & in, std::vector<double> & out)
@@ -175,10 +176,8 @@ int main(int argc, char* argv[])
 
   auto stencil_time = 0.0;
 
-  std::vector<double> in;
-  std::vector<double> out;
-  in.resize(n*n);
-  out.resize(n*n);
+  std::vector<double> in(n*n);
+  std::vector<double> out(n*n);
 
   tbb::blocked_range2d<int> range(0, n, tile_size, 0, n, tile_size);
   tbb::parallel_for( range, [&](decltype(range)& r) {

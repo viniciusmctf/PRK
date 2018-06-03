@@ -50,6 +50,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "prk_util.h"
+#include "prk_raja.h"
 
 const int tile_size = 32;
 
@@ -272,10 +273,8 @@ int main(int argc, char * argv[])
   /// Allocate space for the input and transpose matrix
   //////////////////////////////////////////////////////////////////////
 
-  std::vector<double> A;
-  std::vector<double> B;
-  A.resize(order*order);
-  B.resize(order*order);
+  std::vector<double> A(order*order);
+  std::vector<double> B(order*order);
 
   if (use_for=="seq") {
     if (use_nested) {
