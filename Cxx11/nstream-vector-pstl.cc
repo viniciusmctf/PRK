@@ -131,7 +131,7 @@ int main(int argc, char * argv[])
     std::fill(C.begin(), C.end(), 2.0);
 #if 0
 #if defined(USE_PSTL) && defined(USE_INTEL_PSTL)
-    std::for_each( pstl::execution::par_unseq, std::begin(range), std::end(range), [&] (size_t i) {
+    std::for_each( exec::par_unseq, std::begin(range), std::end(range), [&] (size_t i) {
 #elif defined(USE_PSTL) && defined(__GNUC__) && defined(__GNUC_MINOR__) \
                         && ( (__GNUC__ == 8) || (__GNUC__ == 7) && (__GNUC_MINOR__ >= 2) )
 #warning GNU parallel
@@ -166,7 +166,7 @@ int main(int argc, char * argv[])
                       std::make_tuple(A.begin()),
                       axpy<double>() );
 #if defined(USE_PSTL) && defined(USE_INTEL_PSTL)
-      std::for_each( pstl::execution::par_unseq, std::begin(range), std::end(range), [&] (size_t i) {
+      std::for_each( exec::par_unseq, std::begin(range), std::end(range), [&] (size_t i) {
 #elif defined(USE_PSTL) && defined(__GNUC__) && defined(__GNUC_MINOR__) \
                         && ( (__GNUC__ == 8) || (__GNUC__ == 7) && (__GNUC_MINOR__ >= 2) )
       __gnu_parallel::for_each( std::begin(range), std::end(range), [&] (size_t i) {
