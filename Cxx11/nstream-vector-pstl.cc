@@ -129,52 +129,59 @@ int main(int argc, char * argv[])
     std::fill(A.begin(), A.end(), 0.0);
     std::fill(B.begin(), B.end(), 2.0);
     std::fill(C.begin(), C.end(), 2.0);
-#if 0
-#if defined(USE_PSTL) && defined(USE_INTEL_PSTL)
+#if 1
+# if defined(USE_PSTL) && defined(USE_INTEL_PSTL)
     std::for_each( exec::par_unseq, std::begin(range), std::end(range), [&] (size_t i) {
-#elif defined(USE_PSTL) && defined(__GNUC__) && defined(__GNUC_MINOR__) \
+# elif defined(USE_PSTL) && defined(__GNUC__) && defined(__GNUC_MINOR__) \
                         && ( (__GNUC__ == 8) || (__GNUC__ == 7) && (__GNUC_MINOR__ >= 2) )
-#warning GNU parallel
+# warning GNU parallel
     __gnu_parallel::for_each( std::begin(range), std::end(range), [&] (size_t i) {
-#else
+# else
     std::for_each( std::begin(range), std::end(range), [&] (size_t i) {
-#endif
+# endif
         A[i] = 0;
         B[i] = 2;
         C[i] = 2;
     });
-#endif
-
-    //auto nstream = [&] (size_t i) {
-    //    A[i] += B[i] + scalar * C[i];
-    //};
+#else
+# if 0
+    auto nstream = [&] (size_t i) {
+        A[i] += B[i] + scalar * C[i];
+    };
+# else
     auto nstream = [=] (boost::tuple<double&,double&,double&> t) {
         boost::get<0>(t) +=  boost::get<1>(t) + scalar * boost::get<2>(t);
     };
+# endif
+#endif
 
     for (auto iter = 0; iter<=iterations; iter++) {
 
       if (iter==1) nstream_time = prk::wtime();
 
-      std::transform( boost::make_zip_iterator(boost::make_tuple(A.begin(), B.begin(), C.begin())),
-                      boost::make_zip_iterator(boost::make_tuple(A.end(),   B.end(),   C.end())),
-                      boost::make_zip_iterator(boost::make_tuple(A.begin())),
-                      nstream );
-#if 0
+#if 1
+# if defined(USE_PSTL) && defined(USE_INTEL_PSTL)
+      std::for_each( exec::par_unseq, std::begin(range), std::end(range), [&] (size_t i) {
+# elif defined(USE_PSTL) && defined(__GNUC__) && defined(__GNUC_MINOR__) \
+                        && ( (__GNUC__ == 8) || (__GNUC__ == 7) && (__GNUC_MINOR__ >= 2) )
+      __gnu_parallel::for_each( std::begin(range), std::end(range), [&] (size_t i) {
+# else
+      std::for_each( std::begin(range), std::end(range), [&] (size_t i) {
+# endif
+          A[i] += B[i] + scalar * C[i];
+      });
+#else
+# if 0
       std::transform( std::make_tuple(A.begin(), B.begin(), C.begin()),
                       std::make_tuple(A.end(),   B.end(),   C.end()),
                       std::make_tuple(A.begin()),
                       axpy<double>() );
-#if defined(USE_PSTL) && defined(USE_INTEL_PSTL)
-      std::for_each( exec::par_unseq, std::begin(range), std::end(range), [&] (size_t i) {
-#elif defined(USE_PSTL) && defined(__GNUC__) && defined(__GNUC_MINOR__) \
-                        && ( (__GNUC__ == 8) || (__GNUC__ == 7) && (__GNUC_MINOR__ >= 2) )
-      __gnu_parallel::for_each( std::begin(range), std::end(range), [&] (size_t i) {
-#else
-      std::for_each( std::begin(range), std::end(range), [&] (size_t i) {
-#endif
-          A[i] += B[i] + scalar * C[i];
-      });
+# else
+      std::transform( boost::make_zip_iterator(boost::make_tuple(A.begin(), B.begin(), C.begin())),
+                      boost::make_zip_iterator(boost::make_tuple(A.end(),   B.end(),   C.end())),
+                      boost::make_zip_iterator(boost::make_tuple(A.begin())),
+                      nstream );
+# endif
 #endif
     }
     nstream_time = prk::wtime() - nstream_time;
@@ -193,12 +200,7 @@ int main(int argc, char * argv[])
 
   ar *= length;
 
-  double asum = std::reduce(A.begin(), A.end(), 0.0, std::plus<double>());
-  //double asum = std::transform_reduce(A.begin(),
-  //                                       A.end(),
-  //                                       [=] (double x) -> double { return std::fabs(x); },
-  //                                       0.0,
-  //                                       std::plus<double>());
+  double asum = prk::reduce(A.begin(), A.end(), 0.0);
 
   double epsilon(1.e-8);
   if (std::fabs(ar-asum)/asum > epsilon) {
