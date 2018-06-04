@@ -344,7 +344,8 @@ case "$PRK_TARGET" in
         # C++11 with CBLAS
         if [ "${TRAVIS_OS_NAME}" = "osx" ] ; then
             echo "CBLASFLAG=-DACCELERATE -framework Accelerate" >> common/make.defs
-            make -C $PRK_TARGET_PATH dgemm-cblas
+            make -C $PRK_TARGET_PATH transpose-cblas dgemm-cblas
+            $PRK_TARGET_PATH/transpose-cblas    10 1024
             $PRK_TARGET_PATH/dgemm-cblas        10 400
         fi
 
@@ -476,7 +477,7 @@ case "$PRK_TARGET" in
                     export LD_LIBRARY_PATH=${TBBROOT}/lib:${LD_LIBRARY_PATH}
                     ;;
             esac
-            make -C $PRK_TARGET_PATH p2p-innerloop-vector-tbb p2p-hyperplane-vector-tbb stencil-vector-tbb transpose-vector-tbb nstream-vector-tbb
+            make -C $PRK_TARGET_PATH p2p-innerloop-vector-tbb p2p-hyperplane-vector-tbb p2p-tasks-tbb stencil-vector-tbb transpose-vector-tbb nstream-vector-tbb
             $PRK_TARGET_PATH/p2p-innerloop-vector-tbb     10 1024
             $PRK_TARGET_PATH/p2p-hyperplane-vector-tbb    10 1024 1
             $PRK_TARGET_PATH/p2p-hyperplane-vector-tbb    10 1024 32

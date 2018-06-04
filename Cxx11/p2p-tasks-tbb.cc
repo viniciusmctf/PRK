@@ -61,20 +61,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "prk_util.h"
-
-#include "tbb/flow_graph.h"
-#include "tbb/parallel_for.h"
-
-inline void sweep_tile(int startm, int endm,
-                       int startn, int endn,
-                       int n, double grid[])
-{
-  for (auto i=startm; i<endm; i++) {
-    for (auto j=startn; j<endn; j++) {
-      grid[i*n+j] = grid[(i-1)*n+j] + grid[i*n+(j-1)] - grid[(i-1)*n+(j-1)];
-    }
-  }
-}
+#include "prk_tbb.h"
+#include "p2p-kernel.h"
 
 int main(int argc, char* argv[])
 {
