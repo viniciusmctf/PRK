@@ -98,8 +98,13 @@ void run(cl::Context context, int iterations, int order, int tile_size)
     if (iter==1) trans_time = prk::wtime();
 
     // transpose the matrix
+#if 1
+    kernel(cl::EnqueueArgs(queue, cl::NullRange, cl::NDRange(order,order), cl::NDRange(1,1)),
+           order, d_a, d_b, tile_size, d_t);
+#else
     kernel(cl::EnqueueArgs(queue, cl::NullRange, cl::NDRange(nb,nb), cl::NDRange(tile_size,tile_size)),
            order, d_a, d_b, tile_size, d_t);
+#endif
     queue.finish();
 #if DEBUG
     if (order<20) {
