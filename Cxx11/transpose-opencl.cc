@@ -140,7 +140,7 @@ void run(cl::Context context, int iterations, int order, int tile_size)
     std::cout << "Solution validates" << std::endl;
     auto avgtime = trans_time/iterations;
     auto bytes = (size_t)order * (size_t)order * sizeof(double);
-    std::cout << ((precision==64) ? "64b" : "32b")
+    std::cout << ( (precision==64) ? "64b" : "32b" )
               << " Rate (MB/s): " << 1.0e-6 * (2.*bytes)/avgtime
               << " Avg time (s): " << avgtime << std::endl;
   } else {
@@ -210,9 +210,15 @@ int main(int argc, char* argv[])
     std::cout << "CPU Precision        = " << precision << "-bit" << std::endl;
 
     if (precision==64) {
+<<<<<<< HEAD
         run<double>(cpu, iterations, order, tile_size);
     }
     run<float>(cpu, iterations, order, tile_size);
+=======
+        run<double>(cpu, iterations, order);
+    }
+    run<float>(cpu, iterations, order);
+>>>>>>> f7defbce8cbe86ba015f71fe2779ab2aeea7812e
   }
 
   cl::Context gpu(CL_DEVICE_TYPE_GPU, NULL, NULL, NULL, &err);
@@ -223,23 +229,34 @@ int main(int argc, char* argv[])
     std::cout << "GPU Precision        = " << precision << "-bit" << std::endl;
 
     if (precision==64) {
+<<<<<<< HEAD
         run<double>(gpu, iterations, order, tile_size);
     }
     run<float>(gpu, iterations, order, tile_size);
+=======
+        run<double>(gpu, iterations, order);
+    }
+    run<float>(gpu, iterations, order);
+>>>>>>> f7defbce8cbe86ba015f71fe2779ab2aeea7812e
   }
 
   cl::Context acc(CL_DEVICE_TYPE_ACCELERATOR, NULL, NULL, NULL, &err);
   if ( err == CL_SUCCESS && prk::opencl::available(acc) )
   {
-
     const int precision = prk::opencl::precision(acc);
 
     std::cout << "ACC Precision        = " << precision << "-bit" << std::endl;
 
     if (precision==64) {
+<<<<<<< HEAD
         run<double>(acc, iterations, order, tile_size);
     }
     run<float>(acc, iterations, order, tile_size);
+=======
+        run<double>(acc, iterations, order);
+    }
+    run<float>(acc, iterations, order);
+>>>>>>> f7defbce8cbe86ba015f71fe2779ab2aeea7812e
   }
 
   return 0;

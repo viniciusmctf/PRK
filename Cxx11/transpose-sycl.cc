@@ -39,7 +39,10 @@
 /// USAGE:   Program input is the matrix order and the number of times to
 ///          repeat the operation:
 ///
-///          transpose <matrix_size> <# iterations>
+///          transpose <matrix_size> <# iterations> [tile size]
+///
+///          An optional parameter specifies the tile size used to divide the
+///          individual matrix blocks for improved cache and TLB performance.
 ///
 ///          The output consists of diagnostics to make sure the
 ///          transpose worked and timing statistics.
@@ -64,41 +67,48 @@ int main(int argc, char * argv[])
 
   int iterations;
   size_t order;
+  size_t tile_size;
   try {
       if (argc < 3) {
-        throw "Usage: <# iterations> <matrix order>";
+        throw "Usage: <# iterations> <matrix order> [tile size]";
       }
 
-      // number of times to do the transpose
       iterations  = std::atoi(argv[1]);
       if (iterations < 1) {
         throw "ERROR: iterations must be >= 1";
       }
 
-      // order of a the matrix
       order = std::atoi(argv[2]);
       if (order <= 0) {
         throw "ERROR: Matrix Order must be greater than 0";
       } else if (order > std::floor(std::sqrt(INT_MAX))) {
         throw "ERROR: matrix dimension too large - overflow risk";
       }
+
+      // default tile size for tiling of local transpose
+      tile_size = (argc>3) ? std::atoi(argv[3]) : 32;
+      // a negative tile size means no tiling of the local transpose
+      if (tile_size <= 0) tile_size = order;
   }
   catch (const char * e) {
     std::cout << e << std::endl;
     return 1;
   }
 
-  std::cout << "Number of iterations  = " << iterations << std::endl;
-  std::cout << "Matrix order          = " << order << std::endl;
+  std::cout << "Number of iterations = " << iterations << std::endl;
+  std::cout << "Matrix order         = " << order << std::endl;
+  std::cout << "Tile size            = " << tile_size << std::endl;
 
   //////////////////////////////////////////////////////////////////////
-  /// Allocate space for the input and transpose matrix
+  // Allocate space and perform the computation
   //////////////////////////////////////////////////////////////////////
 
   double trans_time(0);
 
   std::vector<double> h_A(order*order);
   std::vector<double> h_B(order*order,0.0);
+
+  size_t nb = prk::divceil(order, tile_size);
 
   // fill A with the sequence 0 to order^2-1 as doubles
   std::iota(h_A.begin(), h_A.end(), 0.0);
@@ -107,13 +117,8 @@ int main(int argc, char * argv[])
   cl::sycl::queue q;
   {
     // initialize device buffers from host buffers
-#if USE_2D_INDEXING
-    cl::sycl::buffer<double,2> d_A( h_A.data(), cl::sycl::range<2>{order,order} );
-    cl::sycl::buffer<double,2> d_B( h_B.data(), cl::sycl::range<2>{order,order} );
-#else
     cl::sycl::buffer<double> d_A { h_A.data(), h_A.size() };
     cl::sycl::buffer<double> d_B { h_B.data(), h_B.size() };
-#endif
 
     for (int iter = 0; iter<=iterations; ++iter) {
 
@@ -126,17 +131,36 @@ int main(int argc, char * argv[])
         auto B = d_B.get_access<cl::sycl::access::mode::read_write>(h);
 
         // transpose
+#if 0
         h.parallel_for<class transpose>(cl::sycl::range<2>{order,order}, [=] (cl::sycl::item<2> it) {
-#if USE_2D_INDEXING
-          cl::sycl::id<2> ij{it[0],it[1]};
-          cl::sycl::id<2> ji{it[1],it[0]};
-          B[ij] += A[ji];
-          A[ji] += 1.0;
-#else
           B[it[0] * order + it[1]] += A[it[1] * order + it[0]];
           A[it[1] * order + it[0]] += 1.0;
-#endif
         });
+#elif 0
+        h.parallel_for_work_group<class transpose>(cl::sycl::range<2>{nb,nb}, [=] (cl::sycl::group<2> mygroup) {
+          parallel_for_sub_group(mygroup, [=](cl::sycl::sub_group<2> mysubgroup){
+            parallel_for_work_item(mysubgroup, [=](cl::sycl::item<2> it) {
+              B[it[0] * order + it[1]] += A[it[1] * order + it[0]];
+              A[it[1] * order + it[0]] += 1.0;
+            });
+          });
+        });
+#elif 0
+        //h.parallel_for_work_group<class transpose>(cl::sycl::range<2>{nb,nb}, [=] (cl::sycl::group<2> mygroup) {
+        h.parallel_for_work_group<class transpose>(cl::sycl::range<2>{32,32}, [=] (cl::sycl::group<2> mygroup) {
+          parallel_for_work_item(mygroup, [=](cl::sycl::item<2> it) {
+            B[it[0] * order + it[1]] += A[it[1] * order + it[0]];
+            A[it[1] * order + it[0]] += 1.0;
+          });
+        });
+#else
+        h.parallel_for_work_group(cl::sycl::range<2>(64, 64), [=](cl::sycl::group<2> gp){
+            /* data parallel work executed once per work group */
+            parallel_for_work_item(gp, [=](cl::sycl::item<2> it){
+                /* data parallel work executed once per work item */
+            });
+        });
+#endif
       });
       q.wait();
     }
