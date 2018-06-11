@@ -129,7 +129,8 @@ void run(cl::Context context, int iterations, int order)
     std::cout << "Solution validates" << std::endl;
     auto avgtime = trans_time/iterations;
     auto bytes = (size_t)order * (size_t)order * sizeof(double);
-    std::cout << "Rate (MB/s): " << 1.0e-6 * (2L*bytes)/avgtime
+    std::cout << ( (precision==64) ? "64b" : "32b" )
+              << " Rate (MB/s): " << 1.0e-6 * (2L*bytes)/avgtime
               << " Avg time (s): " << avgtime << std::endl;
   } else {
     std::cout << "ERROR: Aggregate squared error " << abserr
@@ -192,9 +193,8 @@ int main(int argc, char* argv[])
 
     if (precision==64) {
         run<double>(cpu, iterations, order);
-    } else {
-        run<float>(cpu, iterations, order);
     }
+    run<float>(cpu, iterations, order);
   }
 
   cl::Context gpu(CL_DEVICE_TYPE_GPU, NULL, NULL, NULL, &err);
@@ -206,24 +206,21 @@ int main(int argc, char* argv[])
 
     if (precision==64) {
         run<double>(gpu, iterations, order);
-    } else {
-        run<float>(gpu, iterations, order);
     }
+    run<float>(gpu, iterations, order);
   }
 
   cl::Context acc(CL_DEVICE_TYPE_ACCELERATOR, NULL, NULL, NULL, &err);
   if ( err == CL_SUCCESS && prk::opencl::available(acc) )
   {
-
     const int precision = prk::opencl::precision(acc);
 
     std::cout << "ACC Precision         = " << precision << "-bit" << std::endl;
 
     if (precision==64) {
         run<double>(acc, iterations, order);
-    } else {
-        run<float>(acc, iterations, order);
     }
+    run<float>(acc, iterations, order);
   }
 
   return 0;
