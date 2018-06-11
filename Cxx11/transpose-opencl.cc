@@ -56,7 +56,7 @@
 #include "prk_opencl.h"
 
 template <typename T>
-void run(cl::Context context, int iterations, int order)
+void run(cl::Context context, int iterations, int order, int tile_size)
 {
   auto precision = (sizeof(T)==8) ? 64 : 32;
 
@@ -65,7 +65,7 @@ void run(cl::Context context, int iterations, int order)
   auto function = (precision==64) ? "transpose64" : "transpose32";
 
   cl_int err;
-  auto kernel = cl::make_kernel<int, cl::Buffer, cl::Buffer>(program, function, &err);
+  auto kernel = cl::make_kernel<int, cl::Buffer, cl::Buffer, int, cl::LocalSpaceArg>(program, function, &err);
   if(err != CL_SUCCESS){
     std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
     std::cout << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) << std::endl;
@@ -87,24 +87,35 @@ void run(cl::Context context, int iterations, int order)
   // copy input from host to device
   cl::Buffer d_a = cl::Buffer(context, begin(h_a), end(h_a), true);
   cl::Buffer d_b = cl::Buffer(context, begin(h_b), end(h_b), true);
+  auto d_t = cl::__local((tile_size+1)*tile_size*sizeof(T));
 
-  auto trans_time = 0.0;
+  double trans_time(0);
 
   for (auto iter = 0; iter<=iterations; iter++) {
 
     if (iter==1) trans_time = prk::wtime();
 
-    // transpose the  matrix
-    kernel(cl::EnqueueArgs(queue, cl::NDRange(order,order)), order, d_a, d_b);
+    // transpose the matrix
+    kernel(cl::EnqueueArgs(queue, cl::NDRange(order,order)), order, d_a, d_b, tile_size, d_t);
     queue.finish();
-
+#if DEBUG
+    if (order<20) {
+        cl::copy(queue, d_a, begin(h_a), end(h_a));
+        cl::copy(queue, d_b, begin(h_b), end(h_b));
+        for (int i=0; i<order; ++i) {
+          for (int j=0; j<order; ++j) {
+              std::cout << "(" << i << "," << j << ") = " << h_a[i*order+j] << ", " << h_b[i*order+j] << "\n";
+          }
+        }
+    }
+#endif
   }
   trans_time = prk::wtime() - trans_time;
 
   // copy output back to host
   cl::copy(queue, d_b, begin(h_b), end(h_b));
 
-  // TODO: replace with std::generate, std::accumulate, or similar
+  // compute error
   const double addit = (iterations+1.0) * (0.5*iterations);
   double abserr = 0.0;
   for (auto j=0; j<order; j++) {
@@ -129,7 +140,8 @@ void run(cl::Context context, int iterations, int order)
     std::cout << "Solution validates" << std::endl;
     auto avgtime = trans_time/iterations;
     auto bytes = (size_t)order * (size_t)order * sizeof(double);
-    std::cout << "Rate (MB/s): " << 1.0e-6 * (2L*bytes)/avgtime
+    std::cout << ((precision==64) ? "64b" : "32b")
+              << " Rate (MB/s): " << 1.0e-6 * (2.*bytes)/avgtime
               << " Avg time (s): " << avgtime << std::endl;
   } else {
     std::cout << "ERROR: Aggregate squared error " << abserr
@@ -150,9 +162,10 @@ int main(int argc, char* argv[])
 
   int iterations;
   int order;
+  int tile_size;
   try {
       if (argc < 3) {
-        throw "Usage: <# iterations> <matrix order>";
+        throw "Usage: <# iterations> <matrix order> [tile size]";
       }
 
       // number of times to do the transpose
@@ -168,14 +181,20 @@ int main(int argc, char* argv[])
       } else if (order > std::floor(std::sqrt(INT_MAX))) {
         throw "ERROR: matrix dimension too large - overflow risk";
       }
+
+      // default tile size for tiling of local transpose
+      tile_size = (argc>3) ? std::atoi(argv[3]) : 32;
+      // a negative tile size means no tiling of the local transpose
+      if (tile_size <= 0) tile_size = order;
   }
   catch (const char * e) {
     std::cout << e << std::endl;
     return 1;
   }
 
-  std::cout << "Number of iterations  = " << iterations << std::endl;
-  std::cout << "Matrix order          = " << order << std::endl;
+  std::cout << "Number of iterations = " << iterations << std::endl;
+  std::cout << "Matrix order         = " << order << std::endl;
+  std::cout << "Tile size            = " << tile_size << std::endl;
 
   //////////////////////////////////////////////////////////////////////
   /// Setup OpenCL environment
@@ -188,13 +207,12 @@ int main(int argc, char* argv[])
   {
     const int precision = prk::opencl::precision(cpu);
 
-    std::cout << "CPU Precision         = " << precision << "-bit" << std::endl;
+    std::cout << "CPU Precision        = " << precision << "-bit" << std::endl;
 
     if (precision==64) {
-        run<double>(cpu, iterations, order);
-    } else {
-        run<float>(cpu, iterations, order);
+        run<double>(cpu, iterations, order, tile_size);
     }
+    run<float>(cpu, iterations, order, tile_size);
   }
 
   cl::Context gpu(CL_DEVICE_TYPE_GPU, NULL, NULL, NULL, &err);
@@ -202,13 +220,12 @@ int main(int argc, char* argv[])
   {
     const int precision = prk::opencl::precision(gpu);
 
-    std::cout << "GPU Precision         = " << precision << "-bit" << std::endl;
+    std::cout << "GPU Precision        = " << precision << "-bit" << std::endl;
 
     if (precision==64) {
-        run<double>(gpu, iterations, order);
-    } else {
-        run<float>(gpu, iterations, order);
+        run<double>(gpu, iterations, order, tile_size);
     }
+    run<float>(gpu, iterations, order, tile_size);
   }
 
   cl::Context acc(CL_DEVICE_TYPE_ACCELERATOR, NULL, NULL, NULL, &err);
@@ -217,13 +234,12 @@ int main(int argc, char* argv[])
 
     const int precision = prk::opencl::precision(acc);
 
-    std::cout << "ACC Precision         = " << precision << "-bit" << std::endl;
+    std::cout << "ACC Precision        = " << precision << "-bit" << std::endl;
 
     if (precision==64) {
-        run<double>(acc, iterations, order);
-    } else {
-        run<float>(acc, iterations, order);
+        run<double>(acc, iterations, order, tile_size);
     }
+    run<float>(acc, iterations, order, tile_size);
   }
 
   return 0;
