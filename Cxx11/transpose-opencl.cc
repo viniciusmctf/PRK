@@ -81,8 +81,6 @@ void run(cl::Context context, int iterations, int order, int tile_size)
   std::vector<T> h_a(nelems);
   std::vector<T> h_b(nelems, T(0));
 
-  const int nb = prk::divceil(order, tile_size);
-
   // fill A with the sequence 0 to order^2-1 as doubles
   std::iota(h_a.begin(), h_a.end(), (T)0);
 
@@ -97,12 +95,19 @@ void run(cl::Context context, int iterations, int order, int tile_size)
 
     if (iter==1) trans_time = prk::wtime();
 
+    const int nb = prk::divceil(order, tile_size);
+    std::cout << "order, num_blocks, tile_size = " <<  order << "," << nb << "," << tile_size << "\n";
+
     // transpose the matrix
 #if 1
+    // local_size must divide global_size evenly so must submit global_range as num_blocks*tile_size, not order
+    kernel(cl::EnqueueArgs(queue, cl::NullRange, cl::NDRange(nb*tile_size,nb*tile_size), cl::NDRange(tile_size,tile_size)),
+           order, d_a, d_b, tile_size, d_t);
+#elif 0
     kernel(cl::EnqueueArgs(queue, cl::NullRange, cl::NDRange(order,order), cl::NDRange(1,1)),
            order, d_a, d_b, tile_size, d_t);
 #else
-    kernel(cl::EnqueueArgs(queue, cl::NullRange, cl::NDRange(nb,nb), cl::NDRange(tile_size,tile_size)),
+    kernel(cl::EnqueueArgs(queue, cl::NullRange, cl::NDRange(order,order), cl::NullRange),
            order, d_a, d_b, tile_size, d_t);
 #endif
     queue.finish();
