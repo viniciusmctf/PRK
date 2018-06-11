@@ -81,6 +81,8 @@ void run(cl::Context context, int iterations, int order, int tile_size)
   std::vector<T> h_a(nelems);
   std::vector<T> h_b(nelems, T(0));
 
+  const int nb = prk::divceil(order, tile_size);
+
   // fill A with the sequence 0 to order^2-1 as doubles
   std::iota(h_a.begin(), h_a.end(), (T)0);
 
@@ -96,7 +98,8 @@ void run(cl::Context context, int iterations, int order, int tile_size)
     if (iter==1) trans_time = prk::wtime();
 
     // transpose the matrix
-    kernel(cl::EnqueueArgs(queue, cl::NDRange(order,order)), order, d_a, d_b, tile_size, d_t);
+    kernel(cl::EnqueueArgs(queue, cl::NullRange, cl::NDRange(nb,nb), cl::NDRange(tile_size,tile_size)),
+           order, d_a, d_b, tile_size, d_t);
     queue.finish();
 #if DEBUG
     if (order<20) {
@@ -210,15 +213,9 @@ int main(int argc, char* argv[])
     std::cout << "CPU Precision        = " << precision << "-bit" << std::endl;
 
     if (precision==64) {
-<<<<<<< HEAD
         run<double>(cpu, iterations, order, tile_size);
     }
     run<float>(cpu, iterations, order, tile_size);
-=======
-        run<double>(cpu, iterations, order);
-    }
-    run<float>(cpu, iterations, order);
->>>>>>> f7defbce8cbe86ba015f71fe2779ab2aeea7812e
   }
 
   cl::Context gpu(CL_DEVICE_TYPE_GPU, NULL, NULL, NULL, &err);
@@ -229,15 +226,9 @@ int main(int argc, char* argv[])
     std::cout << "GPU Precision        = " << precision << "-bit" << std::endl;
 
     if (precision==64) {
-<<<<<<< HEAD
         run<double>(gpu, iterations, order, tile_size);
     }
     run<float>(gpu, iterations, order, tile_size);
-=======
-        run<double>(gpu, iterations, order);
-    }
-    run<float>(gpu, iterations, order);
->>>>>>> f7defbce8cbe86ba015f71fe2779ab2aeea7812e
   }
 
   cl::Context acc(CL_DEVICE_TYPE_ACCELERATOR, NULL, NULL, NULL, &err);
@@ -248,15 +239,9 @@ int main(int argc, char* argv[])
     std::cout << "ACC Precision        = " << precision << "-bit" << std::endl;
 
     if (precision==64) {
-<<<<<<< HEAD
         run<double>(acc, iterations, order, tile_size);
     }
     run<float>(acc, iterations, order, tile_size);
-=======
-        run<double>(acc, iterations, order);
-    }
-    run<float>(acc, iterations, order);
->>>>>>> f7defbce8cbe86ba015f71fe2779ab2aeea7812e
   }
 
   return 0;
