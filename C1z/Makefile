@@ -44,6 +44,8 @@ all: serial thread openmp taskloop $(EXTRA)
 
 serial: p2p p2p-innerloop stencil transpose
 
+vector: p2p-sse p2p-avx p2p-avx-tasks-openmp
+
 thread: transpose-thread
 
 openmp: p2p-simd-openmp p2p-tasks-openmp p2p-innerloop-openmp stencil-openmp transpose-openmp
@@ -94,6 +96,7 @@ clean:
 	-rm -f *.dwarf
 	-rm -rf *.dSYM # Mac
 	-rm -f p2p p2p-innerloop stencil transpose
+	-rm -f p2p-sse p2p-avx p2p-avx3 p2p-avx-tasks-openmp
 	-rm -f *-openmp
 	-rm -f *-target
 	-rm -f *-taskloop
