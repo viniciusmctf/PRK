@@ -123,9 +123,9 @@ int main(int argc, char * argv[])
 
   {
     // initialize device buffers from host buffers
-    cl::sycl::buffer<double, 1, cl::sycl::buffer_allocator<double>> d_A { h_A.data(), h_A.size() };
-    cl::sycl::buffer<double, 1, cl::sycl::buffer_allocator<double>> d_B { h_B.data(), h_B.size() };
-    cl::sycl::buffer<double, 1, cl::sycl::buffer_allocator<double>> d_C { h_C.data(), h_C.size() };
+    cl::sycl::buffer<double, 1, cl::sycl::map_allocator<double>> d_A { h_A.data(), h_A.size() };
+    cl::sycl::buffer<double, 1, cl::sycl::map_allocator<double>> d_B { h_B.data(), h_B.size() };
+    cl::sycl::buffer<double, 1, cl::sycl::map_allocator<double>> d_C { h_C.data(), h_C.size() };
 
     for (int iter = 0; iter<=iterations; ++iter) {
 
